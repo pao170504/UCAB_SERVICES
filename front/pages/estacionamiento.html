@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Estacionamiento</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/estacionamiento.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
+    <div class="navbar-tabs">
+      <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+    </div>
+    <div class="navbar-right">
+      <div class="role-switcher"><button class="role-switcher-btn active">Estudiante</button><button class="role-switcher-btn">Profesor</button></div>
+      <div class="navbar-avatar">MP</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar">MP</div>
+        <div class="sidebar-profile-name">María Pérez</div>
+        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <div class="page-header">
+        <h1 class="page-header-title">Gestión de Estacionamiento Inteligente</h1>
+        <p class="page-header-sub">Monitoreo en tiempo real de sensores, disponibilidad y ocupación por zona.</p>
+      </div>
+
+      <div class="tab-pills mb-5">
+        <button class="tab-pill active" data-zone="sambilito">Sambilito</button>
+        <button class="tab-pill" data-zone="playa">Playa</button>
+        <button class="tab-pill" data-zone="padel">Padel</button>
+        <button class="tab-pill" data-zone="esequibo">Esequibo</button>
+        <button class="tab-pill" data-zone="solarium">Solarium</button>
+      </div>
+
+      <div class="parking-stats-row">
+        <div class="stat-card">
+          <div class="stat-label">🅿 TOTAL DISPONIBILIDAD</div>
+          <div class="stat-value">142</div>
+          <div class="stat-sub">/ 250 puestos</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">📊 TASA DE OCUPACIÓN</div>
+          <div class="stat-value" style="font-size:1.8rem;">43.2%</div>
+          <div><span class="stat-trend down">↘ Baja</span></div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-label">📡 SENSORES ACTIVOS</div>
+          <div class="stat-value" style="font-size:1.8rem;">248</div>
+          <div><span class="badge badge-success">Online</span></div>
+        </div>
+        <div class="stat-card dark">
+          <div class="stat-label">⚙ ESTADO OPERATIVO</div>
+          <div class="flex items-center gap-2 mt-2"><span class="dot dot-blue"></span><span style="color:white;font-weight:700;">Normal</span></div>
+        </div>
+      </div>
+
+      <div class="parking-filterbar">
+        <select class="form-select" style="width:160px;"><option>Vehículos</option><option>Carro</option><option>Moto</option><option>Carga</option><option>Preferencial</option></select>
+        <select class="form-select" style="width:160px;"><option>Estado</option><option>Libre</option><option>Ocupado</option><option>Reservado</option><option>Mantenimiento</option></select>
+        <button class="btn btn-secondary btn-sm">🔄 Actualizar</button>
+      </div>
+
+      <div class="parking-main">
+
+        <div class="spot-grid" id="spot-grid-container">
+          <div class="spot-grid-inner">
+            <div class="spot libre"         data-spot="S-01"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-01</span></div>
+            <div class="spot ocupado"       data-spot="S-02"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-02</span></div>
+            <div class="spot ocupado"       data-spot="S-03"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-03</span></div>
+            <div class="spot libre"         data-spot="S-04"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-04</span></div>
+            <div class="spot reservado"     data-spot="S-05"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-05</span></div>
+            <div class="spot mantenimiento" data-spot="S-06"><span class="spot-dot"></span><span class="spot-icon">🔧</span><span class="spot-label">S-06</span></div>
+            <div class="spot libre"         data-spot="M-01"><span class="spot-dot"></span><span class="spot-icon">🏍</span><span class="spot-label">M-01</span></div>
+            <div class="spot ocupado"       data-spot="M-02"><span class="spot-dot"></span><span class="spot-icon">🏍</span><span class="spot-label">M-02</span></div>
+            <div class="spot libre"         data-spot="M-03"><span class="spot-dot"></span><span class="spot-icon">🏍</span><span class="spot-label">M-03</span></div>
+            <div class="spot libre"         data-spot="C-01"><span class="spot-dot"></span><span class="spot-icon">🚛</span><span class="spot-label">C-01</span></div>
+            <div class="spot ocupado"       data-spot="C-02"><span class="spot-dot"></span><span class="spot-icon">🚛</span><span class="spot-label">C-02</span></div>
+            <div class="spot libre"         data-spot="P-01"><span class="spot-dot"></span><span class="spot-icon">♿</span><span class="spot-label">P-01</span></div>
+            <div class="spot libre"         data-spot="P-02"><span class="spot-dot"></span><span class="spot-icon">♿</span><span class="spot-label">P-02</span></div>
+            <div class="spot ocupado"       data-spot="S-07"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-07</span></div>
+            <div class="spot libre"         data-spot="S-08"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-08</span></div>
+            <div class="spot reservado"     data-spot="S-09"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-09</span></div>
+            <div class="spot libre"         data-spot="S-10"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-10</span></div>
+            <div class="spot mantenimiento" data-spot="S-11"><span class="spot-dot"></span><span class="spot-icon">🔧</span><span class="spot-label">S-11</span></div>
+          </div>
+
+          <div class="spot-legend">
+            <div class="legend-item"><span class="dot dot-success"></span> Libre</div>
+            <div class="legend-item"><span class="dot dot-warning"></span> Ocupado</div>
+            <div class="legend-item"><span class="dot dot-blue"></span> Reservado</div>
+            <div class="legend-item"><span class="dot dot-danger"></span> Mantenimiento</div>
+          </div>
+        </div>
+
+        <div class="spot-detail">
+          <div class="spot-detail-header" id="spot-detail-header">Detalle del Puesto</div>
+          <div class="spot-detail-body" id="spot-detail-body" style="display:none;">
+            <div class="spot-detail-row">
+              <span class="spot-detail-label">Estado del Sensor</span>
+              <span class="spot-detail-value flex items-center gap-2">
+                <span class="dot" id="detail-estado"></span>
+                <span id="detail-sensor"></span>
+              </span>
+            </div>
+            <div class="spot-detail-row">
+              <span class="spot-detail-label">Última Actualización</span>
+              <span class="spot-detail-value" id="detail-updated"></span>
+            </div>
+            <div class="spot-detail-row">
+              <span class="spot-detail-label">Tiempo de Ocupación</span>
+              <span class="spot-timer" id="detail-timer"></span>
+            </div>
+          </div>
+          <div class="spot-detail-empty" id="spot-detail-empty">Seleccione un puesto para ver los detalles</div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Spot popover -->
+<div id="spot-popover" class="spot-popover" style="display:none;">
+  <div class="spot-popover-header">
+    <span id="pop-title">Puesto S-01</span>
+    <button class="modal-close" style="font-size:1.1rem;line-height:1;" onclick="closePopover()">×</button>
+  </div>
+  <div id="pop-body"></div>
+</div>
+
+<!-- Reserve modal -->
+<div class="modal-overlay" id="reserve-modal">
+  <div class="modal" style="width:min(440px,95vw);">
+    <div class="modal-header">
+      <h3 class="modal-title" id="reserve-modal-title">Reservar puesto</h3>
+      <button class="modal-close" onclick="closeModal('reserve-modal')">×</button>
+    </div>
+    <div id="reserve-modal-body">
+      <div class="form-group">
+        <label class="form-label">Placa del vehículo</label>
+        <input type="text" class="form-input" id="reserve-plate" placeholder="Ej. AB123CD" maxlength="8" style="text-transform:uppercase;">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Hora de llegada</label>
+          <input type="time" class="form-input" id="reserve-from" value="07:00">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Hora de salida</label>
+          <input type="time" class="form-input" id="reserve-to" value="09:00">
+        </div>
+      </div>
+      <div class="info-box" style="margin-top:.75rem;">
+        <div style="font-size:.82rem;color:var(--color-text-muted);">Tarifa: <strong>$2.00/hr</strong> · Mínimo 1 hora · Pago al salir mediante TAI o Pago Móvil.</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('reserve-modal')">Cancelar</button>
+        <button class="btn btn-primary" onclick="confirmReservation()">Confirmar reserva →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/tables.js"></script>
+<script src="../js/pages/estacionamiento.js"></script>
+</body>
+</html>

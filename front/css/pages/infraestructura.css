@@ -1,0 +1,222 @@
+/* =============================================================
+   infraestructura.css — Infrastructure management page
+   ============================================================= */
+
+/* Section: Two-column layout */
+.infra-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: var(--space-5);
+  align-items: start;
+}
+
+/* Section: Left panel */
+.infra-panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.infra-panel-header {
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-secondary);
+}
+
+.infra-panel-body {
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* Section: Space detail mini cards */
+.space-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.space-detail-card {
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+}
+
+.space-detail-label {
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+.space-detail-value {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+/* Section: Tariff adjustment panel */
+.tariff-panel {
+  background-color: var(--color-navy);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+}
+
+.tariff-panel-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: var(--space-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.tariff-input-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+  margin-bottom: var(--space-3);
+}
+
+.tariff-input {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1.5px solid rgba(255,255,255,0.2);
+  border-radius: var(--radius-sm);
+  background-color: rgba(255,255,255,0.07);
+  color: white;
+  font-size: 1.1rem;
+  font-weight: 700;
+  outline: none;
+  transition: border-color 0.15s;
+}
+
+.tariff-input:focus { border-color: var(--color-blue); }
+
+.tariff-warning {
+  background-color: rgba(239,68,68,0.15);
+  border: 1px solid rgba(239,68,68,0.4);
+  border-radius: var(--radius-sm);
+  padding: var(--space-3);
+  font-size: 0.8rem;
+  color: #fca5a5;
+  margin-bottom: var(--space-3);
+}
+
+/* Section: Calendar panel */
+.calendar-panel {
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+  overflow: hidden;
+}
+
+.calendar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.calendar-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+}
+
+.calendar-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.calendar-nav-btn {
+  width: 28px;
+  height: 28px;
+  border: 1.5px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  transition: all 0.15s;
+}
+.calendar-nav-btn:hover { border-color: var(--color-blue); color: var(--color-blue); }
+
+.calendar-range {
+  font-size: 0.85rem;
+  color: var(--color-text-secondary);
+  font-weight: 600;
+}
+
+/* Section: Calendar grid */
+.calendar-grid {
+  display: grid;
+  grid-template-columns: 50px repeat(7, 1fr);
+  border-left: 1px solid var(--color-border);
+}
+
+.cal-col-header {
+  padding: var(--space-3);
+  text-align: center;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--color-text-muted);
+  border-right: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-bg);
+}
+
+.cal-time-col { background-color: var(--color-bg); }
+
+.cal-col {
+  border-right: 1px solid var(--color-border);
+  min-height: 320px;
+  position: relative;
+  padding: var(--space-2);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.cal-event {
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-2);
+  font-size: 0.72rem;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cal-event-blue   { background-color: rgba(27,110,243,0.15); color: var(--color-blue); border-left: 3px solid var(--color-blue); }
+.cal-event-teal   { background-color: rgba(20,184,166,0.15); color: #0f766e; border-left: 3px solid #14b8a6; }
+.cal-event-amber  { background-color: rgba(245,158,11,0.15); color: #b45309; border-left: 3px solid var(--color-warning); }
+.cal-event-navy   { background-color: rgba(11,30,45,0.12);   color: var(--color-navy); border-left: 3px solid var(--color-navy); }
+
+.cal-event-time {
+  font-size: 0.65rem;
+  font-weight: 500;
+  opacity: 0.75;
+  display: block;
+  margin-top: 2px;
+}

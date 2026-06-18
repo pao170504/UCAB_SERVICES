@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Pagos</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/pagos.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Section: Navbar -->
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
+    <div class="navbar-tabs">
+      <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+    </div>
+    <div class="navbar-right">
+      <div class="role-switcher">
+        <button class="role-switcher-btn active">Estudiante</button>
+        <button class="role-switcher-btn">Profesor</button>
+      </div>
+      <div class="navbar-avatar">MP</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+
+    <!-- Section: Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar">MP</div>
+        <div class="sidebar-profile-name">María Pérez</div>
+        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <!-- Section: Main content -->
+    <main class="main-content">
+
+      <div class="page-header">
+        <h1 class="page-header-title">Gestión de Pagos</h1>
+        <p class="page-header-sub">Consulte el historial de pagos y gestione sus transacciones institucionales.</p>
+      </div>
+
+      <!-- Profesor info card (only shown in Profesor mode) -->
+      <div id="pagos-profesor-note" style="display:none;" class="alert alert-info mb-4">
+        ℹ Los pagos de nómina se gestionan a través de la <strong>Dirección de Recursos Humanos</strong>. Este módulo muestra únicamente los cargos por servicios contratados.
+      </div>
+
+      <!-- Top bar -->
+      <div class="pagos-topbar">
+        <div class="search-bar" style="width:320px;">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="pagos-search" placeholder="Buscar por concepto o sede...">
+        </div>
+        <button class="btn btn-secondary btn-sm">⚙ Filtros</button>
+        <button class="btn btn-secondary btn-sm">📅 Fecha</button>
+      </div>
+
+      <!-- Vencimiento alert -->
+      <div class="vencimiento-card">
+        <div>
+          <div class="vencimiento-label">⚠ PRÓXIMO VENCIMIENTO</div>
+          <div class="vencimiento-title">Inscripción Académica 2026-2</div>
+        </div>
+        <div class="vencimiento-date">12 Oct, 2026</div>
+      </div>
+
+      <!-- Payments table -->
+      <div class="card">
+        <div class="card-header">
+          <span class="card-header-title">Historial de Pagos</span>
+        </div>
+        <div class="table-wrap" style="border:none;border-radius:0;">
+          <table class="table" id="pagos-table">
+            <thead>
+              <tr>
+                <th>FECHA</th><th>CONCEPTO</th><th>SEDE</th><th>MONTO ($)</th><th>MONTO (BCV)</th><th>ESTADO</th><th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="row-99201">
+                <td>15/09/2026</td>
+                <td>Inscripción Semestre Sept-Feb<span class="ref">#UCAB-99201</span></td>
+                <td>Montalbán</td>
+                <td class="monto-cell">$450.00</td>
+                <td class="monto-cell">Bs. 16,560.00</td>
+                <td id="status-99201"><span class="badge badge-success">PAGADO</span></td>
+                <td></td>
+              </tr>
+              <tr id="row-88210">
+                <td>22/08/2026</td>
+                <td>Derecho de Grado<span class="ref">#UCAB-88210</span></td>
+                <td>Guayana</td>
+                <td class="monto-cell">$120.00</td>
+                <td class="monto-cell" id="bs-88210">Bs. 4,416.00</td>
+                <td id="status-88210"><span class="badge badge-warning">PARCIAL</span></td>
+                <td><button class="btn btn-primary btn-sm" onclick="triggerPago('#UCAB-88210','Derecho de Grado',120)">Pagar</button></td>
+              </tr>
+              <tr id="row-77112">
+                <td>10/08/2026</td>
+                <td>Curso de Inglés Intensivo<span class="ref">#UCAB-77112</span></td>
+                <td>Montalbán</td>
+                <td class="monto-cell">$85.00</td>
+                <td class="monto-cell">Bs. 3,128.00</td>
+                <td id="status-77112"><span class="badge badge-danger">NULO</span></td>
+                <td></td>
+              </tr>
+              <tr id="row-44510">
+                <td>01/08/2026</td>
+                <td>Estacionamiento Prepago<span class="ref">#UCAB-44510</span></td>
+                <td>Montalbán</td>
+                <td class="monto-cell">$15.00</td>
+                <td class="monto-cell">Bs. 552.00</td>
+                <td id="status-44510"><span class="badge badge-success">PAGADO</span></td>
+                <td></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Section: TAI Wallet -->
+      <div class="wallet-bar">
+        <span style="font-size:1.6rem;">🪙</span>
+        <div style="flex:1;">
+          <div class="wallet-label">SALDO DE LA BILLETERA TAI</div>
+          <div class="wallet-value" id="wallet-balance">$1,240.50</div>
+        </div>
+        <button class="btn btn-primary">+ Añadir fondos</button>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/tables.js"></script>
+<script src="../js/payment-modal.js"></script>
+<script src="../js/pages/pagos.js"></script>
+</body>
+</html>

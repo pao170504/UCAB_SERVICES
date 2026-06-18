@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Infraestructura</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/infraestructura.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Section: Navbar -->
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand">
+      <div class="navbar-brand-icon">🎓</div>
+      UCAB Services
+    </a>
+    <div class="navbar-tabs">
+      <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+    </div>
+    <div class="navbar-right">
+      <div class="role-switcher">
+        <button class="role-switcher-btn active">Estudiante</button>
+        <button class="role-switcher-btn">Profesor</button>
+      </div>
+      <div class="navbar-avatar">MP</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+
+    <!-- Section: Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar">MP</div>
+        <div class="sidebar-profile-name">María Pérez</div>
+        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <!-- Section: Main content -->
+    <main class="main-content">
+
+      <div class="page-header">
+        <h1 class="page-header-title">Gestión de Infraestructuras</h1>
+        <p class="page-header-sub">Administre los espacios, tarifas y reservas de los edificios de la universidad.</p>
+      </div>
+
+      <div class="infra-layout">
+
+        <!-- Left: Location selector + details -->
+        <div>
+          <div class="infra-panel">
+            <div class="infra-panel-header">Selector de espacio</div>
+            <div class="infra-panel-body">
+              <div class="form-group">
+                <label class="form-label">Sede</label>
+                <select class="form-select"><option>Montalbán</option><option>Guayana</option></select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Edificación</label>
+                <select class="form-select">
+                  <option>Edificio Laboratorios</option>
+                  <option>Edif. Cincuentenario</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="form-label">Espacio</label>
+                <select class="form-select">
+                  <option>Auditorio</option>
+                  <option>Sala de Cómputo A</option>
+                  <option>Sala de Conferencias</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Space detail mini cards -->
+          <div class="space-details-grid mt-4">
+            <div class="space-detail-card">
+              <div class="space-detail-label">📐 CAPACIDAD TOTAL</div>
+              <div class="space-detail-value">240 Asientos</div>
+            </div>
+            <div class="space-detail-card">
+              <div class="space-detail-label">🪑 MUEBLES</div>
+              <div class="space-detail-value"><span class="badge badge-blue">Ergonómico PREMIUM</span></div>
+            </div>
+            <div class="space-detail-card">
+              <div class="space-detail-label">🖥 TECNOLOGÍA</div>
+              <div class="space-detail-value" style="font-size:0.8rem;">4K Proyector | Surround 7.1</div>
+            </div>
+            <div class="space-detail-card">
+              <div class="space-detail-label">🔧 MANTENIMIENTO</div>
+              <div class="space-detail-value" style="font-size:0.8rem;">Programado | 24 Oct</div>
+            </div>
+          </div>
+
+          <!-- Tariff adjustment panel -->
+          <div class="tariff-panel mt-4">
+            <div class="tariff-panel-label">AJUSTE DE TARIFA <span style="opacity:.6;cursor:help;" title="Límite máximo por categoría">ⓘ</span></div>
+            <div class="tariff-input-row">
+              <input class="tariff-input" type="number" id="tariff-input" value="120.00" step="0.50">
+            </div>
+            <div class="tariff-warning" id="tariff-warning">
+              ⚠ La tarifa excede el límite de la categoría (95,00 $)
+            </div>
+            <button class="btn btn-primary btn-full" id="tariff-update-btn">Actualizar</button>
+          </div>
+        </div>
+
+        <!-- Right: Weekly calendar -->
+        <div class="calendar-panel">
+          <div class="calendar-header">
+            <span class="calendar-title">Calendario de reservas semanal</span>
+            <div class="calendar-nav">
+              <button class="calendar-nav-btn">‹</button>
+              <span class="calendar-range">Octubre 14 — 20, 2026</span>
+              <button class="calendar-nav-btn">›</button>
+            </div>
+          </div>
+
+          <div style="overflow-x:auto;">
+            <div class="calendar-grid" style="min-width:600px;">
+              <!-- Header row -->
+              <div class="cal-col-header cal-time-col"></div>
+              <div class="cal-col-header">LUN 14</div>
+              <div class="cal-col-header">MAR 15</div>
+              <div class="cal-col-header">MIÉ 16</div>
+              <div class="cal-col-header">JUE 17</div>
+              <div class="cal-col-header">VIE 18</div>
+              <div class="cal-col-header">SÁB 19</div>
+              <div class="cal-col-header">DOM 20</div>
+
+              <!-- Time labels -->
+              <div class="cal-col" style="background:var(--color-bg);border-right:1px solid var(--color-border);gap:var(--space-8);padding-top:var(--space-4);">
+                <span style="font-size:.65rem;color:var(--color-text-muted);">08:00</span>
+                <span style="font-size:.65rem;color:var(--color-text-muted);">10:00</span>
+                <span style="font-size:.65rem;color:var(--color-text-muted);">12:00</span>
+                <span style="font-size:.65rem;color:var(--color-text-muted);">14:00</span>
+              </div>
+
+              <!-- LUN 14 -->
+              <div class="cal-col">
+                <div class="cal-event cal-event-blue">
+                  CONF.
+                  <span class="cal-event-time">08:00–10:05</span>
+                </div>
+              </div>
+              <!-- MAR 15 -->
+              <div class="cal-col">
+                <div class="cal-event cal-event-teal" style="margin-top:calc(var(--space-8)*1.2);">
+                  PREP.
+                  <span class="cal-event-time">11:00–14:00</span>
+                </div>
+              </div>
+              <!-- MIÉ 16 -->
+              <div class="cal-col"></div>
+              <!-- JUE 17 -->
+              <div class="cal-col">
+                <div class="cal-event cal-event-amber">
+                  MANT.
+                  <span class="cal-event-time">08:00–09:30</span>
+                </div>
+              </div>
+              <!-- VIE 18 -->
+              <div class="cal-col">
+                <div class="cal-event cal-event-navy" style="margin-top:calc(var(--space-8)*.5);">
+                  GENERAL
+                  <span class="cal-event-time">09:00–15:06</span>
+                </div>
+              </div>
+              <!-- SÁB 19 -->
+              <div class="cal-col"></div>
+              <!-- DOM 20 -->
+              <div class="cal-col"></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/tables.js"></script>
+<script src="../js/pages/infraestructura.js"></script>
+</body>
+</html>

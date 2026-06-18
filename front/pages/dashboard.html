@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Panel</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/dashboard.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Section: Navbar -->
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand">
+      <div class="navbar-brand-icon">🎓</div>
+      UCAB Services
+    </a>
+    <div class="navbar-tabs">
+      <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+    </div>
+    <div class="navbar-right">
+      <div class="role-switcher">
+        <button class="role-switcher-btn active">Estudiante</button>
+        <button class="role-switcher-btn">Profesor</button>
+      </div>
+      <div class="navbar-avatar">MP</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+
+    <!-- Section: Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar">MP</div>
+        <div class="sidebar-profile-name">María Pérez</div>
+        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <!-- Section: Main content -->
+    <main class="main-content">
+
+      <!-- ==== ESTUDIANTE VIEW ==== -->
+      <div id="view-estudiante">
+
+        <div class="page-header">
+          <h1 class="page-header-title">¡Bienvenida, María!</h1>
+          <p class="page-header-sub">Aquí tienes el resumen académico para el semestre 2026-II.</p>
+        </div>
+
+        <!-- KPI row: 4 cards -->
+        <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);">
+
+          <!-- Promedio -->
+          <div class="kpi-card">
+            <div class="kpi-label">PROMEDIO <span class="stat-trend up">↗ Top 5%</span></div>
+            <div class="kpi-value">18.45</div>
+            <p class="kpi-sub">Top 5% Facultad Ingeniería Informática</p>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:92%"></div></div>
+          </div>
+
+          <!-- Unidades de Crédito -->
+          <div class="kpi-card">
+            <div class="kpi-label">UNIDADES DE CRÉDITO (UC) <span>✓</span></div>
+            <div class="kpi-value" style="font-size:1.8rem;">162 <span style="font-size:1rem;color:var(--color-text-muted);">/ 180 UC</span></div>
+            <div class="kpi-tags">
+              <span class="tag">Semestre: 8vo</span>
+              <span class="badge badge-success">Beca: ACTIVA (45%)</span>
+            </div>
+          </div>
+
+          <!-- Seguridad -->
+          <div class="kpi-card">
+            <div class="kpi-label">ESTADO DE SEGURIDAD <span>🛡</span></div>
+            <div class="security-row"><span class="dot dot-success"></span> 📱 Protegido por MFA</div>
+            <div class="security-row text-sm text-secondary">Último cambio: Hace 2 días</div>
+            <div style="margin-top:var(--space-3);">
+              <button class="btn btn-secondary btn-sm" onclick="openModal('mfa-modal')">Gestionar</button>
+            </div>
+          </div>
+
+          <!-- Beca -->
+          <div class="kpi-card" style="border-left:4px solid var(--color-blue);">
+            <div class="kpi-label">MI BECA</div>
+            <div style="margin-bottom:var(--space-2);"><span class="badge badge-blue">Excelencia</span></div>
+            <div style="font-size:.82rem;color:var(--color-text-secondary);margin-bottom:var(--space-2);">
+              Índice mantenimiento: <strong>16.80</strong> / requerido: 14.00
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill success" style="width:88%"></div></div>
+            <div style="margin-top:var(--space-2);"><span class="badge badge-success">BENEFICIO ACTIVO</span></div>
+          </div>
+
+        </div>
+
+        <!-- Preparador card -->
+        <div class="card mb-4" style="border-left:4px solid var(--color-warning);">
+          <div class="card-body" style="display:flex;align-items:center;gap:var(--space-6);flex-wrap:wrap;">
+            <div>
+              <div class="section-title" style="margin-bottom:var(--space-1);">MI ROL COMO PREPARADOR</div>
+              <div style="font-size:.875rem;color:var(--color-text-secondary);">Asignatura: <strong>Sistemas Digitales I</strong></div>
+            </div>
+            <div style="flex:1;min-width:200px;">
+              <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:var(--space-1);">
+                <span>Horas de ayudantía</span>
+                <strong>48 / 60 hrs</strong>
+              </div>
+              <div class="progress-bar-wrap"><div class="progress-bar-fill warning" style="width:80%"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Trámites recientes -->
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-header">
+            <span class="card-header-title">Trámites recientes</span>
+            <a href="pagos.html" class="btn btn-outline btn-sm">Ver todos →</a>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr><th>N° SOLICITUD</th><th>TRÁMITE</th><th>FECHA</th><th>ESTADO</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="font-mono text-sm">#RQ-98260</td>
+                  <td><strong>Solicitud de Título</strong></td>
+                  <td>10/06/2026</td>
+                  <td><span class="badge badge-info">En proceso</span></td>
+                  <td><button type="button" class="btn btn-outline btn-sm" onclick="showToast('Solicitud #RQ-98260 en revisión por la DACE','info')">Ver estado</button></td>
+                </tr>
+                <tr>
+                  <td class="font-mono text-sm">#RQ-98261</td>
+                  <td><strong>Inscripción Postgrado</strong></td>
+                  <td>05/06/2026</td>
+                  <td><span class="badge badge-warning">Pendiente</span></td>
+                  <td><button type="button" class="btn btn-outline btn-sm" onclick="showToast('Documentación pendiente de entrega','warning')">Ver estado</button></td>
+                </tr>
+                <tr>
+                  <td class="font-mono text-sm">#RQ-98262</td>
+                  <td><strong>Constancia de Notas</strong></td>
+                  <td>01/06/2026</td>
+                  <td><span class="badge badge-success">Completado</span></td>
+                  <td><button type="button" class="btn btn-outline btn-sm" onclick="showToast('Constancia lista para retiro en DACE','success')">Descargar</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Audit table + Map row -->
+        <div class="audit-map-row">
+          <div class="card">
+            <div class="card-header">
+              <span class="card-header-title">Auditoría de sesión reciente</span>
+              <a href="#" class="text-sm text-blue">Ver recorrido completo →</a>
+            </div>
+            <div class="table-wrap" style="border:none;border-radius:0;">
+              <table class="table" id="audit-table">
+                <thead><tr><th>DISPOSITIVO</th><th>DIRECCIÓN IP</th><th>DIRECCIÓN</th><th>TIEMPO</th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><div class="device-cell"><span class="device-name">MacBook Pro 16" / macOS 14.2</span><span class="device-os">Safari</span></div></td>
+                    <td class="font-mono text-sm">190.202.14.82</td><td>Caracas, VE</td><td><span class="badge badge-success">Hace 2 minutos</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="device-cell"><span class="device-name">iPhone 17 Pro / iOS 17.1</span><span class="device-os">UCAB App</span></div></td>
+                    <td class="font-mono text-sm">190.202.14.82</td><td>Caracas, VE</td><td><span class="badge badge-info">Hace 4 horas</span></td>
+                  </tr>
+                  <tr>
+                    <td><div class="device-cell"><span class="device-name">Laptop Personal / Windows 11</span><span class="device-os">Chrome</span></div></td>
+                    <td class="font-mono text-sm">18.45.1.201</td><td>Montalbán, Caracas</td><td><span class="badge badge-gray">Ayer</span></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <div class="map-widget">
+            <div class="map-placeholder" style="min-height:180px;">🗺</div>
+            <div class="map-label">📍 UBICACIÓN ACTUAL — Montalbán, Caracas (Casa)</div>
+          </div>
+        </div>
+
+      </div><!-- /view-estudiante -->
+
+      <!-- ==== PROFESOR VIEW ==== -->
+      <div id="view-profesor" style="display:none;">
+
+        <div class="page-header">
+          <h1 class="page-header-title">Panel Docente — Semestre 2026-II</h1>
+          <p class="page-header-sub">Bienvenido, Carlos. Gestione sus asignaturas y actividad académica.</p>
+        </div>
+
+        <!-- Profesor KPI row -->
+        <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:var(--space-5);">
+
+          <div class="kpi-card">
+            <div class="kpi-label">ESCALAFÓN</div>
+            <div class="kpi-value" style="font-size:1.6rem;">Asistente</div>
+            <div class="kpi-sub">Antigüedad: 6 años</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">CARGA HORARIA</div>
+            <div class="kpi-value" style="font-size:1.6rem;">18 hrs</div>
+            <div class="kpi-sub">3 asignaturas activas / semana</div>
+          </div>
+
+          <div class="kpi-card" style="border-left:4px solid var(--color-blue);">
+            <div class="kpi-label">INVESTIGADOR ACTIVO</div>
+            <div class="kpi-value" style="font-size:1.2rem;font-family:var(--font-mono);">INV-2019-047</div>
+            <div style="margin-top:var(--space-2);"><span class="badge badge-navy">Decanato Investigación</span></div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">ESTADO DE SEGURIDAD <span>🛡</span></div>
+            <div class="security-row"><span class="dot dot-success"></span> 📱 Protegido por MFA</div>
+            <div class="security-row text-sm text-secondary">Último cambio: Hace 2 días</div>
+            <div style="margin-top:var(--space-3);">
+              <button class="btn btn-secondary btn-sm" onclick="openModal('mfa-modal')">Gestionar</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Mis cursos + schedule -->
+        <div style="display:grid;grid-template-columns:1fr 280px;gap:var(--space-4);align-items:start;">
+
+          <!-- Courses table -->
+          <div class="card">
+            <div class="card-header">
+              <span class="card-header-title">Mis Asignaturas — 2026-II</span>
+            </div>
+            <div class="table-wrap" style="border:none;border-radius:0;">
+              <table class="table" id="courses-table">
+                <thead><tr><th>ASIGNATURA</th><th>SECCIÓN</th><th>ESTUDIANTES</th><th>PROM. GRUPO</th><th>PRÓXIMA CLASE</th><th></th></tr></thead>
+                <tbody>
+                  <tr>
+                    <td><strong>Bases de Datos I</strong></td><td>Sección 1</td><td>28</td><td><span class="badge badge-warning">14.20</span></td><td>Lunes 08:00 AM</td>
+                    <td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('Bases de Datos I, Sección 1')">Ver estudiantes →</button></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Bases de Datos II</strong></td><td>Sección 2</td><td>22</td><td><span class="badge badge-warning">13.85</span></td><td>Miércoles 10:00 AM</td>
+                    <td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('Bases de Datos II, Sección 2')">Ver estudiantes →</button></td>
+                  </tr>
+                  <tr>
+                    <td><strong>Sistemas de Información</strong></td><td>Sección 1</td><td>31</td><td><span class="badge badge-success">15.40</span></td><td>Viernes 08:00 AM</td>
+                    <td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('Sistemas de Información, Sección 1')">Ver estudiantes →</button></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Schedule widget -->
+          <div class="card">
+            <div class="card-header"><span class="card-header-title">Próximas Clases</span></div>
+            <div class="card-body" style="padding:var(--space-4);">
+              <div style="display:flex;flex-direction:column;gap:var(--space-3);">
+                <div style="display:flex;gap:var(--space-3);align-items:center;">
+                  <div style="background:var(--color-blue-light);color:var(--color-blue);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);font-size:.75rem;font-weight:700;min-width:80px;text-align:center;">LUN 08:00</div>
+                  <div><div style="font-size:.875rem;font-weight:700;">BdD I</div><div style="font-size:.75rem;color:var(--color-text-muted);">Aula 305</div></div>
+                </div>
+                <div style="display:flex;gap:var(--space-3);align-items:center;">
+                  <div style="background:rgba(20,184,166,.12);color:#0f766e;border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);font-size:.75rem;font-weight:700;min-width:80px;text-align:center;">MAR 14:00</div>
+                  <div><div style="font-size:.875rem;font-weight:700;">Investigación</div><div style="font-size:.75rem;color:var(--color-text-muted);">Decanato</div></div>
+                </div>
+                <div style="display:flex;gap:var(--space-3);align-items:center;">
+                  <div style="background:var(--color-blue-light);color:var(--color-blue);border-radius:var(--radius-sm);padding:var(--space-2) var(--space-3);font-size:.75rem;font-weight:700;min-width:80px;text-align:center;">MIÉ 10:00</div>
+                  <div><div style="font-size:.875rem;font-weight:700;">BdD II</div><div style="font-size:.75rem;color:var(--color-text-muted);">Lab 2</div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div><!-- /view-profesor -->
+
+    </main>
+  </div>
+</div>
+
+<!-- Section: MFA Modal -->
+<div class="modal-overlay" id="mfa-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">🛡 Seguridad de la Cuenta</h3>
+      <button class="modal-close" onclick="closeModal('mfa-modal')">×</button>
+    </div>
+    <div class="modal-body">
+
+      <div class="flex items-center gap-3 mb-4">
+        <span class="dot dot-success" style="width:12px;height:12px;"></span>
+        <strong>Verificación en dos pasos activada</strong>
+      </div>
+      <div class="text-sm text-secondary mb-4">Último cambio de contraseña: Hace 2 días</div>
+
+      <div class="section-title mb-3">Dispositivos registrados</div>
+      <div style="display:flex;flex-direction:column;gap:var(--space-2);margin-bottom:var(--space-5);">
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);">
+          <div><div style="font-weight:600;font-size:.875rem;">MacBook Pro 16" / Safari</div><div style="font-size:.75rem;color:var(--color-text-muted);">190.202.14.82 · Caracas · Hace 2 min</div></div>
+          <button class="btn btn-sm" style="color:var(--color-danger);border:none;" onclick="showToast('Acceso revocado para MacBook Pro', 'success')">Revocar</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);">
+          <div><div style="font-weight:600;font-size:.875rem;">iPhone 17 Pro / UCAB App</div><div style="font-size:.75rem;color:var(--color-text-muted);">190.202.14.82 · Hace 4 horas</div></div>
+          <button class="btn btn-sm" style="color:var(--color-danger);border:none;" onclick="showToast('Acceso revocado para iPhone', 'success')">Revocar</button>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:var(--space-3);border:1px solid var(--color-border);border-radius:var(--radius-sm);">
+          <div><div style="font-weight:600;font-size:.875rem;">Laptop Personal / Chrome</div><div style="font-size:.75rem;color:var(--color-text-muted);">18.45.1.201 · Ayer</div></div>
+          <button class="btn btn-sm" style="color:var(--color-danger);border:none;" onclick="showToast('Acceso revocado para Laptop', 'success')">Revocar</button>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-2 mb-4">
+        <span class="dot dot-success"></span>
+        <span class="text-sm">0 intentos fallidos en los últimos 7 días</span>
+      </div>
+
+      <div id="mfa-pwd-form" style="display:none;">
+        <div class="divider"></div>
+        <div style="display:flex;flex-direction:column;gap:var(--space-3);margin-top:var(--space-4);">
+          <div class="form-group"><label class="form-label">Contraseña actual</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          <div class="form-group"><label class="form-label">Nueva contraseña</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          <div class="form-group"><label class="form-label">Confirmar contraseña</label><input class="form-input" type="password" placeholder="••••••••"></div>
+          <button class="btn btn-primary" onclick="showToast('Contraseña actualizada exitosamente','success');document.getElementById('mfa-pwd-form').style.display='none';">Guardar cambios</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="document.getElementById('mfa-pwd-form').style.display=document.getElementById('mfa-pwd-form').style.display==='none'?'':'none'">Cambiar contraseña</button>
+      <button class="btn btn-primary" onclick="closeModal('mfa-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Section: Students Modal (Profesor mode) -->
+<div class="modal-overlay" id="students-modal">
+  <div class="modal" style="width:min(720px,95vw);">
+    <div class="modal-header">
+      <h3 class="modal-title" id="students-modal-title">Estudiantes</h3>
+      <button class="modal-close" onclick="closeModal('students-modal')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="info-box mb-4">ℹ Solo puedes ver el rendimiento de estudiantes inscritos en tus asignaturas.</div>
+      <div class="table-wrap">
+        <table class="table" id="students-table">
+          <thead><tr><th>CÉDULA</th><th>NOMBRE</th><th>UC APROBADAS</th><th>PROMEDIO</th><th>ESTATUS BECA</th></tr></thead>
+          <tbody>
+            <tr><td class="font-mono">V-25.123.456</td><td>García, Laura</td><td>120</td><td>16.80</td><td><span class="badge badge-success">Activa</span></td></tr>
+            <tr><td class="font-mono">V-28.987.654</td><td>Martínez, Juan</td><td>90</td><td>13.20</td><td><span class="badge badge-gray">No aplica</span></td></tr>
+            <tr><td class="font-mono">V-22.334.556</td><td>López, Sofía</td><td>105</td><td>15.60</td><td><span class="badge badge-warning">Revisión</span></td></tr>
+            <tr><td class="font-mono">V-26.445.789</td><td>Torres, Miguel</td><td>78</td><td>11.40</td><td><span class="badge badge-danger">Suspendida</span></td></tr>
+            <tr><td class="font-mono">V-29.012.345</td><td>Ramírez, Ana</td><td>142</td><td>18.20</td><td><span class="badge badge-success">Excelencia</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-primary" onclick="closeModal('students-modal')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/tables.js"></script>
+<script src="../js/pages/dashboard.js"></script>
+</body>
+</html>

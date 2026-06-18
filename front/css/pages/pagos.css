@@ -1,0 +1,52 @@
+/* =============================================================
+   pagos.css — Payments page
+   ============================================================= */
+
+/* Section: Top bar */
+.pagos-topbar {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-bottom: var(--space-5);
+}
+
+.pagos-topbar .search-bar { width: 320px; }
+
+/* Section: Alert card */
+.vencimiento-card {
+  background-color: var(--color-navy);
+  border-radius: var(--radius-md);
+  padding: var(--space-5) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  gap: var(--space-4);
+}
+
+.vencimiento-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,0.5);
+  margin-bottom: var(--space-1);
+}
+
+.vencimiento-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: white;
+}
+
+.vencimiento-date {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-warning);
+  white-space: nowrap;
+}
+
+/* Section: Monto cell */
+.monto-cell { font-family: var(--font-mono); font-size: 0.875rem; }
+.monto-bs   { font-size: 0.75rem; color: var(--color-text-muted); display: block; }
