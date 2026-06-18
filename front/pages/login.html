@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,119 +9,105 @@
   <link rel="stylesheet" href="../css/components.css">
   <link rel="stylesheet" href="../css/pages/login.css">
 </head>
+
 <body>
 
-<div class="login-shell">
+  <div class="login-shell">
 
-  <!-- Section: Left panel -->
-  <aside class="login-left">
-    <div class="login-logo">
-      <div class="login-logo-icon">🎓</div>
-      <span class="login-logo-text">UCAB Services</span>
-    </div>
-
-    <h1 class="login-left-heading">Portal Académico</h1>
-    <p class="login-left-sub">
-      Acceda a su espacio de trabajo institucional, expedientes académicos y
-      servicios financieros a través de nuestra plataforma segura.
-    </p>
-
-    <div class="login-left-footer">
-      <div class="login-status-row">
-        <span class="login-status-dot"></span>
-        ESTADO ACTIVO
+    <!-- Section: Left panel -->
+    <aside class="login-left">
+      <div class="login-logo">
+        <div class="login-logo-icon">🎓</div>
+        <span class="login-logo-text">UCAB Services</span>
       </div>
-      <div class="login-status-row">
-        🔒 Sesión cifrada
+
+      <h1 class="login-left-heading">Portal Académico</h1>
+      <p class="login-left-sub">
+        Acceda a su espacio de trabajo institucional, expedientes académicos y
+        servicios financieros a través de nuestra plataforma segura.
+      </p>
+
+      <div class="login-left-footer">
+        <div class="login-status-row">
+          <span class="login-status-dot"></span>
+          ESTADO ACTIVO
+        </div>
+        <div class="login-status-row">
+          🔒 Sesión cifrada
+        </div>
       </div>
-    </div>
-  </aside>
+    </aside>
 
-  <!-- Section: Right panel -->
-  <main class="login-right">
+    <!-- Section: Right panel -->
+    <main class="login-right">
 
-    <div class="login-right-top">
-      <div class="sede-tabs">
-        <button class="sede-tab active">Montalbán</button>
-        <button class="sede-tab">Guayana</button>
-      </div>
-    </div>
-
-    <h2 class="login-form-heading">Acceso seguro</h2>
-    <p class="login-form-sub">Ingrese sus credenciales institucionales para continuar.</p>
-
-    <div class="form-grid-2">
-      <!-- Cédula -->
-      <div class="form-group">
-        <label class="form-label" for="cedula">Cédula</label>
-        <div class="input-with-icon relative">
-          <span class="input-icon">🪪</span>
-          <input class="form-input" type="text" id="cedula" placeholder="V-12.345.678">
+      <div class="login-right-top">
+        <div class="sede-tabs">
+          <button class="sede-tab active">Montalban</button>
+          <button class="sede-tab">Guayana</button>
         </div>
       </div>
 
-      <!-- Correo -->
-      <div class="form-group">
-        <label class="form-label" for="email">Correo Institucional</label>
-        <div class="input-with-icon relative">
-          <span class="input-icon">@</span>
-          <input class="form-input" type="email" id="email" placeholder="user@ucab.edu.ve">
+      <h2 class="login-form-heading">Acceso seguro</h2>
+      <p class="login-form-sub">Ingrese sus credenciales institucionales para continuar.</p>
+
+      <div class="form-grid-2">
+        <!-- Cédula -->
+        <div class="form-group">
+          <label class="form-label" for="cedula">Cédula</label>
+          <div class="input-with-icon relative">
+            <span class="input-icon">🪪</span>
+            <input class="form-input" type="text" id="cedula" placeholder="V-12.345.678">
+          </div>
+        </div>
+
+        <!-- Correo -->
+        <div class="form-group">
+          <label class="form-label" for="email">Correo Institucional</label>
+          <div class="input-with-icon relative">
+            <span class="input-icon">@</span>
+            <input class="form-input" type="email" id="email" placeholder="user@ucab.edu.ve">
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- Contraseña -->
-    <div class="password-group">
-      <label class="form-label" for="password">Contraseña</label>
-      <div class="input-with-icon relative">
-        <span class="input-icon">🔑</span>
-        <input class="form-input" type="password" id="password" placeholder="••••••••" style="padding-right:44px;">
-        <button class="input-suffix-btn" id="toggle-password" type="button" tabindex="-1">👁</button>
+      <!-- Contraseña -->
+      <div class="password-group">
+        <label class="form-label" for="password">Contraseña</label>
+        <div class="input-with-icon relative">
+          <span class="input-icon">🔑</span>
+          <input class="form-input" type="password" id="password" placeholder="••••••••" style="padding-right:44px;">
+          <button class="input-suffix-btn" id="toggle-password" type="button" tabindex="-1">👁</button>
+        </div>
       </div>
-    </div>
 
-    <!-- MFA Box -->
-    <div class="mfa-box">
-      <div class="mfa-box-title">🔑 Paso 2: Autenticación en dos pasos</div>
-      <div class="mfa-box-sub">Ingrese el código de 6 dígitos enviado a su dispositivo registrado.</div>
-      <div class="otp-inputs">
-        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 1">
-        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 2">
-        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 3">
-        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 4">
-        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 5">
-        <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 6">
+      <!-- MFA Box -->
+      <div class="mfa-box">
+        <div class="mfa-box-title">🔑 Paso 2: Autenticación en dos pasos</div>
+        <div class="mfa-box-sub">Ingrese el código de 6 dígitos enviado a su dispositivo registrado.</div>
+        <div class="otp-inputs">
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 1">
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 2">
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 3">
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 4">
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 5">
+          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 6">
+        </div>
       </div>
-    </div>
 
-    <!-- Account status row -->
-    <div class="account-status-row">
-      <div class="account-status-item">
-        <span class="dot dot-success"></span>
-        <span>ACTIVA</span>
+      <!-- Submit button -->
+      <div class="login-btn-wrapper">
+        <button class="btn btn-primary btn-lg btn-full" id="login-btn" type="button">
+          Autorizar sesión →
+        </button>
       </div>
-      <div class="account-status-item">
-        <span class="dot dot-warning"></span>
-        <span>SUSPENDIDA</span>
-      </div>
-      <div class="account-status-item">
-        <span class="dot dot-danger"></span>
-        <span>BLOQUEADA</span>
-      </div>
-    </div>
 
-    <!-- Submit button -->
-    <div class="login-btn-wrapper">
-      <button class="btn btn-primary btn-lg btn-full" id="login-btn" type="button">
-        Autorizar sesión →
-      </button>
-    </div>
+      <p class="login-footer-text">© 2026 UCAB — UNIVERSIDAD CATÓLICA ANDRÉS BELLO</p>
 
-    <p class="login-footer-text">© 2026 UCAB — UNIVERSIDAD CATÓLICA ANDRÉS BELLO</p>
+    </main>
+  </div>
 
-  </main>
-</div>
-
-<script src="../js/pages/login.js"></script>
+  <script src="../js/pages/login.js"></script>
 </body>
+
 </html>
