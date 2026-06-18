@@ -7,6 +7,15 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
+  document.getElementById('toggle-password').addEventListener('click', function () {
+    const passwordInput = document.getElementById('password');
+    const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+
+    passwordInput.setAttribute('type', type);
+
+    this.innerText = type === 'password' ? '👁' : '🙈';
+  });
+
   const otpInputs = document.querySelectorAll('.otp-input');
   otpInputs.forEach((input, index) => {
     input.addEventListener('input', (e) => {
