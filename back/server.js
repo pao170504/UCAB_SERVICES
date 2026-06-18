@@ -1,24 +1,32 @@
+require('dotenv').config();
 const express = require('express');
+const cors = require('cors');
 const { Pool } = require('pg');
 
 const app = express();
-const PORT = 3000;
+
+app.use(cors());
+app.use(express.json());
 
 const pool = new Pool({
-  user: 'postgres',
-  host: 'localhost',
-  database: 'nombre_de_tu_bd',
-  password: 'tu_contraseña',
-  port: 5432,
+  user: process.env.DB_USER,
+  host: process.env.DB_HOST,
+  database: process.env.DB_NAME,
+  password: process.env.DB_PASSWORD,
+  port: process.env.DB_PORT,
 });
 
-app.use(express.json());
-app.use(express.static('../front'));
-
-app.get('/api/saludo', (req, res) => {
-  res.json({ mensaje: 'Hola desde el backend' });
+pool.connect((err) => {
+  if (err) console.error('Error al conectar a la BD:', err.stack);
+  else console.log('Conexión a la base de datos exitosa.');
 });
 
+// Endpoints
+app.get('/api/status', (req, res) => {
+  res.json({ message: 'Servidor UCAB Services funcionando correctamente' });
+});
+
+const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);
 });
