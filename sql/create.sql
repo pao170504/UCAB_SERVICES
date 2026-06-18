@@ -11,14 +11,15 @@ CREATE TABLE Persona (
 CREATE TABLE Miembro_Comunidad (
   Cedula VARCHAR(20) PRIMARY KEY,
   Correo_Institucional VARCHAR(100) NOT NULL CHECK (Correo_Institucional LIKE '%@ucab%'),
-  Sede VARCHAR(20) NOT NULL CHECK (Sede IN ('Montalban', 'Guayana')),
+  ID_Sede INT NOT NULL,
   Contrasena VARCHAR(100) NOT NULL,
   Estado_de_Cuenta VARCHAR(20) NOT NULL CHECK (Estado_de_Cuenta IN ('Activa', 'Suspendida', 'Bloqueada')),
   Fecha_Cambio_Clave DATE NOT NULL,
   Ciudad VARCHAR(50),
   Estado VARCHAR(50),
   Calle VARCHAR(100),
-  FOREIGN KEY (Cedula) REFERENCES Persona(Cedula) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (Cedula) REFERENCES Persona(Cedula) ON DELETE CASCADE ON UPDATE CASCADE,
+  FOREIGN KEY (ID_Sede) REFERENCES Sede(ID_Sede) ON DELETE RESTRICT ON UPDATE CASCADE
 );
 
 CREATE TABLE Telefono (
