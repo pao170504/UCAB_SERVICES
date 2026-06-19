@@ -4,7 +4,7 @@ const pool = require('../config/db');
 const crypto = require('crypto');
 
 router.post('/login', async (req, res) => {
-  const { cedula, email, password, codigoMFA, lat, lon, sede } = req.body;
+  const { cedula, email, password, codigoMFA, lat, lon, sede, deviceName } = req.body;
 
   try {
     /* 1. Find user */
@@ -132,20 +132,22 @@ router.post('/login', async (req, res) => {
     /* 8. Insert session */
     const sessionID = crypto.randomUUID();
     await pool.query(
-      `INSERT INTO Sesion (cedula, uuid, fecha_hora_acceso, direccion_ip, intentos_fallidos, latitud, longitud)
+      `INSERT INTO Sesion
+         (cedula, uuid, fecha_hora_acceso, direccion_ip, intentos_fallidos, latitud, longitud)
        VALUES ($1, $2, CURRENT_TIMESTAMP, $3, 0, $4, $5)`,
       [cedula, sessionID, req.ip, lat || null, lon || null]
     );
 
     /* 9. Respond */
-    const nombre = [user.primer_nombre, user.primer_apellido].filter(Boolean).join(' ');
-    res.json({
+    const nombre = `${user.primer_nombre} ${user.primer_apellido} ${user.segundo_apellido || ''}`.trim();
+    return res.json({
       sessionID,
       usuario: {
-        cedula: user.cedula,
+        cedula:     user.cedula,
         nombre,
-        correo: user.correo_institucional,
-        sede: user.nombre_sede,
+        correo:     user.correo_institucional,
+        sede:       user.nombre_sede,
+        deviceName: deviceName || 'Dispositivo desconocido',
         roles
       }
     });
