@@ -27,10 +27,6 @@
       <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
     </div>
     <div class="navbar-right">
-      <div class="role-switcher">
-        <button class="role-switcher-btn active">Estudiante</button>
-        <button class="role-switcher-btn">Profesor</button>
-      </div>
       <div class="navbar-avatar">MP</div>
     </div>
   </nav>
@@ -40,27 +36,28 @@
     <!-- Section: Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-profile">
-        <div class="sidebar-avatar">MP</div>
-        <div class="sidebar-profile-name">María Pérez</div>
-        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-profile-name" id="sidebar-nombre">UCAB Services</div>
+        <div class="sidebar-profile-sub" id="sidebar-subtitulo"></div>
       </div>
       <nav class="sidebar-nav">
-        <a href="dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
-        <a href="servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
-        <a href="pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
-        <a href="infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
-        <a href="estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
-        <a href="carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+        <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
-        <a href="login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+        <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
       </div>
     </aside>
 
     <!-- Section: Main content -->
     <main class="main-content">
+    <div id="dashboard-main-content">
 
       <!-- ==== ESTUDIANTE VIEW ==== -->
       <div id="view-estudiante">
@@ -114,21 +111,21 @@
 
         </div>
 
-        <!-- Preparador card -->
-        <div class="card mb-4" style="border-left:4px solid var(--color-warning);">
-          <div class="card-body" style="display:flex;align-items:center;gap:var(--space-6);flex-wrap:wrap;">
-            <div>
-              <div class="section-title" style="margin-bottom:var(--space-1);">MI ROL COMO PREPARADOR</div>
-              <div style="font-size:.875rem;color:var(--color-text-secondary);">Asignatura: <strong>Sistemas Digitales I</strong></div>
-            </div>
-            <div style="flex:1;min-width:200px;">
-              <div style="display:flex;justify-content:space-between;font-size:.82rem;margin-bottom:var(--space-1);">
-                <span>Horas de ayudantía</span>
-                <strong>48 / 60 hrs</strong>
-              </div>
-              <div class="progress-bar-wrap"><div class="progress-bar-fill warning" style="width:80%"></div></div>
-            </div>
+        <!-- Preparador card (FIX 2A) -->
+        <div class="kpi-card preparador-card" data-role="estudiante" style="margin-bottom:var(--space-5);border-left:4px solid var(--color-warning);">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:var(--space-2);">
+            <span class="kpi-label">ROL ADICIONAL</span>
+            <span class="badge badge-info">Preparador</span>
           </div>
+          <p style="font-size:1rem;font-weight:700;margin:0 0 var(--space-1);">Sistemas Digitales I</p>
+          <p style="font-size:.8rem;color:var(--color-text-secondary);margin:0 0 var(--space-3);">Responsable: Prof. Ana González</p>
+          <div>
+            <div style="display:flex;justify-content:space-between;font-size:.8rem;margin-bottom:var(--space-1);">
+              <span>Horas completadas</span><span><strong>48 / 60 hrs</strong></span>
+            </div>
+            <div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:80%;background:var(--color-warning);"></div></div>
+          </div>
+          <p style="font-size:.78rem;color:var(--color-text-muted);margin:var(--space-2) 0 0;">Próxima sesión: Miércoles 10:00 AM — Lab. Computación 3</p>
         </div>
 
         <!-- Trámites recientes -->
@@ -256,15 +253,15 @@
                 <tbody>
                   <tr>
                     <td><strong>Bases de Datos I</strong></td><td>Sección 1</td><td>28</td><td><span class="badge badge-warning">14.20</span></td><td>Lunes 08:00 AM</td>
-                    <td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('Bases de Datos I, Sección 1')">Ver estudiantes →</button></td>
+                    <td><button type="button" class="btn btn-secondary btn-sm" onclick="openStudentModal('Bases de Datos I, Sección 1')">Ver estudiantes →</button></td>
                   </tr>
                   <tr>
                     <td><strong>Bases de Datos II</strong></td><td>Sección 2</td><td>22</td><td><span class="badge badge-warning">13.85</span></td><td>Miércoles 10:00 AM</td>
-                    <td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('Bases de Datos II, Sección 2')">Ver estudiantes →</button></td>
+                    <td><button type="button" class="btn btn-secondary btn-sm" onclick="openStudentModal('Bases de Datos II, Sección 2')">Ver estudiantes →</button></td>
                   </tr>
                   <tr>
                     <td><strong>Sistemas de Información</strong></td><td>Sección 1</td><td>31</td><td><span class="badge badge-success">15.40</span></td><td>Viernes 08:00 AM</td>
-                    <td><button class="btn btn-secondary btn-sm" onclick="openStudentModal('Sistemas de Información, Sección 1')">Ver estudiantes →</button></td>
+                    <td><button type="button" class="btn btn-secondary btn-sm" onclick="openStudentModal('Sistemas de Información, Sección 1')">Ver estudiantes →</button></td>
                   </tr>
                 </tbody>
               </table>
@@ -295,6 +292,92 @@
         </div>
       </div><!-- /view-profesor -->
 
+      <!-- ==== ADMINISTRATIVO VIEW ==== -->
+      <div id="view-administrativo" style="display:none;">
+
+        <div class="page-header">
+          <h1 class="page-header-title">Panel Administrativo — Dirección Académica</h1>
+          <p class="page-header-sub">Bienvenido, Luis. Gestión de trámites, inscripciones y comunidad UCAB.</p>
+        </div>
+
+        <!-- Admin KPI row -->
+        <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:var(--space-5);">
+
+          <div class="kpi-card">
+            <div class="kpi-label">CARGO</div>
+            <div class="kpi-value" style="font-size:1.4rem;">Coordinador Académico</div>
+            <div class="kpi-sub">Unidad: Dirección Académica</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">CARGA HORARIA</div>
+            <div class="kpi-value" style="font-size:1.6rem;">40 <span class="stat-unit">hrs/sem</span></div>
+            <div class="kpi-sub">Tipo: Tiempo completo</div>
+          </div>
+
+          <div class="kpi-card" style="border-left:4px solid var(--color-warning);">
+            <div class="kpi-label">TRÁMITES HOY</div>
+            <div class="kpi-value" style="font-size:2rem;">12</div>
+            <div><span class="badge badge-warning">3 con alerta SLA</span></div>
+            <div class="kpi-sub" style="margin-top:var(--space-2);">Activos en este momento</div>
+          </div>
+
+          <div class="kpi-card">
+            <div class="kpi-label">ESTADO DE SEGURIDAD 🛡</div>
+            <div class="security-row"><span class="dot dot-success"></span> 📱 MFA Activo</div>
+            <div class="security-row text-sm text-secondary">Último cambio: Hace 2 días</div>
+            <div style="margin-top:var(--space-3);">
+              <button type="button" class="btn btn-secondary btn-sm" onclick="openModal('mfa-modal')">Gestionar</button>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Trámites con alerta SLA -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">Trámites con alerta SLA</span>
+            <span class="badge badge-warning">3 pendientes</span>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr><th>N° SOLICITUD</th><th>TIPO</th><th>SOLICITANTE</th><th>RECIBIDO</th><th>SLA</th><th>ESTADO</th><th></th></tr></thead>
+              <tbody>
+                <tr>
+                  <td class="font-mono text-sm">#RQ-98255</td>
+                  <td>Solicitud de Título</td>
+                  <td>García, Luis · V-27.100.001</td>
+                  <td>10/06/2026</td>
+                  <td><span style="color:var(--color-danger);font-weight:700;">Vence hoy</span></td>
+                  <td><span class="badge badge-warning">En revisión</span></td>
+                  <td><button type="button" class="btn btn-primary btn-sm" onclick="showToast('Trámite #RQ-98255 aprobado','success')">Aprobar</button></td>
+                </tr>
+                <tr>
+                  <td class="font-mono text-sm">#RQ-98248</td>
+                  <td>Cambio de Carrera</td>
+                  <td>Rodríguez, Ana · V-29.200.002</td>
+                  <td>08/06/2026</td>
+                  <td><span style="color:var(--color-warning);font-weight:700;">1 día restante</span></td>
+                  <td><span class="badge badge-warning">Pendiente</span></td>
+                  <td><button type="button" class="btn btn-outline btn-sm" onclick="showToast('Trámite enviado a revisión superior','info')">Escalar</button></td>
+                </tr>
+                <tr>
+                  <td class="font-mono text-sm">#RQ-98241</td>
+                  <td>Retiro de Materia</td>
+                  <td>Pérez, Marco · V-30.300.003</td>
+                  <td>05/06/2026</td>
+                  <td><span style="color:var(--color-warning);font-weight:700;">2 días restantes</span></td>
+                  <td><span class="badge badge-info">En proceso</span></td>
+                  <td><button type="button" class="btn btn-outline btn-sm" onclick="showToast('Ver detalles de #RQ-98241','info')">Ver detalle</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div><!-- /view-administrativo -->
+
+    </div><!-- /dashboard-main-content -->
     </main>
   </div>
 </div>
@@ -353,33 +436,34 @@
 </div>
 
 <!-- Section: Students Modal (Profesor mode) -->
-<div class="modal-overlay" id="students-modal">
+<div class="modal-overlay" id="modal-estudiantes">
   <div class="modal" style="width:min(720px,95vw);">
     <div class="modal-header">
-      <h3 class="modal-title" id="students-modal-title">Estudiantes</h3>
-      <button class="modal-close" onclick="closeModal('students-modal')">×</button>
+      <h3 class="modal-title" id="modal-estudiantes-title">Estudiantes</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-estudiantes')">×</button>
     </div>
     <div class="modal-body">
       <div class="info-box mb-4">ℹ Solo puedes ver el rendimiento de estudiantes inscritos en tus asignaturas.</div>
       <div class="table-wrap">
         <table class="table" id="students-table">
-          <thead><tr><th>CÉDULA</th><th>NOMBRE</th><th>UC APROBADAS</th><th>PROMEDIO</th><th>ESTATUS BECA</th></tr></thead>
+          <thead><tr><th>CÉDULA</th><th>NOMBRE</th><th>UC APROBADAS</th><th>PROMEDIO</th><th>BECA</th></tr></thead>
           <tbody>
-            <tr><td class="font-mono">V-25.123.456</td><td>García, Laura</td><td>120</td><td>16.80</td><td><span class="badge badge-success">Activa</span></td></tr>
-            <tr><td class="font-mono">V-28.987.654</td><td>Martínez, Juan</td><td>90</td><td>13.20</td><td><span class="badge badge-gray">No aplica</span></td></tr>
-            <tr><td class="font-mono">V-22.334.556</td><td>López, Sofía</td><td>105</td><td>15.60</td><td><span class="badge badge-warning">Revisión</span></td></tr>
-            <tr><td class="font-mono">V-26.445.789</td><td>Torres, Miguel</td><td>78</td><td>11.40</td><td><span class="badge badge-danger">Suspendida</span></td></tr>
-            <tr><td class="font-mono">V-29.012.345</td><td>Ramírez, Ana</td><td>142</td><td>18.20</td><td><span class="badge badge-success">Excelencia</span></td></tr>
+            <tr><td class="font-mono">V-28.100.001</td><td>González, Pedro</td><td>120</td><td>16.20</td><td><span class="badge badge-success">Excelencia</span></td></tr>
+            <tr><td class="font-mono">V-29.200.002</td><td>López, Carla</td><td>98</td><td>14.80</td><td>—</td></tr>
+            <tr><td class="font-mono">V-28.500.003</td><td>Romero, Andrés</td><td>145</td><td>17.30</td><td><span class="badge badge-info">Ayuda Ec.</span></td></tr>
+            <tr><td class="font-mono">V-30.100.004</td><td>Vásquez, Daniela</td><td>110</td><td>13.40</td><td>—</td></tr>
+            <tr><td class="font-mono">V-29.800.005</td><td>Soto, Miguel</td><td>130</td><td>15.90</td><td><span class="badge badge-warning">Comedor</span></td></tr>
           </tbody>
         </table>
       </div>
     </div>
     <div class="modal-footer">
-      <button class="btn btn-primary" onclick="closeModal('students-modal')">Cerrar</button>
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-estudiantes')">Cerrar</button>
     </div>
   </div>
 </div>
 
+<script src="../js/auth-guard.js"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/nav.js"></script>
 <script src="../js/tables.js"></script>

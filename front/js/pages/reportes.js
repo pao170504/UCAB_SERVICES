@@ -22,6 +22,10 @@ window.renderForRole = function (role) {
 document.addEventListener('DOMContentLoaded', function () {
   window.renderForRole(window.currentRole || 'estudiante');
 
+  document.addEventListener('roleChanged', function (e) {
+    window.renderForRole(e.detail.rol);
+  });
+
   /* Tab switching */
   document.querySelectorAll('.tab-item[data-tab]').forEach(function (tab) {
     tab.addEventListener('click', function () {

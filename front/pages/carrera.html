@@ -23,10 +23,6 @@
       <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
     </div>
     <div class="navbar-right">
-      <div class="role-switcher">
-        <button type="button" class="role-switcher-btn active">Estudiante</button>
-        <button type="button" class="role-switcher-btn">Profesor</button>
-      </div>
       <div class="navbar-avatar">MP</div>
     </div>
   </nav>
@@ -34,22 +30,22 @@
   <div class="app-body">
     <aside class="sidebar">
       <div class="sidebar-profile">
-        <div class="sidebar-avatar">MP</div>
-        <div class="sidebar-profile-name">María Pérez</div>
-        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-profile-name" id="sidebar-nombre">UCAB Services</div>
+        <div class="sidebar-profile-sub" id="sidebar-subtitulo"></div>
       </div>
       <nav class="sidebar-nav">
-        <a href="dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
-        <a href="servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
-        <a href="pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
-        <a href="infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
-        <a href="estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
-        <a href="carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+        <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
-        <a href="login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+        <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
       </div>
     </aside>
 
@@ -84,11 +80,11 @@
           </div>
 
           <button type="button" class="btn btn-primary btn-sm" style="width:100%;margin-top:var(--space-4);"
-            onclick="showToast('CV generado y listo para descargar', 'success')">
+            onclick="verPerfilCompleto()">
             📄 Descargar CV
           </button>
           <button type="button" class="btn btn-outline btn-sm" style="width:100%;margin-top:var(--space-2);"
-            onclick="openModal('modal-cv')">
+            onclick="verPerfilCompleto()">
             👁 Ver perfil completo
           </button>
         </aside>
@@ -104,86 +100,26 @@
   </div>
 </div>
 
-<!-- Application modal -->
-<div class="modal-overlay" id="application-modal">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title" id="app-modal-title">Postular a vacante</h3>
-      <button type="button" class="modal-close" onclick="closeModal('application-modal')">×</button>
-    </div>
-    <div class="form-group">
-      <label class="form-label">Nombre completo</label>
-      <input type="text" class="form-input" id="app-name" value="María Pérez">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Correo electrónico</label>
-      <input type="email" class="form-input" id="app-email" value="maria.perez@ucab.edu.ve">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Teléfono</label>
-      <input type="tel" class="form-input" placeholder="+58 412 000 0000">
-    </div>
-    <div class="form-group">
-      <label class="form-label">Carta de presentación <small style="color:var(--color-text-muted);">(opcional)</small></label>
-      <textarea class="form-input" rows="4" style="resize:vertical;" placeholder="Cuéntanos por qué eres el candidato ideal..."></textarea>
-    </div>
-    <div class="form-group">
-      <label class="form-label">CV / Portafolio</label>
-      <div class="upload-area">
-        <span>📎 Adjuntar archivo (PDF, DOCX, max 5MB)</span>
-        <input type="file" accept=".pdf,.docx" style="display:none;" id="cv-file">
-        <button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById('cv-file').click()">Seleccionar archivo</button>
-      </div>
-    </div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeModal('application-modal')">Cancelar</button>
-      <button type="button" class="btn btn-primary" onclick="submitApplication()">Enviar postulación →</button>
-    </div>
-  </div>
-</div>
-
-<!-- New vacancy modal (Administrativo) -->
-<div class="modal-overlay" id="modal-nueva-vacante">
-  <div class="modal">
-    <div class="modal-header">
-      <h3 class="modal-title">Nueva Vacante Aliado</h3>
-      <button type="button" class="modal-close" onclick="closeModal('modal-nueva-vacante')">×</button>
-    </div>
-    <div class="form-group"><label class="form-label">Empresa aliada</label><input type="text" class="form-input" placeholder="Ej. TechNova Solutions"></div>
-    <div class="form-group"><label class="form-label">Cargo</label><input type="text" class="form-input" placeholder="Ej. Junior Developer"></div>
-    <div class="form-row">
-      <div class="form-group"><label class="form-label">Sede</label><select class="form-select"><option>Montalbán</option><option>Guayana</option><option>Remoto</option></select></div>
-      <div class="form-group"><label class="form-label">Fecha límite</label><input type="date" class="form-input"></div>
-    </div>
-    <div class="form-group"><label class="form-label">Rango salarial</label><input type="text" class="form-input" placeholder="Ej. $800 – $1,200 mensual"></div>
-    <div class="form-group"><label class="form-label">Perfil buscado</label><input type="text" class="form-input" placeholder="Ej. Ing. Informática, 0-2 años exp."></div>
-    <div class="form-group"><label class="form-label">Responsabilidades</label><textarea class="form-input" rows="3" style="resize:vertical;" placeholder="Describir las responsabilidades principales..."></textarea></div>
-    <div class="modal-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-nueva-vacante')">Cancelar</button>
-      <button type="button" class="btn btn-primary" onclick="showToast('Vacante publicada exitosamente','success');closeModal('modal-nueva-vacante')">Publicar vacante</button>
-    </div>
-  </div>
-</div>
-
 <!-- Full CV modal -->
 <div class="modal-overlay" id="modal-cv">
   <div class="modal" style="width:min(700px,95vw);">
     <div class="modal-header">
-      <h3 class="modal-title">Perfil Académico — María Pérez</h3>
+      <h3 class="modal-title" id="modal-cv-titulo">Perfil Académico — María Pérez</h3>
       <button type="button" class="modal-close" onclick="closeModal('modal-cv')">×</button>
     </div>
     <section class="cv-section">
       <h4 class="cv-section-title">📋 Información Personal</h4>
       <div class="cv-grid-2">
-        <div><label>Cédula</label><p>V-30.411.315</p></div>
-        <div><label>Correo</label><p>maria.perez@ucab.edu.ve</p></div>
-        <div><label>Teléfono</label><p>0414-987-6543</p></div>
-        <div><label>Semestre</label><p>8vo Semestre</p></div>
+        <div><label>Cédula</label><p id="cv-modal-cedula">V-30.411.315</p></div>
+        <div><label>Correo</label><p id="cv-modal-correo">maria.perez@ucab.edu.ve</p></div>
+        <div><label>Teléfono</label><p id="cv-modal-telefono">0414-987-6543</p></div>
+        <div id="cv-modal-semestre-row"><label>Semestre</label><p id="cv-modal-semestre">8vo Semestre</p></div>
+        <div><label>Dirección</label><p id="cv-modal-direccion">—</p></div>
       </div>
     </section>
     <section class="cv-section">
       <h4 class="cv-section-title">🎓 Trayectoria Académica</h4>
-      <div class="cv-timeline">
+      <div class="cv-timeline" id="cv-modal-trayectoria">
         <div class="cv-timeline-item">
           <span class="cv-timeline-date">Mar 2022 — Actual</span>
           <strong>Ingeniería en Informática</strong>
@@ -192,38 +128,60 @@
         </div>
       </div>
     </section>
-    <section class="cv-section">
-      <h4 class="cv-section-title">🔧 Habilidades</h4>
-      <div class="skills-tags">
-        <span class="skill-tag">Python</span><span class="skill-tag">Oracle PL/SQL</span>
-        <span class="skill-tag">React</span><span class="skill-tag">Bases de Datos</span>
-        <span class="skill-tag">Java</span><span class="skill-tag">C++</span>
-        <span class="skill-tag">Git</span><span class="skill-tag">Análisis de datos</span>
-      </div>
-    </section>
-    <section class="cv-section">
-      <h4 class="cv-section-title">💼 Experiencia</h4>
-      <div class="cv-timeline">
-        <div class="cv-timeline-item">
-          <span class="cv-timeline-date">Ene 2024 — Actual</span>
-          <strong>Desarrolladora Full-Stack (Pasantía)</strong>
-          <span style="font-size:.85rem;color:var(--color-text-secondary);">Mercantil Seguros — Plataforma Sirweb</span>
-          <p style="font-size:.82rem;color:var(--color-text-secondary);margin-top:4px;">Desarrollo de módulos en Oracle PL/SQL y React para gestión de pólizas.</p>
-        </div>
-        <div class="cv-timeline-item">
-          <span class="cv-timeline-date">Sep 2023 — Dic 2023</span>
-          <strong>Preparadora — Sistemas Digitales I</strong>
-          <span style="font-size:.85rem;color:var(--color-text-secondary);">UCAB Montalbán</span>
-        </div>
-      </div>
-    </section>
     <div class="modal-footer">
-      <button type="button" class="btn btn-primary" onclick="showToast('CV descargado exitosamente','success');closeModal('modal-cv')">📄 Descargar PDF</button>
+      <button type="button" class="btn btn-primary" onclick="descargarCV()">📄 Descargar PDF</button>
       <button type="button" class="btn btn-secondary" onclick="closeModal('modal-cv')">Cerrar</button>
     </div>
   </div>
 </div>
 
+<!-- Vacancy detail modal -->
+<div class="modal-overlay" id="modal-detalle-vacante">
+  <div class="modal" style="width:min(680px,95vw);">
+    <div class="modal-header">
+      <div>
+        <h3 id="modal-det-cargo" style="margin:0;"></h3>
+        <span id="modal-det-empresa"
+          style="color:var(--color-blue);font-weight:500;font-size:0.95rem;"></span>
+      </div>
+      <button type="button" class="modal-close"
+        onclick="closeModal('modal-detalle-vacante')">×</button>
+    </div>
+    <div style="margin:var(--space-2) 0;">
+      <span id="modal-det-match" class="badge" style="display:none;"></span>
+    </div>
+    <section class="cv-section">
+      <h4 class="cv-section-title">📋 Responsabilidades</h4>
+      <p id="modal-det-responsabilidades"
+        style="color:var(--color-text-secondary);line-height:1.6;margin:0;"></p>
+    </section>
+    <section class="cv-section">
+      <h4 class="cv-section-title">👤 Perfil buscado</h4>
+      <p id="modal-det-perfil"
+        style="color:var(--color-text-secondary);line-height:1.6;margin:0;"></p>
+    </section>
+    <section class="cv-section">
+      <h4 class="cv-section-title">✨ Beneficios</h4>
+      <p id="modal-det-beneficios"
+        style="color:var(--color-text-secondary);line-height:1.6;margin:0;"></p>
+    </section>
+    <div class="modal-footer" style="justify-content:space-between;align-items:center;">
+      <span style="font-size:0.82rem;color:var(--color-text-muted);">
+        Publicado: <span id="modal-det-fecha"></span>
+        &nbsp;·&nbsp; ID: <span id="modal-det-id"></span>
+      </span>
+      <div style="display:flex;gap:var(--space-3);">
+        <button type="button" class="btn btn-secondary"
+          onclick="closeModal('modal-detalle-vacante')">Cerrar</button>
+        <button type="button" class="btn btn-primary" id="modal-det-btn-postular">
+          Postular →
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/auth-guard.js"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/nav.js"></script>
 <script src="../js/tables.js"></script>

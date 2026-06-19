@@ -23,7 +23,6 @@
       <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
     </div>
     <div class="navbar-right">
-      <div class="role-switcher"><button class="role-switcher-btn active">Estudiante</button><button class="role-switcher-btn">Profesor</button></div>
       <div class="navbar-avatar">MP</div>
     </div>
   </nav>
@@ -31,22 +30,22 @@
   <div class="app-body">
     <aside class="sidebar">
       <div class="sidebar-profile">
-        <div class="sidebar-avatar">MP</div>
-        <div class="sidebar-profile-name">María Pérez</div>
-        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-profile-name" id="sidebar-nombre">UCAB Services</div>
+        <div class="sidebar-profile-sub" id="sidebar-subtitulo"></div>
       </div>
       <nav class="sidebar-nav">
-        <a href="dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
-        <a href="servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
-        <a href="pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
-        <a href="infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
-        <a href="estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
-        <a href="carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+        <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
-        <a href="login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+        <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
       </div>
     </aside>
 
@@ -195,6 +194,7 @@
   </div>
 </div>
 
+<script src="../js/auth-guard.js"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/nav.js"></script>
 <script src="../js/tables.js"></script>

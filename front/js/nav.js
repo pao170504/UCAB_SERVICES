@@ -1,118 +1,105 @@
-/* =============================================================
-   nav.js — Sidebar active state, 3-role switcher, renderForRole
-   ============================================================= */
+/* nav.js */
 
-var ROLE_PROFILES = {
-  estudiante:     { name: 'María Pérez',      sub: 'Estudiante · 8vo Semestre',        initials: 'MP' },
-  profesor:       { name: 'Carlos Rodríguez', sub: 'Docente · Asistente',              initials: 'CR' },
-  egresado:       { name: 'Ana Martínez',     sub: 'Egresada · Ing. Informática 2023', initials: 'AM' },
-  administrativo: { name: 'Luis Pérez',       sub: 'Administrativo · DIDT',            initials: 'LP' }
+/* Updated permissions: carrera is egresado-only */
+window.NAV_PERMISOS = {
+  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento'],
+  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera'],
+  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes'],
+  administrativo: ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes']
 };
 
+var _usuario = null;
+
 document.addEventListener('DOMContentLoaded', function () {
+  _usuario = getUsuario();
+  if (!_usuario) return;
 
-  /* ---------- Active nav state ---------- */
-  var path = window.location.pathname;
-  var filename = path.split('/').pop() || 'index.html';
+  /* --- Sidebar profile --- */
+  var nombreEl = document.getElementById('sidebar-nombre');
+  if (nombreEl) nombreEl.textContent = _usuario.nombre;
 
-  var navMap = {
+  var initials = _initials(_usuario.nombre);
+  var navAv  = document.querySelector('.navbar-avatar');
+  if (navAv)  navAv.textContent  = initials;
+  var sideAv = document.getElementById('sidebar-avatar');
+  if (sideAv) sideAv.textContent = initials;
+
+  /* --- Restore or default active role --- */
+  var savedRol = sessionStorage.getItem('rolActivo');
+  var rolInicial = null;
+  if (savedRol && _usuario.roles.some(function (r) { return r.rol === savedRol; })) {
+    rolInicial = savedRol;
+  } else {
+    rolInicial = _usuario.roles[0] ? _usuario.roles[0].rol : null;
+  }
+  if (rolInicial) activarRol(rolInicial);
+
+  /* --- Mark active sidebar link --- */
+  var filename = window.location.pathname.split('/').pop() || 'index.html';
+  var PAGE_MAP = {
     'dashboard.html':       'dashboard',
     'servicios.html':       'servicios',
     'pagos.html':           'pagos',
     'infraestructura.html': 'infraestructura',
     'estacionamiento.html': 'estacionamiento',
     'carrera.html':         'carrera',
-    'index.html':           path.includes('reportes') ? 'reportes' : 'dashboard',
-    'eficiencia.html':      'reportes',
-    'financiero.html':      'reportes',
-    'comunidad.html':       'reportes',
+    'index.html':           'reportes'
   };
-
-  var key = navMap[filename] || filename.replace('.html', '');
-
-  document.querySelectorAll('.sidebar-item[data-nav]').forEach(function (el) {
-    el.classList.toggle('active', el.dataset.nav === key);
+  var currentPage = PAGE_MAP[filename] || filename.replace('.html', '');
+  document.querySelectorAll('.sidebar-item[data-page]').forEach(function (el) {
+    el.classList.toggle('active', el.getAttribute('data-page') === currentPage);
   });
   document.querySelectorAll('.navbar-tab[data-nav]').forEach(function (el) {
-    el.classList.toggle('active', el.dataset.nav === key);
+    el.classList.toggle('active', el.getAttribute('data-nav') === currentPage);
   });
 
-  /* ---------- Role switcher: build in sidebar ---------- */
-  var sidebarNav = document.querySelector('.sidebar-nav');
-  if (sidebarNav) {
-    var existing = document.getElementById('sidebar-role-switcher');
-    if (!existing) {
-      var wrapper = document.createElement('div');
-      wrapper.id = 'sidebar-role-switcher';
-      wrapper.innerHTML =
-        '<div class="sidebar-role-label">VISTA DE ROL</div>' +
-        '<div class="sidebar-role-btns">' +
-          '<button type="button" class="sidebar-role-btn active" data-role="estudiante">Estudiante</button>' +
-          '<button type="button" class="sidebar-role-btn" data-role="profesor">Profesor</button>' +
-          '<button type="button" class="sidebar-role-btn" data-role="egresado">Egresado</button>' +
-          '<button type="button" class="sidebar-role-btn" data-role="administrativo">Administrativo</button>' +
-        '</div>';
-      sidebarNav.after(wrapper);
-
-      wrapper.addEventListener('click', function (e) {
-        var btn = e.target.closest('.sidebar-role-btn');
-        if (!btn || !btn.dataset.role) return;
-        setRole(btn.dataset.role);
-      });
-    }
-  }
-
-  /* Hide legacy navbar role-switcher to avoid duplication */
-  var navSwitcher = document.querySelector('.navbar-right .role-switcher');
-  if (navSwitcher) navSwitcher.style.display = 'none';
-
-  applyRoleUI(window.currentRole);
+  /* --- Cerrar sesión --- */
+  var logoutBtn = document.getElementById('btn-cerrar-sesion');
+  if (logoutBtn) logoutBtn.addEventListener('click', cerrarSesion);
 });
 
-/* ---------- Set role globally ---------- */
-function setRole(role) {
-  window.currentRole = role;
-  applyRoleUI(role);
+function activarRol(rol) {
+  window.currentRole = rol;
+  sessionStorage.setItem('rolActivo', rol);
 
-  /* Update sidebar profile */
-  var p = ROLE_PROFILES[role] || ROLE_PROFILES.estudiante;
-  var nameEl = document.querySelector('.sidebar-profile-name');
-  var subEl  = document.querySelector('.sidebar-profile-sub');
-  var avEl   = document.querySelector('.sidebar-avatar');
-  if (nameEl) nameEl.textContent = p.name;
-  if (subEl)  subEl.textContent  = p.sub;
-  if (avEl)   avEl.textContent   = p.initials;
-
-  /* Update navbar avatar */
-  var navAv = document.querySelector('.navbar-avatar');
-  if (navAv) navAv.textContent = p.initials;
-
-  /* Dispatch to page-specific renderer */
-  if (typeof window.renderForRole === 'function') {
-    window.renderForRole(role);
+  /* Update sidebar subtitle */
+  var rolData = _usuario ? (_usuario.roles || []).find(function (r) { return r.rol === rol; }) : null;
+  var subtitulo = '';
+  if (rol === 'estudiante' && rolData) {
+    subtitulo = 'Estudiante · ' + (rolData.semestre || '?') + 'mo Semestre';
+    if (rolData.beca) subtitulo += ' · Becario (' + rolData.beca.tipo + ')';
+  } else if (rol === 'profesor' && rolData) {
+    subtitulo = 'Docente · ' + (rolData.escalafon || '');
+    if (rolData.codigoInvestigador) subtitulo += ' · Investigador';
+  } else if (rol === 'egresado' && rolData) {
+    subtitulo = 'Egresado · ' + (rolData.titulo || '') + ' ' + (rolData.ano_graduacion || '');
+  } else if (rol === 'administrativo' && rolData) {
+    subtitulo = (rolData.cargo || '') + ' · ' + (rolData.unidad_adscripcion || '');
   }
+  var subEl = document.getElementById('sidebar-subtitulo');
+  if (subEl) subEl.textContent = subtitulo;
 
-  /* data-role visibility helpers */
-  ['estudiante', 'profesor', 'egresado', 'administrativo'].forEach(function (r) {
-    document.querySelectorAll('[data-role="' + r + '"]').forEach(function (el) {
-      el.style.display = (r === role) ? '' : 'none';
-    });
+  /* Show/hide sidebar items based on permissions */
+  var permisos = (window.NAV_PERMISOS || {})[rol] || [];
+  document.querySelectorAll('.sidebar-item[data-page]').forEach(function (item) {
+    var page = item.getAttribute('data-page');
+    item.style.display = permisos.indexOf(page) !== -1 ? '' : 'none';
   });
+
+  /* Call page-specific renderer (backward compat) */
+  if (typeof window.renderForRole === 'function') {
+    window.renderForRole(rol);
+  }
+
+  /* Dispatch event for pages that listen */
+  document.dispatchEvent(new CustomEvent('roleChanged', {
+    detail: { rol: rol, rolData: rolData, usuario: _usuario }
+  }));
 }
 
-function applyRoleUI(role) {
-  /* Update sidebar role buttons */
-  var wrapper = document.getElementById('sidebar-role-switcher');
-  if (wrapper) {
-    wrapper.querySelectorAll('.sidebar-role-btn').forEach(function (btn) {
-      btn.classList.toggle('active', btn.dataset.role === role);
-    });
-  }
-  /* Also update legacy navbar switcher if present */
-  var navSwitcher = document.querySelector('.role-switcher');
-  if (navSwitcher) {
-    navSwitcher.querySelectorAll('.role-switcher-btn').forEach(function (btn) {
-      btn.classList.toggle('active', btn.dataset.role === role);
-    });
-  }
+function _initials(nombre) {
+  var parts = (nombre || '').trim().split(/\s+/);
+  return parts.slice(0, 2).map(function (p) { return (p[0] || '').toUpperCase(); }).join('');
 }
+
+window.activarRol = activarRol;

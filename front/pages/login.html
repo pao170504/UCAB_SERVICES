@@ -43,70 +43,79 @@
 
       <div class="login-right-top">
         <div class="sede-tabs">
-          <button class="sede-tab active">Montalban</button>
-          <button class="sede-tab">Guayana</button>
+          <button type="button" class="sede-tab active" data-sede="Montalbán">Montalbán</button>
+          <button type="button" class="sede-tab"        data-sede="Guayana">Guayana</button>
         </div>
       </div>
 
       <h2 class="login-form-heading">Acceso seguro</h2>
       <p class="login-form-sub">Ingrese sus credenciales institucionales para continuar.</p>
 
-      <div class="form-grid-2">
-        <!-- Cédula -->
-        <div class="form-group">
-          <label class="form-label" for="cedula">Cédula</label>
-          <div class="input-with-icon relative">
-            <span class="input-icon">🪪</span>
-            <input class="form-input" type="text" id="cedula" placeholder="V-12.345.678">
+      <!-- Error alert -->
+      <div id="login-error" class="alert alert-danger" style="display:none;margin-bottom:var(--space-4);"></div>
+
+      <form id="form-login" onsubmit="return false;">
+
+        <div class="form-grid-2">
+          <!-- Cédula -->
+          <div class="form-group">
+            <label class="form-label" for="cedula">Cédula</label>
+            <div class="input-with-icon relative">
+              <span class="input-icon">🪪</span>
+              <input class="form-input" type="text" id="cedula" placeholder="V-12.345.678" autocomplete="username">
+            </div>
+          </div>
+
+          <!-- Correo -->
+          <div class="form-group">
+            <label class="form-label" for="email">Correo Institucional</label>
+            <div class="input-with-icon relative">
+              <span class="input-icon">@</span>
+              <input class="form-input" type="email" id="email" placeholder="user@ucab.edu.ve" autocomplete="email">
+            </div>
           </div>
         </div>
 
-        <!-- Correo -->
-        <div class="form-group">
-          <label class="form-label" for="email">Correo Institucional</label>
+        <!-- Contraseña -->
+        <div class="password-group">
+          <label class="form-label" for="password">Contraseña</label>
           <div class="input-with-icon relative">
-            <span class="input-icon">@</span>
-            <input class="form-input" type="email" id="email" placeholder="user@ucab.edu.ve">
+            <span class="input-icon">🔑</span>
+            <input class="form-input" type="password" id="password" placeholder="••••••••"
+              style="padding-right:44px;" autocomplete="current-password">
+            <button class="input-suffix-btn" id="toggle-password" type="button" tabindex="-1">👁</button>
           </div>
         </div>
-      </div>
 
-      <!-- Contraseña -->
-      <div class="password-group">
-        <label class="form-label" for="password">Contraseña</label>
-        <div class="input-with-icon relative">
-          <span class="input-icon">🔑</span>
-          <input class="form-input" type="password" id="password" placeholder="••••••••" style="padding-right:44px;">
-          <button class="input-suffix-btn" id="toggle-password" type="button" tabindex="-1">👁</button>
+        <!-- MFA Box -->
+        <div class="mfa-box">
+          <div class="mfa-box-title">🔑 Paso 2: Autenticación en dos pasos</div>
+          <div class="mfa-box-sub">Ingrese el código de 6 dígitos enviado a su dispositivo registrado.</div>
+          <div class="otp-inputs">
+            <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 1">
+            <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 2">
+            <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 3">
+            <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 4">
+            <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 5">
+            <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 6">
+          </div>
         </div>
-      </div>
 
-      <!-- MFA Box -->
-      <div class="mfa-box">
-        <div class="mfa-box-title">🔑 Paso 2: Autenticación en dos pasos</div>
-        <div class="mfa-box-sub">Ingrese el código de 6 dígitos enviado a su dispositivo registrado.</div>
-        <div class="otp-inputs">
-          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 1">
-          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 2">
-          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 3">
-          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 4">
-          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 5">
-          <input class="otp-input" type="text" maxlength="1" inputmode="numeric" aria-label="Dígito 6">
+        <!-- Submit button -->
+        <div class="login-btn-wrapper">
+          <button class="btn btn-primary btn-lg btn-full" id="btn-login" type="button">
+            Autorizar sesión →
+          </button>
         </div>
-      </div>
 
-      <!-- Submit button -->
-      <div class="login-btn-wrapper">
-        <button class="btn btn-primary btn-lg btn-full" id="login-btn" type="button">
-          Autorizar sesión →
-        </button>
-      </div>
+      </form>
 
       <p class="login-footer-text">© 2026 UCAB — UNIVERSIDAD CATÓLICA ANDRÉS BELLO</p>
 
     </main>
   </div>
 
+  <script src="../js/auth-guard.js"></script>
   <script src="../js/pages/login.js"></script>
 </body>
 
