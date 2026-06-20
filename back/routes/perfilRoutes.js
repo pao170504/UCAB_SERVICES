@@ -59,7 +59,7 @@ router.get('/sesiones', async (req, res) => {
     const sesiones = rows.map(s => ({
       uuid:             s.uuid,
       fecha:            s.fecha_hora_acceso,
-      ip:               s.direccion_ip,
+      ip:               s.direccion_ip || 'No registrada',
       intentosFallidos: s.intentos_fallidos,
       ubicacion: s.latitud && s.longitud
         ? `${parseFloat(s.latitud).toFixed(4)}, ${parseFloat(s.longitud).toFixed(4)}`

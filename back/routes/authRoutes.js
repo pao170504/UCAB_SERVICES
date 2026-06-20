@@ -130,12 +130,20 @@ router.post('/login', async (req, res) => {
     }
 
     /* 8. Insert session */
+    function normalizarIP(ip) {
+      if (!ip) return '0.0.0.0';
+      if (ip === '::1') return '127.0.0.1';
+      if (ip.startsWith('::ffff:')) return ip.replace('::ffff:', '');
+      return ip;
+    }
+    const ipCliente = normalizarIP(req.ip);
+
     const sessionID = crypto.randomUUID();
     await pool.query(
       `INSERT INTO Sesion
          (cedula, uuid, fecha_hora_acceso, direccion_ip, intentos_fallidos, latitud, longitud)
        VALUES ($1, $2, CURRENT_TIMESTAMP, $3, 0, $4, $5)`,
-      [cedula, sessionID, req.ip, lat || null, lon || null]
+      [cedula, sessionID, ipCliente, lat || null, lon || null]
     );
 
     /* 9. Respond */
