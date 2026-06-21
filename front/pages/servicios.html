@@ -51,139 +51,60 @@
 
     <main class="main-content">
 
+      <!-- Top bar: title + category tabs -->
       <div class="servicios-topbar">
         <div class="page-header" style="margin-bottom:0">
           <h1 class="page-header-title">Catálogo de Servicios</h1>
-          <p class="page-header-sub">Explore y reserve los espacios disponibles en su sede.</p>
+          <p class="page-header-sub">Explore y solicite los servicios disponibles en su sede.</p>
         </div>
-        <div class="tab-pills">
+        <div class="tab-pills" id="tab-pills-container">
           <button class="tab-pill active" data-category="all">Todo</button>
-          <button class="tab-pill" data-category="salud">Salud</button>
-          <button class="tab-pill" data-category="educacion">Educación</button>
-          <button class="tab-pill" data-category="cultura">Cultura</button>
-          <button class="tab-pill" data-category="deporte">Deporte</button>
         </div>
       </div>
 
-      <div class="filter-bar">
-        <select class="form-select" style="width:160px;"><option>Montalbán</option><option>Guayana</option></select>
-        <select class="form-select" style="width:180px;"><option>Edificio</option><option>Edif. Laboratorios</option><option>Edif. Cincuentenario</option></select>
-        <select class="form-select" style="width:180px;"><option>Todos los espacios</option><option>Laboratorios</option><option>Auditorios</option></select>
-        <button class="btn btn-primary btn-sm">Aplicar</button>
-        <button class="btn btn-secondary btn-sm" id="filter-reset">Reiniciar</button>
+      <!-- Search bar + admin button -->
+      <div class="filter-bar" style="margin-bottom:var(--space-5);">
+        <div class="search-bar">
+          <span class="search-icon">🔍</span>
+          <input type="text" id="catalog-search" placeholder="Buscar servicio, entidad...">
+        </div>
+        <button class="btn btn-primary btn-sm" id="btn-nuevo-servicio" style="display:none" onclick="abrirAdminModal(null)">
+          + Nuevo Servicio
+        </button>
       </div>
 
-      <!-- Section: Service cards -->
-      <div class="service-cards-grid">
-
-        <!-- Card 1 — Lab Biotecnología -->
-        <div class="service-card">
-          <div class="service-card-img">🔬</div>
-          <div class="service-card-body">
-            <div class="service-card-badges">
-              <span class="badge badge-success">ACTIVA</span>
-              <span class="badge badge-success">DISPONIBLE</span>
-              <span class="badge badge-navy" id="docente-badge-1" style="display:none;">DOCENTE</span>
-            </div>
-            <div class="service-card-name">Laboratorio de Biotecnología</div>
-            <div class="service-card-location">📍 MÓDULO 4, MONTALBÁN</div>
-            <div class="service-card-tariff" id="tariff-1">
-              <span>Miembro Activo: <strong>$16/hr</strong></span>
-              <span>Externo: <strong>$45/hr</strong></span>
-            </div>
-          </div>
-          <div class="service-card-footer">
-            <button class="btn btn-primary btn-full btn-sm" id="btn-reservar-1" onclick="openReservation('Laboratorio de Biotecnología','Módulo 4, Montalbán',16)">
-              RESERVAR AHORA
-            </button>
-          </div>
-        </div>
-
-        <!-- Card 2 — Aula Magna -->
-        <div class="service-card">
-          <div class="service-card-img">🎭</div>
-          <div class="service-card-body">
-            <div class="service-card-badges"><span class="badge badge-warning">⚠ REVISIÓN DE PRECIOS</span></div>
-            <div class="service-card-name">Aula Magna</div>
-            <div class="service-card-location">📍 EDIFICIO PRINCIPAL, MONTALBÁN</div>
-            <div class="service-card-warning">El precio externo ($60) está por debajo del umbral mínimo ($20).</div>
-          </div>
-          <div class="service-card-footer">
-            <button class="btn btn-outline btn-full btn-sm" disabled>Ajustar tarifas</button>
-          </div>
-        </div>
-
-        <!-- Card 3 — Centro Rehabilitación -->
-        <div class="service-card">
-          <div class="service-card-img">🏃</div>
-          <div class="service-card-body">
-            <div class="service-card-badges">
-              <span class="badge badge-info">🕐 2:00 PM</span>
-              <span class="badge badge-navy" id="docente-badge-3" style="display:none;">DOCENTE</span>
-            </div>
-            <div class="service-card-name">Centro de Rehabilitación</div>
-            <div class="service-card-location">📍 DEPORTES, GUAYANA</div>
-            <div class="service-card-tariff" id="tariff-3">
-              <span>Miembro Activo: <strong>$5/sesión</strong></span>
-              <span>Externo: <strong>$20/sesión</strong></span>
-            </div>
-          </div>
-          <div class="service-card-footer">
-            <button class="btn btn-primary btn-full btn-sm" id="btn-reservar-3" onclick="openReservation('Centro de Rehabilitación','Deportes, Guayana',5)">
-              SOLICITAR
-            </button>
-          </div>
-        </div>
-
+      <!-- Service cards grid (rendered by JS) -->
+      <div id="cards-loading" class="servicios-placeholder">Cargando servicios...</div>
+      <div class="service-cards-grid" id="service-cards" style="display:none"></div>
+      <div id="cards-empty" class="servicios-placeholder" style="display:none">
+        <span style="font-size:2rem;display:block;margin-bottom:var(--space-2);">🔍</span>
+        No hay servicios disponibles para los filtros seleccionados.
       </div>
 
-      <!-- Section: Inventory table -->
+      <!-- Mis Solicitudes -->
       <div class="card">
         <div class="card-header">
-          <span class="card-header-title">Inventario</span>
-          <div class="flex gap-2 items-center">
-            <div class="search-bar"><span class="search-icon">🔍</span><input type="text" id="inventory-search" placeholder="Buscar servicio..."></div>
-            <button class="btn-icon">⚙</button>
+          <span class="card-header-title">Mis Solicitudes</span>
+          <div class="search-bar">
+            <span class="search-icon">🔍</span>
+            <input type="text" id="sol-search" placeholder="Buscar solicitud...">
           </div>
         </div>
         <div class="table-wrap" style="border:none;border-radius:0;">
-          <table class="table" id="inventory-table">
+          <table class="table" id="solicitudes-table">
             <thead>
               <tr>
-                <th>SERVICIO</th><th>CATEGORÍA</th><th>TARIFA ACTIVA</th><th>TARIFA EXTERNA</th>
-                <th id="col-uso-academico" style="display:none;">USO ACADÉMICO</th>
+                <th>ID</th>
+                <th>SERVICIO</th>
+                <th>CATEGORÍA</th>
+                <th>FECHA</th>
+                <th>PROGRESO</th>
                 <th>ESTADO</th>
+                <th>ACCIONES</th>
               </tr>
             </thead>
-            <tbody>
-              <tr>
-                <td>Clínica Dental – Estación 1</td>
-                <td><span class="badge badge-info">Salud</span></td>
-                <td class="monto-cell">$8.00</td><td class="monto-cell">$25.00</td>
-                <td class="uso-academico-col" style="display:none;"><select class="form-select" style="width:80px;padding:4px;font-size:.8rem;"><option>No</option><option>Sí</option></select></td>
-                <td><span class="badge badge-warning">MANTENIMIENTO</span></td>
-              </tr>
-              <tr>
-                <td>Laboratorio de idiomas A</td>
-                <td><span class="badge badge-blue">Educación</span></td>
-                <td class="monto-cell">$12.00</td><td class="monto-cell">$35.00</td>
-                <td class="uso-academico-col" style="display:none;"><select class="form-select" style="width:80px;padding:4px;font-size:.8rem;"><option>No</option><option>Sí</option></select></td>
-                <td><span class="badge badge-success">ACTIVA</span></td>
-              </tr>
-              <tr>
-                <td>Sala de conferencias 202</td>
-                <td><span class="badge badge-purple">Cultura</span></td>
-                <td class="monto-cell">$30.00</td><td class="monto-cell" style="color:var(--color-danger);">$65.00</td>
-                <td class="uso-academico-col" style="display:none;"><select class="form-select" style="width:80px;padding:4px;font-size:.8rem;"><option>No</option><option>Sí</option></select></td>
-                <td><span class="badge badge-warning">REVISAR</span></td>
-              </tr>
-              <tr>
-                <td>Cancha de Tenis</td>
-                <td><span class="badge badge-teal">Deporte</span></td>
-                <td class="monto-cell">$10.00</td><td class="monto-cell">$28.00</td>
-                <td class="uso-academico-col" style="display:none;"><select class="form-select" style="width:80px;padding:4px;font-size:.8rem;"><option>No</option><option>Sí</option></select></td>
-                <td><span class="badge badge-success">ACTIVA</span></td>
-              </tr>
+            <tbody id="solicitudes-body">
+              <tr><td colspan="7" class="table-empty">Cargando solicitudes...</td></tr>
             </tbody>
           </table>
         </div>
@@ -193,15 +114,37 @@
   </div>
 </div>
 
-<!-- Section: Reservation Modal -->
-<div class="modal-overlay" id="reservation-modal">
+<!-- Modal: Service Request (3 steps) -->
+<div class="modal-overlay" id="solicitud-modal">
   <div class="modal">
     <div class="modal-header">
-      <h3 class="modal-title">Reservar Espacio</h3>
-      <button class="modal-close" onclick="closeModal('reservation-modal')">×</button>
+      <h3 class="modal-title">Solicitar Servicio</h3>
+      <button class="modal-close" onclick="closeModal('solicitud-modal')">×</button>
     </div>
-    <div id="res-steps" class="step-indicator"></div>
-    <div id="res-body"></div>
+    <div id="sol-steps" class="step-indicator"></div>
+    <div id="sol-body"></div>
+  </div>
+</div>
+
+<!-- Modal: Admin Create/Edit Service -->
+<div class="modal-overlay" id="admin-servicio-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title" id="admin-modal-title">Nuevo Servicio</h3>
+      <button class="modal-close" onclick="closeModal('admin-servicio-modal')">×</button>
+    </div>
+    <div id="admin-modal-body"></div>
+  </div>
+</div>
+
+<!-- Modal: Solicitud detail -->
+<div class="modal-overlay" id="detalle-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title">Detalle de Solicitud</h3>
+      <button class="modal-close" onclick="closeModal('detalle-modal')">×</button>
+    </div>
+    <div id="detalle-body"></div>
   </div>
 </div>
 
@@ -209,7 +152,6 @@
 <script src="../js/utils.js"></script>
 <script src="../js/nav.js"></script>
 <script src="../js/tables.js"></script>
-<script src="../js/payment-modal.js"></script>
 <script src="../js/pages/servicios.js"></script>
 </body>
 </html>

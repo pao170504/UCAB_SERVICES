@@ -1,3 +1,8 @@
+CREATE TABLE Sede (
+  ID_Sede INT PRIMARY KEY,
+  Nombre VARCHAR(50) NOT NULL
+);
+
 CREATE TABLE Persona (
   Cedula VARCHAR(20) PRIMARY KEY,
   Sexo CHAR(1) NOT NULL CHECK (Sexo IN ('M', 'F')),
@@ -249,7 +254,7 @@ CREATE TABLE Solicitud_Servicio (
   FOREIGN KEY (ID_Servicio) REFERENCES Servicio(ID_Servicio) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE Acompañante (
+CREATE TABLE Acompanante (
   ID_Solicitud VARCHAR(50),
   Documento VARCHAR(20),
   Nombre VARCHAR(100) NOT NULL,
@@ -275,17 +280,12 @@ CREATE TABLE Item_Consumo (
   FOREIGN KEY (ID_Folio) REFERENCES Folio_Consumo(ID_Folio) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
-CREATE TABLE Sede (
-  ID_Sede INT PRIMARY KEY,
-  Nombre VARCHAR(50) NOT NULL
-);
-
 CREATE TABLE Regula (
   ID_Sede INT,
   ID_Categoria VARCHAR(50),
   Costo_Max REAL NOT NULL CHECK (Costo_Max >= 0.0),
   Costo_Min REAL NOT NULL CHECK (Costo_Min >= 0.0),
-  Ubicación VARCHAR(100) NOT NULL,
+  Ubicacion VARCHAR(100) NOT NULL,
   PRIMARY KEY (ID_Sede, ID_Categoria),
   FOREIGN KEY (ID_Sede) REFERENCES Sede(ID_Sede) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (ID_Categoria) REFERENCES Categoria_Servicio(ID_Categoria) ON DELETE CASCADE ON UPDATE CASCADE,

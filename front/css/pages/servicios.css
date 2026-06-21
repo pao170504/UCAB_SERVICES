@@ -1,5 +1,5 @@
 /* =============================================================
-   servicios.css — Service catalog cards and inventory table
+   servicios.css — Service catalog, cards, requests table
    ============================================================= */
 
 /* Section: Top bar */
@@ -20,6 +20,14 @@
   margin-bottom: var(--space-6);
 }
 
+@media (max-width: 1100px) {
+  .service-cards-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 700px) {
+  .service-cards-grid { grid-template-columns: 1fr; }
+}
+
 .service-card {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -28,16 +36,21 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+
+.service-card:hover {
+  box-shadow: 0 4px 16px rgba(0,0,0,0.1);
+  transform: translateY(-2px);
 }
 
 .service-card-img {
-  height: 160px;
+  height: 120px;
   background: linear-gradient(150deg, #dde8ff 0%, #b8ccf0 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 3rem;
-  color: var(--color-blue);
+  font-size: 2.8rem;
 }
 
 .service-card-body {
@@ -55,14 +68,13 @@
 }
 
 .service-card-name {
-  font-size: 1rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--color-text-primary);
-  margin-bottom: 0;
 }
 
 .service-card-location {
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   color: var(--color-text-muted);
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -71,23 +83,130 @@
 .service-card-tariff {
   font-size: 0.82rem;
   color: var(--color-text-secondary);
+}
+
+/* Admin controls row inside card */
+.service-card-admin {
+  padding: var(--space-2) var(--space-4);
   display: flex;
-  flex-direction: column;
-  gap: 3px;
+  gap: var(--space-2);
+  border-top: 1px solid var(--color-border);
+  background: rgba(0,0,0,0.015);
 }
 
-.service-card-tariff span { display: block; }
-
-.service-card-warning {
-  background-color: rgba(245,158,11,0.1);
-  border: 1px solid rgba(245,158,11,0.3);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
-  font-size: 0.8rem;
-  color: #92400e;
-}
-
+/* Card footer with CTA button */
 .service-card-footer {
   padding: var(--space-3) var(--space-4);
   border-top: 1px solid var(--color-border);
+}
+
+/* Section: Accreditation tags on cards */
+.service-acred-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: var(--space-1);
+}
+
+.acred-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+
+.acred-ok   { background: rgba(34, 197, 94, 0.12); color: #16a34a; }
+.acred-fail { background: rgba(239, 68,  68, 0.12); color: #dc2626; }
+
+/* Section: Placeholder / loading / empty */
+.servicios-placeholder {
+  text-align: center;
+  padding: var(--space-8) var(--space-4);
+  color: var(--color-text-muted);
+  font-size: 0.95rem;
+  margin-bottom: var(--space-6);
+}
+
+/* Section: Empty table cell */
+.table-empty {
+  text-align: center;
+  padding: var(--space-8);
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+/* Section: Solicitudes progress bar */
+.sol-progress-wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 110px;
+}
+
+.sol-progress-bar {
+  flex: 1;
+  height: 6px;
+  background: var(--color-border);
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.sol-progress-fill {
+  height: 100%;
+  background: var(--color-blue);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.sol-progress-label {
+  font-size: 0.72rem;
+  color: var(--color-text-muted);
+  white-space: nowrap;
+}
+
+/* Section: Activity steps in detail modal */
+.pasos-container {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.paso-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--color-border);
+}
+
+.paso-done    { background: rgba(34,  197, 94, 0.05); border-color: rgba(34,  197, 94, 0.3); }
+.paso-pending { background: rgba(245, 158, 11, 0.05); border-color: rgba(245, 158, 11, 0.3); }
+
+.paso-num {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+}
+
+.paso-done    .paso-num { background: rgba(34,  197, 94, 0.2); color: #16a34a; }
+.paso-pending .paso-num { background: rgba(245, 158, 11, 0.2); color: #b45309; }
+
+.paso-info        { flex: 1; }
+.paso-responsable { font-weight: 600; font-size: 0.875rem; margin-bottom: 2px; }
+.paso-estado      { font-size: 0.8rem; }
+
+/* Section: Large modal variant */
+.modal-lg {
+  max-width: 660px;
+  width: 95%;
 }
