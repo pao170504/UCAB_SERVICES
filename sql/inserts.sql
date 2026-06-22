@@ -242,3 +242,62 @@ INSERT INTO Paso_Actividad VALUES (
 -- ACOMPAÑANTE
 INSERT INTO Acompanante VALUES ('SOL-TEST-002', '22334455', 'María Elena Rodríguez');
 INSERT INTO Acompanante VALUES ('SOL-TEST-002', '11223344', 'Pedro José Gómez');
+
+-- TASA BCV (columnas: Fecha_Tasa, EUR, USD)
+INSERT INTO Tasa VALUES ('2026-06-01', 40.15, 37.20);
+INSERT INTO Tasa VALUES ('2026-06-10', 40.38, 37.45);
+INSERT INTO Tasa VALUES ('2026-06-20', 40.62, 37.68);
+
+-- TERCERO CORPORATIVO
+INSERT INTO Tercero_Corporativo VALUES ('J-299876543', 'Corporación Eventos Venezuela, C.A.');
+INSERT INTO Tercero_Corporativo VALUES ('J-400123456', 'Industrias Venezolanas Reunidas, S.A.');
+
+-- FOLIO DE CONSUMO
+-- SOL-TEST-003 (Paola, odontología, completada) → Cerrado con factura
+INSERT INTO Folio_Consumo VALUES ('FOL-TEST-001', 'Cerrado', 'SOL-TEST-003');
+-- SOL-TEST-001 (Paola, cancha tenis, pendiente) → Abierto sin factura
+INSERT INTO Folio_Consumo VALUES ('FOL-TEST-002', 'Abierto', 'SOL-TEST-001');
+-- SOL-TEST-002 (Carlos, aula magna, en proceso) → Cerrado con factura corporativa
+INSERT INTO Folio_Consumo VALUES ('FOL-TEST-003', 'Cerrado', 'SOL-TEST-002');
+-- SOL-TEST-004 (Luis, taller python, pendiente) → Cerrado con factura
+INSERT INTO Folio_Consumo VALUES ('FOL-TEST-004', 'Cerrado', 'SOL-TEST-004');
+
+-- ITEM CONSUMO
+-- FOL-TEST-001: odontología
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-001', 1, 0.16, 1, 'Consulta Odontológica General', 25.00);
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-001', 2, 0.16, 1, 'Limpieza Dental Profunda',       15.00);
+-- Totales: 29.00 + 17.40 = 46.40
+
+-- FOL-TEST-002: cancha de tenis (abierto, sin factura todavía)
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-002', 1, 0.00, 2, 'Hora de Cancha de Tenis', 5.00);
+
+-- FOL-TEST-003: aula magna (corporativo)
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-003', 1, 0.16, 1,  'Alquiler Aula Magna (4 horas)', 80.00);
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-003', 2, 0.16, 1,  'Servicio de Sonido Profesional', 20.00);
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-003', 3, 0.16, 50, 'Silla Adicional',                 0.50);
+-- Totales: 92.80 + 23.20 + 29.00 = 145.00
+
+-- FOL-TEST-004: taller python
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-004', 1, 0.16, 1, 'Inscripción Taller Python Avanzado', 50.00);
+INSERT INTO Item_Consumo VALUES ('FOL-TEST-004', 2, 0.00, 1, 'Material Didáctico Digital',          8.00);
+-- Totales: 58.00 + 8.00 = 66.00
+
+-- FACTURA (Saldo y Estado los inicializa el trigger trg_init_factura en logic.sql)
+-- FAC-TEST-001: odontología Paola → total 46.40, pagada completa
+INSERT INTO Factura (ID_Factura, Emisión, Monto, ID_Folio, RIF)
+  VALUES ('FAC-TEST-001', '2026-06-05', 46.40,  'FOL-TEST-001', NULL);
+-- FAC-TEST-002: aula magna Carlos → total 145.00, abono parcial (80), corporativa
+INSERT INTO Factura (ID_Factura, Emisión, Monto, ID_Folio, RIF)
+  VALUES ('FAC-TEST-002', '2026-06-12', 145.00, 'FOL-TEST-003', 'J-299876543');
+-- FAC-TEST-003: taller python Luis → total 66.00, pendiente de pago
+INSERT INTO Factura (ID_Factura, Emisión, Monto, ID_Folio, RIF)
+  VALUES ('FAC-TEST-003', '2026-06-19', 66.00,  'FOL-TEST-004', NULL);
+
+-- PAGO
+-- PAG-TEST-001: Paola paga FAC-TEST-001 completo por Pago Móvil
+INSERT INTO Pago VALUES ('PAG-TEST-001', 46.40, '2026-06-05', 'FAC-TEST-001', '2026-06-01');
+INSERT INTO Pago_Movil VALUES ('PAG-TEST-001', '0412-555-1315', 'Banesco', '20260605-REF001');
+
+-- PAG-TEST-002: Carlos abona 80.00 de FAC-TEST-002 por Zelle
+INSERT INTO Pago VALUES ('PAG-TEST-002', 80.00, '2026-06-13', 'FAC-TEST-002', '2026-06-10');
+INSERT INTO Zelle VALUES ('PAG-TEST-002', 'Carlos Rodríguez', 'crodriguez@email.com', 'ZLLE-2026-TEST02');

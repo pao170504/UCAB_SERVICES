@@ -376,10 +376,13 @@ CREATE TABLE Tercero_Corporativo (
 
 CREATE TABLE Factura (
   ID_Factura VARCHAR(50) PRIMARY KEY,
-  Emisión DATE NOT NULL,
-  Monto REAL NOT NULL CHECK (Monto >= 0.0),
-  ID_Folio VARCHAR(50) NOT NULL,
-  RIF VARCHAR(20),
+  Emisión    DATE        NOT NULL,
+  Monto      REAL        NOT NULL CHECK (Monto >= 0.0),
+  Saldo      REAL        NOT NULL DEFAULT 0 CHECK (Saldo >= 0.0),
+  Estado     VARCHAR(20) NOT NULL DEFAULT 'Pendiente'
+               CHECK (Estado IN ('Pendiente', 'Parcial', 'Pagada')),
+  ID_Folio   VARCHAR(50) NOT NULL,
+  RIF        VARCHAR(20),
   FOREIGN KEY (ID_Folio) REFERENCES Folio_Consumo(ID_Folio) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (RIF) REFERENCES Tercero_Corporativo(RIF) ON DELETE CASCADE ON UPDATE CASCADE
 );
