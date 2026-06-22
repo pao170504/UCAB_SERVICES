@@ -226,23 +226,10 @@ router.patch('/solicitudes/:id/paso/:idPaso', async (req, res) => {
       return res.status(400).json({ error: 'El paso ya fue completado' });
 
     await pool.query(`
-      UPDATE Paso_Actividad
-      SET    estado_paso = 'Completado', fecha_completada = CURRENT_TIMESTAMP
-      WHERE  id_paso = $1
+      UPDATE Paso_Actividad SET estado_paso = 'Completado' WHERE id_paso = $1
     `, [idPaso]);
-
-    const { rows: pendientes } = await pool.query(`
-      SELECT 1 FROM Paso_Actividad
-      WHERE  id_solicitud = $1 AND estado_paso != 'Completado'
-      LIMIT  1
-    `, [id]);
-
-    if (pendientes.length === 0) {
-      await pool.query(
-        `UPDATE Solicitud_Servicio SET estado = 'Completada' WHERE id_solicitud = $1`,
-        [id]
-      );
-    }
+    // trg_timestamp_paso auto-sets Fecha_Completada
+    // trg_completar_solicitud auto-completes Solicitud when all pasos are done
 
     res.json({ message: 'Paso completado exitosamente' });
   } catch (err) {
@@ -415,6 +402,41 @@ router.delete('/:id', async (req, res) => {
   } catch (err) {
     if (err.code === '23503')
       return res.status(400).json({ error: 'No se puede eliminar: hay solicitudes vinculadas a este servicio' });
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/* ── GET /api/servicios/solicitudes/:id/tiempo ───────────────────────────────── */
+router.get('/solicitudes/:id/tiempo', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows: sol } = await pool.query(
+      `SELECT cedula FROM Solicitud_Servicio WHERE id_solicitud = $1`, [id]
+    );
+    if (sol.length === 0) return res.status(404).json({ error: 'Solicitud no encontrada' });
+    const admin = await esAdmin(req.cedula);
+    if (!admin && sol[0].cedula !== req.cedula)
+      return res.status(403).json({ error: 'Acceso denegado' });
+    const { rows } = await pool.query(`SELECT * FROM fn_tiempo_resolucion($1)`, [id]);
+    res.json({ tiempo: rows[0] || null });
+  } catch (err) {
+    if (err.code === 'P0001') return res.status(404).json({ error: err.message });
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/* ── GET /api/servicios/:id/costo-estimado ───────────────────────────────────── */
+router.get('/:id/costo-estimado', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM fn_costo_final_servicio($1, $2)`, [id, req.cedula]
+    );
+    if (rows.length === 0) return res.status(404).json({ error: 'Servicio no encontrado' });
+    res.json({ costo: rows[0] });
+  } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error interno' });
   }

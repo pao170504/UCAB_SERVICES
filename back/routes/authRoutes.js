@@ -37,13 +37,22 @@ router.post('/login', async (req, res) => {
 
     /* 4. Validate password and MFA */
     if (user.contrasena !== password || codigoMFA !== '123456') {
-      await pool.query(
+      const { rowCount: updCount } = await pool.query(
         `UPDATE Sesion SET intentos_fallidos = intentos_fallidos + 1
          WHERE cedula = $1 AND fecha_hora_acceso = (
            SELECT MAX(fecha_hora_acceso) FROM Sesion WHERE cedula = $1
          )`,
         [cedula]
       );
+      if (updCount === 0) {
+        const rawIp = req.ip || '0.0.0.0';
+        const ipFail = rawIp === '::1' ? '127.0.0.1' : rawIp.replace('::ffff:', '');
+        await pool.query(
+          `INSERT INTO Sesion (cedula, uuid, fecha_hora_acceso, direccion_ip, intentos_fallidos, latitud, longitud)
+           VALUES ($1, $2, CURRENT_TIMESTAMP, $3, 1, NULL, NULL)`,
+          [cedula, crypto.randomUUID(), ipFail]
+        );
+      }
       return res.status(401).json({ error: 'Credenciales o código de verificación incorrectos' });
     }
 

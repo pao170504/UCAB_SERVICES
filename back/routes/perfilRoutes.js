@@ -74,4 +74,16 @@ router.get('/sesiones', async (req, res) => {
   }
 });
 
+router.get('/recurrencia', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT * FROM fn_indice_recurrencia($1)`, [req.cedula]
+    );
+    res.json({ recurrencia: rows[0] || null });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 module.exports = router;

@@ -2,6 +2,88 @@
    pagos.css — Payments page
    ============================================================= */
 
+/* Section: BCV Banner */
+.bcv-banner {
+  background: linear-gradient(135deg, var(--color-navy) 0%, #1e3a5f 100%);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-5);
+  gap: var(--space-4);
+}
+
+.bcv-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255,255,255,.5);
+  display: block;
+  margin-bottom: 2px;
+}
+
+.bcv-rate {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #fff;
+  font-family: var(--font-mono);
+}
+
+.bcv-banner-left { display: flex; flex-direction: column; }
+.bcv-banner-right { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
+
+.bcv-eur {
+  font-size: 1rem;
+  font-weight: 700;
+  color: rgba(255,255,255,.7);
+  font-family: var(--font-mono);
+}
+
+/* Section: Module Tabs */
+.pagos-tabs {
+  display: flex;
+  gap: var(--space-2);
+  margin-bottom: var(--space-5);
+  border-bottom: 2px solid var(--color-border);
+  padding-bottom: 0;
+}
+
+.pagos-tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  padding: var(--space-3) var(--space-5);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+.pagos-tab:hover {
+  color: var(--color-text);
+  background: var(--color-bg);
+}
+
+.pagos-tab.active {
+  color: var(--color-blue);
+  border-bottom-color: var(--color-blue);
+}
+
+/* Section: Tab panels */
+.tab-panel {
+  animation: fadeIn .15s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0);   }
+}
+
 /* Section: Top bar */
 .pagos-topbar {
   display: flex;
@@ -11,9 +93,10 @@
   margin-bottom: var(--space-5);
 }
 
-.pagos-topbar .search-bar { width: 320px; }
+/* Section: Monto cell */
+.mono { font-family: var(--font-mono); font-size: 0.875rem; }
 
-/* Section: Alert card */
+/* Section: Vencimiento alert (legacy, kept for compat) */
 .vencimiento-card {
   background-color: var(--color-navy);
   border-radius: var(--radius-md);
@@ -47,6 +130,212 @@
   white-space: nowrap;
 }
 
-/* Section: Monto cell */
-.monto-cell { font-family: var(--font-mono); font-size: 0.875rem; }
-.monto-bs   { font-size: 0.75rem; color: var(--color-text-muted); display: block; }
+/* Section: Wallet bar */
+.wallet-bar {
+  background: linear-gradient(135deg, #1565c0, #0d47a1);
+  border-radius: var(--radius-md);
+  padding: var(--space-4) var(--space-6);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  margin-top: var(--space-5);
+  color: white;
+}
+
+.wallet-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: rgba(255,255,255,.5);
+}
+
+.wallet-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  font-family: var(--font-mono);
+}
+
+/* Section: Invoice detail labels */
+.det-label {
+  color: var(--color-text-muted);
+  padding: .3rem .5rem;
+  white-space: nowrap;
+  width: 130px;
+  vertical-align: top;
+}
+
+/* Section: Payment method grid (shared with payment-modal.js) */
+.payment-methods-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-3);
+}
+
+.payment-method-card {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: border-color .15s, background .15s;
+}
+
+.payment-method-card:hover {
+  border-color: var(--color-blue-light);
+  background: var(--color-blue-light);
+}
+
+.payment-method-card.selected {
+  border-color: var(--color-blue);
+  background: var(--color-blue-light);
+}
+
+.payment-method-icon { font-size: 1.5rem; flex-shrink: 0; }
+.payment-method-name { font-weight: 600; font-size: .9rem; }
+.payment-method-desc { font-size: .78rem; color: var(--color-text-muted); }
+
+/* Section: NFC animation */
+.nfc-animation {
+  text-align: center;
+  padding: var(--space-4);
+  border: 2px dashed var(--color-blue-light);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--space-3);
+}
+
+.nfc-pulse {
+  font-size: 3rem;
+  animation: pulse-nfc 1.4s ease-in-out infinite;
+  display: inline-block;
+}
+
+@keyframes pulse-nfc {
+  0%, 100% { transform: scale(1);    opacity: 1;    }
+  50%       { transform: scale(1.15); opacity: 0.7;  }
+}
+
+/* Section: Receipt card (shared) */
+.receipt-card {
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  overflow: hidden;
+}
+
+.receipt-header {
+  background: var(--color-navy);
+  color: white;
+  padding: var(--space-3) var(--space-4);
+  display: flex;
+  justify-content: space-between;
+  font-size: .85rem;
+  font-weight: 600;
+}
+
+.receipt-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--space-2) var(--space-4);
+  border-bottom: 1px solid var(--color-border);
+  font-size: .875rem;
+}
+
+.receipt-row:last-child { border-bottom: none; }
+
+.receipt-label { color: var(--color-text-muted); }
+.receipt-value { font-weight: 500; text-align: right; }
+
+/* Section: Success animation */
+.success-anim {
+  text-align: center;
+  padding: var(--space-4) 0;
+  margin-bottom: var(--space-4);
+}
+
+.checkmark-circle {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--color-success);
+  color: white;
+  font-size: 1.6rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-3);
+  animation: popIn .3s ease;
+}
+
+@keyframes popIn {
+  from { transform: scale(0.5); opacity: 0; }
+  to   { transform: scale(1);   opacity: 1; }
+}
+
+/* Section: Step indicator (shared) */
+.step-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-4) var(--space-5);
+  border-bottom: 1px solid var(--color-border);
+  gap: 0;
+}
+
+.step-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.step-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid var(--color-border);
+  background: var(--color-bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: .78rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  transition: all .2s;
+}
+
+.step-dot.active    { border-color: var(--color-blue); color: var(--color-blue); background: var(--color-blue-light); }
+.step-dot.completed { border-color: var(--color-success); color: white; background: var(--color-success); }
+
+.step-label       { font-size: .72rem; color: var(--color-text-muted); font-weight: 500; }
+.step-label.active{ color: var(--color-blue); font-weight: 700; }
+
+.step-line {
+  flex: 1;
+  height: 2px;
+  background: var(--color-border);
+  min-width: 48px;
+  margin: 0 var(--space-2);
+  margin-bottom: var(--space-4);
+  transition: background .2s;
+}
+
+.step-line.completed { background: var(--color-success); }
+
+/* Section: Info box */
+.info-box {
+  background: var(--color-blue-light);
+  border: 1px solid var(--color-blue-light);
+  border-radius: var(--radius-md);
+  padding: var(--space-3) var(--space-4);
+  font-size: .875rem;
+  color: var(--color-text);
+}
+
+.info-box-title {
+  font-weight: 700;
+  margin-bottom: var(--space-2);
+  color: var(--color-blue);
+}

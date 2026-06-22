@@ -13,7 +13,6 @@
 
 <div class="app-shell">
 
-  <!-- Section: Navbar -->
   <nav class="navbar">
     <a href="dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
     <div class="navbar-tabs">
@@ -30,7 +29,6 @@
 
   <div class="app-body">
 
-    <!-- Section: Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-profile">
         <div class="sidebar-avatar" id="sidebar-avatar">?</div>
@@ -52,103 +50,255 @@
       </div>
     </aside>
 
-    <!-- Section: Main content -->
     <main class="main-content">
 
       <div class="page-header">
         <h1 class="page-header-title">Gestión de Pagos</h1>
-        <p class="page-header-sub">Consulte el historial de pagos y gestione sus transacciones institucionales.</p>
+        <p class="page-header-sub">Consulte facturas, registre pagos y administre el módulo financiero.</p>
       </div>
 
-      <!-- Profesor info card (only shown in Profesor mode) -->
-      <div id="pagos-profesor-note" style="display:none;" class="alert alert-info mb-4">
-        ℹ Los pagos de nómina se gestionan a través de la <strong>Dirección de Recursos Humanos</strong>. Este módulo muestra únicamente los cargos por servicios contratados.
-      </div>
-
-      <!-- Top bar -->
-      <div class="pagos-topbar">
-        <div class="search-bar" style="width:320px;">
-          <span class="search-icon">🔍</span>
-          <input type="text" id="pagos-search" placeholder="Buscar por concepto o sede...">
+      <!-- BCV Rate Banner -->
+      <div class="bcv-banner" id="bcv-banner">
+        <div class="bcv-banner-left">
+          <span class="bcv-label">Tasa BCV vigente</span>
+          <span class="bcv-rate" id="bcv-usd-rate">— Bs/$</span>
         </div>
-        <button class="btn btn-secondary btn-sm">⚙ Filtros</button>
-        <button class="btn btn-secondary btn-sm">📅 Fecha</button>
+        <div class="bcv-banner-right">
+          <span id="bcv-fecha" style="color:rgba(255,255,255,.6);font-size:.8rem;"></span>
+          <span class="bcv-eur" id="bcv-eur-rate"></span>
+        </div>
       </div>
 
-      <!-- Vencimiento alert -->
-      <div class="vencimiento-card">
-        <div>
-          <div class="vencimiento-label">⚠ PRÓXIMO VENCIMIENTO</div>
-          <div class="vencimiento-title">Inscripción Académica 2026-2</div>
-        </div>
-        <div class="vencimiento-date">12 Oct, 2026</div>
+      <!-- Module Tabs -->
+      <div class="pagos-tabs" id="pagos-tabs">
+        <button class="pagos-tab active" data-tab="facturas">💳 Facturas</button>
+        <button class="pagos-tab admin-only" data-tab="folios" style="display:none;">📋 Folios</button>
+        <button class="pagos-tab admin-only" data-tab="tasas"  style="display:none;">📈 Tasas BCV</button>
+        <button class="pagos-tab admin-only" data-tab="terceros" style="display:none;">🏢 Terceros</button>
       </div>
 
-      <!-- Payments table -->
-      <div class="card">
-        <div class="card-header">
-          <span class="card-header-title">Historial de Pagos</span>
+      <!-- ══════ TAB: FACTURAS ══════ -->
+      <div id="tab-facturas" class="tab-panel">
+
+        <div class="card-header" style="padding:0 0 var(--space-4);">
+          <span class="card-header-title">Historial de Facturas</span>
+          <div style="display:flex;gap:var(--space-3);align-items:center;">
+            <div class="search-bar" style="width:260px;">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="facturas-search" placeholder="Buscar por ID o servicio...">
+            </div>
+            <select class="form-select" id="facturas-filter" style="width:140px;">
+              <option value="all">Todos</option>
+              <option value="Pendiente">Pendiente</option>
+              <option value="Parcial">Parcial</option>
+              <option value="Pagada">Pagada</option>
+            </select>
+          </div>
         </div>
-        <div class="table-wrap" style="border:none;border-radius:0;">
-          <table class="table" id="pagos-table">
+
+        <div class="table-wrap">
+          <table class="table" id="facturas-table">
             <thead>
               <tr>
-                <th>FECHA</th><th>CONCEPTO</th><th>SEDE</th><th>MONTO ($)</th><th>MONTO (BCV)</th><th>ESTADO</th><th></th>
+                <th>ID FACTURA</th>
+                <th>SERVICIO</th>
+                <th>FECHA</th>
+                <th>TOTAL ($)</th>
+                <th>PAGADO ($)</th>
+                <th>SALDO ($)</th>
+                <th>ESTADO</th>
+                <th>ACCIONES</th>
               </tr>
             </thead>
-            <tbody>
-              <tr id="row-99201">
-                <td>15/09/2026</td>
-                <td>Inscripción Semestre Sept-Feb<span class="ref">#UCAB-99201</span></td>
-                <td>Montalbán</td>
-                <td class="monto-cell">$450.00</td>
-                <td class="monto-cell">Bs. 16,560.00</td>
-                <td id="status-99201"><span class="badge badge-success">PAGADO</span></td>
-                <td></td>
-              </tr>
-              <tr id="row-88210">
-                <td>22/08/2026</td>
-                <td>Derecho de Grado<span class="ref">#UCAB-88210</span></td>
-                <td>Guayana</td>
-                <td class="monto-cell">$120.00</td>
-                <td class="monto-cell" id="bs-88210">Bs. 4,416.00</td>
-                <td id="status-88210"><span class="badge badge-warning">PARCIAL</span></td>
-                <td><button class="btn btn-primary btn-sm" onclick="triggerPago('#UCAB-88210','Derecho de Grado',120)">Pagar</button></td>
-              </tr>
-              <tr id="row-77112">
-                <td>10/08/2026</td>
-                <td>Curso de Inglés Intensivo<span class="ref">#UCAB-77112</span></td>
-                <td>Montalbán</td>
-                <td class="monto-cell">$85.00</td>
-                <td class="monto-cell">Bs. 3,128.00</td>
-                <td id="status-77112"><span class="badge badge-danger">NULO</span></td>
-                <td></td>
-              </tr>
-              <tr id="row-44510">
-                <td>01/08/2026</td>
-                <td>Estacionamiento Prepago<span class="ref">#UCAB-44510</span></td>
-                <td>Montalbán</td>
-                <td class="monto-cell">$15.00</td>
-                <td class="monto-cell">Bs. 552.00</td>
-                <td id="status-44510"><span class="badge badge-success">PAGADO</span></td>
-                <td></td>
-              </tr>
+            <tbody id="facturas-body">
+              <tr><td colspan="8" class="table-empty">Cargando facturas...</td></tr>
             </tbody>
           </table>
         </div>
       </div>
 
-      <!-- Section: TAI Wallet -->
-      <div class="wallet-bar">
-        <span style="font-size:1.6rem;">🪙</span>
-        <div style="flex:1;">
-          <div class="wallet-label">SALDO DE LA BILLETERA TAI</div>
-          <div class="wallet-value" id="wallet-balance">$1,240.50</div>
+      <!-- ══════ TAB: FOLIOS (admin) ══════ -->
+      <div id="tab-folios" class="tab-panel" style="display:none;">
+
+        <div class="card-header" style="padding:0 0 var(--space-4);">
+          <span class="card-header-title">Folios de Consumo</span>
+          <button class="btn btn-primary btn-sm" onclick="abrirCrearFolio()">+ Crear Folio</button>
         </div>
-        <button class="btn btn-primary">+ Añadir fondos</button>
+
+        <div class="table-wrap">
+          <table class="table" id="folios-table">
+            <thead>
+              <tr>
+                <th>ID FOLIO</th>
+                <th>SOLICITUD</th>
+                <th>MIEMBRO</th>
+                <th>SERVICIO</th>
+                <th>ÍTEMS</th>
+                <th>TOTAL CALC. ($)</th>
+                <th>ESTADO</th>
+                <th>ACCIONES</th>
+              </tr>
+            </thead>
+            <tbody id="folios-body">
+              <tr><td colspan="8" class="table-empty">Cargando folios...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ══════ TAB: TASAS BCV (admin) ══════ -->
+      <div id="tab-tasas" class="tab-panel" style="display:none;">
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-5);margin-bottom:var(--space-5);">
+          <div class="card">
+            <div class="card-header"><span class="card-header-title">Registrar Nueva Tasa</span></div>
+            <div style="padding:var(--space-4);">
+              <div class="form-group">
+                <label class="form-label">Fecha</label>
+                <input class="form-input" type="date" id="tasa-fecha">
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+                <div class="form-group">
+                  <label class="form-label">Tasa USD (Bs/$)</label>
+                  <input class="form-input" type="number" id="tasa-usd" placeholder="37.68" step="0.01" min="0.01">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">Tasa EUR (Bs/€)</label>
+                  <input class="form-input" type="number" id="tasa-eur" placeholder="40.62" step="0.01" min="0.01">
+                </div>
+              </div>
+              <button class="btn btn-primary" onclick="registrarTasa()">Guardar Tasa</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-header-title">Tasa Vigente (Última registrada)</span></div>
+            <div style="padding:var(--space-5);text-align:center;" id="tasa-vigente-panel">
+              <div style="font-size:2.5rem;font-weight:800;color:var(--color-primary);" id="tasa-vigente-usd">—</div>
+              <div style="color:var(--color-text-muted);margin-bottom:var(--space-3);">Bs. por dólar USD</div>
+              <div style="font-size:1.5rem;font-weight:700;color:var(--color-navy);" id="tasa-vigente-eur">—</div>
+              <div style="color:var(--color-text-muted);">Bs. por euro EUR</div>
+              <div style="margin-top:var(--space-3);font-size:.8rem;color:var(--color-text-muted);" id="tasa-vigente-fecha"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header"><span class="card-header-title">Historial de Tasas</span></div>
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table" id="tasas-table">
+              <thead>
+                <tr><th>FECHA</th><th>USD (Bs/$)</th><th>EUR (Bs/€)</th></tr>
+              </thead>
+              <tbody id="tasas-body">
+                <tr><td colspan="3" class="table-empty">Cargando...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- ══════ TAB: TERCEROS (admin) ══════ -->
+      <div id="tab-terceros" class="tab-panel" style="display:none;">
+
+        <div style="display:grid;grid-template-columns:1fr 2fr;gap:var(--space-5);">
+          <div class="card">
+            <div class="card-header"><span class="card-header-title">Nuevo Tercero Corporativo</span></div>
+            <div style="padding:var(--space-4);">
+              <div class="form-group">
+                <label class="form-label">RIF</label>
+                <input class="form-input" type="text" id="tercero-rif" placeholder="J-123456789">
+              </div>
+              <div class="form-group">
+                <label class="form-label">Razón Social</label>
+                <input class="form-input" type="text" id="tercero-razon" placeholder="Empresa, C.A.">
+              </div>
+              <button class="btn btn-primary" onclick="registrarTercero()">Registrar</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-header"><span class="card-header-title">Terceros Registrados</span></div>
+            <div class="table-wrap" style="border:none;border-radius:0;">
+              <table class="table" id="terceros-table">
+                <thead>
+                  <tr><th>RIF</th><th>RAZÓN SOCIAL</th><th>ACCIONES</th></tr>
+                </thead>
+                <tbody id="terceros-body">
+                  <tr><td colspan="3" class="table-empty">Cargando...</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </div>
 
     </main>
+  </div>
+</div>
+
+<!-- Modal: Invoice Detail -->
+<div class="modal-overlay" id="factura-detalle-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title">Detalle de Factura</h3>
+      <button class="modal-close" onclick="closeModal('factura-detalle-modal')">×</button>
+    </div>
+    <div id="factura-detalle-body"></div>
+  </div>
+</div>
+
+<!-- Modal: Folio Items Management (admin) -->
+<div class="modal-overlay" id="folio-items-modal">
+  <div class="modal modal-lg">
+    <div class="modal-header">
+      <h3 class="modal-title" id="folio-items-title">Ítems del Folio</h3>
+      <button class="modal-close" onclick="closeModal('folio-items-modal')">×</button>
+    </div>
+    <div id="folio-items-body"></div>
+  </div>
+</div>
+
+<!-- Modal: Create Folio (admin) -->
+<div class="modal-overlay" id="crear-folio-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Crear Folio de Consumo</h3>
+      <button class="modal-close" onclick="closeModal('crear-folio-modal')">×</button>
+    </div>
+    <div style="padding:var(--space-4);">
+      <div class="form-group">
+        <label class="form-label">Solicitud de Servicio</label>
+        <select class="form-select" id="folio-sol-select">
+          <option value="">Seleccione una solicitud...</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('crear-folio-modal')">Cancelar</button>
+        <button class="btn btn-primary" id="btn-crear-folio" onclick="confirmarCrearFolio()">Crear Folio</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Generate Invoice from Folio (admin) -->
+<div class="modal-overlay" id="generar-factura-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3 class="modal-title">Generar Factura</h3>
+      <button class="modal-close" onclick="closeModal('generar-factura-modal')">×</button>
+    </div>
+    <div style="padding:var(--space-4);">
+      <div id="generar-factura-info" class="info-box" style="margin-bottom:var(--space-4);"></div>
+      <div class="form-group">
+        <label class="form-label">Tercero Corporativo <small style="color:var(--color-text-muted);">(opcional, para factura corporativa)</small></label>
+        <select class="form-select" id="generar-rif-select">
+          <option value="">Sin tercero (factura personal)</option>
+        </select>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('generar-factura-modal')">Cancelar</button>
+        <button class="btn btn-primary" id="btn-generar-fac" onclick="confirmarGenerarFactura()">Generar Factura</button>
+      </div>
+    </div>
   </div>
 </div>
 
