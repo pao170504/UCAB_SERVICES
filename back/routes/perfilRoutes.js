@@ -86,4 +86,72 @@ router.get('/recurrencia', async (req, res) => {
   }
 });
 
+
+/* ─────────────────────────────────────────────
+   GET /api/perfil/fecha-clave — Última fecha de cambio de contraseña
+   ───────────────────────────────────────────── */
+router.get('/fecha-clave', async (req, res) => {
+  try {
+    const { rows } = await pool.query(
+      `SELECT fecha_cambio_clave FROM Miembro_Comunidad WHERE cedula = $1`,
+      [req.cedula]
+    );
+    res.json({ fecha_cambio_clave: rows[0]?.fecha_cambio_clave || null });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/* ─────────────────────────────────────────────
+   PUT /api/perfil/password — Cambio de contraseña
+   ───────────────────────────────────────────── */
+router.put('/password', async (req, res) => {
+  const { contrasena_actual, contrasena_nueva } = req.body;
+
+  if (!contrasena_actual || !contrasena_nueva) {
+    return res.status(400).json({ error: 'Debe proporcionar la contraseña actual y la nueva.' });
+  }
+  if (contrasena_nueva.length < 6) {
+    return res.status(400).json({ error: 'La nueva contraseña debe tener al menos 6 caracteres.' });
+  }
+  if (contrasena_actual === contrasena_nueva) {
+    return res.status(400).json({ error: 'La nueva contraseña debe ser diferente a la actual.' });
+  }
+
+  try {
+    /* 1. Obtener contraseña cifrada actual */
+    const { rows } = await pool.query(
+      `SELECT contrasena FROM Miembro_Comunidad WHERE cedula = $1`,
+      [req.cedula]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado.' });
+    }
+
+    /* 2. Verificar contraseña actual con pgcrypto */
+    const checkResult = await pool.query(
+      `SELECT fn_verificar_contrasena($1, $2) AS valido`,
+      [contrasena_actual, rows[0].contrasena]
+    );
+    if (!checkResult.rows[0]?.valido) {
+      return res.status(401).json({ error: 'La contraseña actual es incorrecta.' });
+    }
+
+    /* 3. Actualizar — el trigger trg_cifrar_contrasena cifra automáticamente */
+    await pool.query(
+      `UPDATE Miembro_Comunidad
+       SET Contrasena = $1, Fecha_Cambio_Clave = CURRENT_DATE
+       WHERE cedula = $2`,
+      [contrasena_nueva, req.cedula]
+    );
+
+    res.json({ message: 'Contraseña actualizada correctamente.' });
+
+  } catch (err) {
+    console.error('Error en cambio de contraseña:', err);
+    res.status(500).json({ error: 'Error interno del servidor.' });
+  }
+});
+
 module.exports = router;

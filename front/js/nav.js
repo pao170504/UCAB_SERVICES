@@ -2,10 +2,10 @@
 
 /* Updated permissions: carrera is egresado-only */
 window.NAV_PERMISOS = {
-  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento'],
-  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera'],
-  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes'],
-  administrativo: ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes']
+  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
+  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion'],
+  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
+  administrativo: ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion']
 };
 
 var _usuario = null;
@@ -43,7 +43,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'infraestructura.html': 'infraestructura',
     'estacionamiento.html': 'estacionamiento',
     'carrera.html':         'carrera',
-    'index.html':           'reportes'
+    'index.html':           'dashboard'
   };
   var currentPage = PAGE_MAP[filename] || filename.replace('.html', '');
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function (el) {

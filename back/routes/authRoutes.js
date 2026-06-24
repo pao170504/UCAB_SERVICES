@@ -36,7 +36,13 @@ router.post('/login', async (req, res) => {
     }
 
     /* 4. Validate password and MFA */
-    if (user.contrasena !== password || codigoMFA !== '123456') {
+    const pwCheck = await pool.query(
+      `SELECT fn_verificar_contrasena($1, $2) AS valido`,
+      [password, user.contrasena]
+    );
+    const passwordValida = pwCheck.rows[0]?.valido === true;
+
+    if (!passwordValida || codigoMFA !== '123456') {
       const { rowCount: updCount } = await pool.query(
         `UPDATE Sesion SET intentos_fallidos = intentos_fallidos + 1
          WHERE cedula = $1 AND fecha_hora_acceso = (
@@ -172,6 +178,82 @@ router.post('/login', async (req, res) => {
   } catch (err) {
     console.error('Error crítico en login:', err);
     res.status(500).json({ error: 'Error interno del servidor' });
+  }
+});
+
+
+/* ─────────────────────────────────────────────
+   POST /api/auth/register — Registro de nuevo miembro
+   ───────────────────────────────────────────── */
+router.post('/register', async (req, res) => {
+  const {
+    cedula, sexo, fecha_nacimiento,
+    primer_nombre, segundo_nombre, primer_apellido, segundo_apellido,
+    correo_institucional, id_sede, contrasena,
+    ciudad, estado, calle, telefono
+  } = req.body;
+
+  const required = { cedula, sexo, fecha_nacimiento, primer_nombre, primer_apellido, segundo_apellido, correo_institucional, id_sede, contrasena };
+  const missing = Object.entries(required).filter(([, v]) => v === undefined || v === null || String(v).trim() === '').map(([k]) => k);
+  if (missing.length) {
+    return res.status(400).json({ error: `Faltan campos obligatorios: ${missing.join(', ')}` });
+  }
+
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+
+    await client.query(
+      `INSERT INTO Persona (Cedula, Sexo, Fecha_Nacimiento, Primer_Nombre, Segundo_Nombre, Primer_Apellido, Segundo_Apellido)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+      [
+        cedula.trim(), sexo,
+        fecha_nacimiento,
+        primer_nombre.trim(),
+        segundo_nombre?.trim() || null,
+        primer_apellido.trim(),
+        segundo_apellido.trim()
+      ]
+    );
+
+    /* El trigger trg_cifrar_contrasena cifra automáticamente la contraseña */
+    await client.query(
+      `INSERT INTO Miembro_Comunidad
+         (Cedula, Correo_Institucional, ID_Sede, Contrasena, Estado_de_Cuenta, Fecha_Cambio_Clave, Ciudad, Estado, Calle)
+       VALUES ($1, $2, $3, $4, 'Activa', CURRENT_DATE, $5, $6, $7)`,
+      [
+        cedula.trim(),
+        correo_institucional.trim(),
+        id_sede,
+        contrasena,
+        ciudad?.trim() || null,
+        estado?.trim() || null,
+        calle?.trim() || null
+      ]
+    );
+
+    if (telefono?.trim()) {
+      await client.query(
+        `INSERT INTO Telefono (Cedula, NumeroTelefono) VALUES ($1, $2)`,
+        [cedula.trim(), telefono.trim()]
+      );
+    }
+
+    await client.query('COMMIT');
+    res.status(201).json({ message: 'Usuario registrado exitosamente' });
+
+  } catch (err) {
+    await client.query('ROLLBACK');
+    if (err.code === '23505') {
+      return res.status(409).json({ error: 'La cédula o el correo institucional ya están registrados.' });
+    }
+    if (err.code === '23514') {
+      return res.status(400).json({ error: 'El correo debe pertenecer al dominio @ucab.edu.ve' });
+    }
+    console.error('Error en registro:', err);
+    res.status(500).json({ error: 'Error interno del servidor' });
+  } finally {
+    client.release();
   }
 });
 

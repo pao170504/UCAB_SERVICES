@@ -228,8 +228,7 @@ function renderAdministrativo(data, view) {
       qa.style.cssText = 'display:flex;gap:var(--space-3);margin-bottom:var(--space-5);flex-wrap:wrap;';
       qa.innerHTML =
         '<a href="servicios.html" class="btn btn-secondary">📋 Nuevo Trámite</a>' +
-        '<a href="infraestructura.html" class="btn btn-secondary">📅 Gestionar Espacios</a>' +
-        '<a href="reportes/index.html" class="btn btn-secondary">📊 Ver Reportes</a>';
+        '<a href="infraestructura.html" class="btn btn-secondary">📅 Gestionar Espacios</a>';
       newRow.insertAdjacentElement('afterend', qa);
     }
   }

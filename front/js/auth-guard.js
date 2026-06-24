@@ -1,19 +1,14 @@
 /* auth-guard.js — session helpers available on window */
 
 var NAV_PERMISOS = {
-  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera'],
-  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera'],
-  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes'],
-  administrativo: ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'reportes']
+  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
+  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion'],
+  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
+  administrativo: ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion']
 };
 
-function _loginPath() {
-  return window.location.pathname.includes('/reportes/') ? '../login.html' : 'login.html';
-}
-
-function _dashPath() {
-  return window.location.pathname.includes('/reportes/') ? '../dashboard.html' : 'dashboard.html';
-}
+function _loginPath() { return 'login.html'; }
+function _dashPath()  { return 'dashboard.html'; }
 
 function getUsuario() {
   var raw = sessionStorage.getItem('usuario');
@@ -56,11 +51,7 @@ function checkPageAccess() {
   var filename = pathname.split('/').pop() || '';
   var currentPage;
 
-  if (pathname.includes('/reportes/') && filename === 'index.html') {
-    currentPage = 'reportes';
-  } else {
-    currentPage = filename.replace('.html', '');
-  }
+  currentPage = filename.replace('.html', '');
 
   /* Always allowed */
   if (currentPage === 'login' || currentPage === '') return;
