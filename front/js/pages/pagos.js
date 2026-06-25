@@ -1,6 +1,7 @@
 /* pagos.js — Payments module */
 
 var _facturas   = [];
+var facturasCache = [];
 var _folios     = [];
 var _tasas      = [];
 var _terceros   = [];
@@ -50,15 +51,28 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   /* Table search & filter */
-  var searchInput = document.getElementById('facturas-search');
-  if (searchInput) searchInput.addEventListener('input', _renderFacturasTable);
+  document.getElementById('facturas-search')
+    ?.addEventListener('input', function () {
+      var q = this.value.toLowerCase().trim();
+      var filtradas = facturasCache.filter(function (f) {
+        return f.id_factura.toLowerCase().includes(q) ||
+               (f.servicio || '').toLowerCase().includes(q);
+      });
+      renderTablaFacturas(filtradas);
+    });
 
-  var filterSelect = document.getElementById('facturas-filter');
-  if (filterSelect) filterSelect.addEventListener('change', _renderFacturasTable);
+  document.getElementById('facturas-filter')
+    ?.addEventListener('change', function () {
+      var estado = this.value;
+      var filtradas = estado === 'all' || !estado
+        ? facturasCache
+        : facturasCache.filter(function (f) { return f.estado === estado; });
+      renderTablaFacturas(filtradas);
+    });
 
   /* Role-based init */
   document.addEventListener('roleChanged', function (e) {
-    _adminMode = e.detail.rol === 'administrativo';
+    _adminMode = esAdminSistema();
     _updateAdminUI();
   });
 
@@ -67,7 +81,7 @@ document.addEventListener('DOMContentLoaded', function () {
 });
 
 window.renderForRole = function (rol) {
-  _adminMode = rol === 'administrativo';
+  _adminMode = esAdminSistema();
   _updateAdminUI();
 };
 
@@ -246,66 +260,67 @@ window.eliminarTercero = function (rif) {
 /* ── Facturas ─────────────────────────────────────────────────────────────── */
 function cargarFacturas() {
   fetch('/api/pagos/facturas', { headers: _authHeaders() })
-    .then(function (r) { return r.json(); })
-    .then(function (data) {
-      _facturas = data.facturas || [];
-      _renderFacturasTable();
-      makeTableSortable('facturas-table');
-      makePaginated('facturas-table', 8);
+    .then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
     })
-    .catch(function () { showToast('Error al cargar facturas', 'error'); });
+    .then(function (data) {
+      facturasCache = data.facturas || [];
+      _facturas = facturasCache;
+      renderTablaFacturas(facturasCache);
+      makeTableSortable('facturas-table');
+    })
+    .catch(function (err) {
+      console.error('Error al cargar facturas:', err);
+      showToast('Error al cargar facturas. Verifica la conexión.', 'error');
+    });
 }
 
-function _renderFacturasTable() {
-  var tbody  = document.getElementById('facturas-body');
+var ESTADO_BADGE = {
+  'Gratuito':  'badge-success',
+  'Pagada':    'badge-success',
+  'Parcial':   'badge-warning',
+  'Pendiente': 'badge-danger'
+};
+
+function renderTablaFacturas(lista) {
+  var tbody = document.getElementById('facturas-body');
   if (!tbody) return;
 
-  var search = ((document.getElementById('facturas-search') || {}).value || '').toLowerCase();
-  var filter = (document.getElementById('facturas-filter') || {}).value || 'all';
+  var datos = lista || facturasCache;
 
-  var visible = _facturas.filter(function (f) {
-    var matchSearch = !search ||
-      (f.id_factura    || '').toLowerCase().includes(search) ||
-      (f.nombre_servicio || '').toLowerCase().includes(search) ||
-      (f.nombre_miembro  || '').toLowerCase().includes(search);
-    var matchFilter = filter === 'all' || f.estado_pago === filter;
-    return matchSearch && matchFilter;
-  });
-
-  if (visible.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="8" class="table-empty">No hay facturas que coincidan.</td></tr>';
+  if (datos.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" class="table-empty">No hay facturas que coincidan.</td></tr>';
     return;
   }
 
-  tbody.innerHTML = visible.map(function (f) {
-    var estado = _ESTADO_PAGO[f.estado_pago] || _ESTADO_PAGO['default'];
-    var fecha  = f.emision ? new Date(f.emision).toLocaleDateString('es-VE') : '—';
-    var total  = '$' + parseFloat(f.total  || 0).toFixed(2);
-    var pagado = '$' + parseFloat(f.pagado || 0).toFixed(2);
-    var saldo  = '$' + parseFloat(f.saldo  || 0).toFixed(2);
+  tbody.innerHTML = datos.map(function (f) {
+    var badgeCls = ESTADO_BADGE[f.estado] || 'badge-info';
+    var fecha    = f.fecha_emision ? new Date(f.fecha_emision).toLocaleDateString('es-VE') : '—';
+    var total    = '$' + parseFloat(f.monto_total  || 0).toFixed(2);
+    var pagado   = '$' + parseFloat(f.total_pagado || 0).toFixed(2);
+    var saldo    = '$' + parseFloat(f.saldo        || 0).toFixed(2);
 
-    var acciones = '<button class="btn btn-secondary btn-sm" onclick="verDetalleFactura(\'' + f.id_factura + '\')">Ver detalle</button>';
-    if (f.estado_pago !== 'Pagada') {
-      acciones += ' <button class="btn btn-primary btn-sm" onclick="abrirPago(\'' + f.id_factura + '\',\'' + _esc(f.nombre_servicio) + '\',' + parseFloat(f.saldo || 0).toFixed(2) + ')">Pagar</button>';
-    }
-
-    var miembroCell = _adminMode && f.nombre_miembro
-      ? '<span class="badge badge-gray" style="font-size:.72rem;">' + _esc(f.nombre_miembro) + '</span><br>'
-      : '';
+    var pagarBtn = (f.estado === 'Pagada' || f.estado === 'Gratuito')
+      ? '<button class="btn btn-sm" disabled style="opacity:0.5">' + (f.estado === 'Gratuito' ? 'Sin costo ✓' : 'Pagada ✓') + '</button>'
+      : '<button class="btn btn-primary btn-sm" onclick="abrirPago(\'' + f.id_factura + '\',\'' + _esc(f.servicio) + '\',' + parseFloat(f.saldo || 0).toFixed(2) + ')">Pagar</button>';
 
     return '<tr>' +
       '<td><code style="font-size:.78rem;">' + _esc(f.id_factura) + '</code></td>' +
-      '<td>' + miembroCell + _esc(f.nombre_servicio) + (f.tercero ? '<br><small style="color:var(--color-text-muted);">Corporativa: ' + _esc(f.tercero) + '</small>' : '') + '</td>' +
+      '<td>' + _esc(f.servicio || '—') + '</td>' +
       '<td>' + fecha + '</td>' +
       '<td class="mono">' + total + '</td>' +
       '<td class="mono" style="color:var(--color-success);">' + pagado + '</td>' +
       '<td class="mono" style="color:var(--color-warning);">' + saldo + '</td>' +
-      '<td><span class="badge ' + estado.cls + '">' + estado.label + '</span></td>' +
-      '<td><div style="display:flex;gap:var(--space-2);">' + acciones + '</div></td>' +
+      '<td><span class="badge ' + badgeCls + '">' + _esc(f.estado) + '</span></td>' +
+      '<td><div style="display:flex;gap:var(--space-2);">' +
+        '<button class="btn btn-secondary btn-sm" onclick="verDetalleFactura(\'' + f.id_factura + '\')">Ver detalle</button>' +
+        pagarBtn +
+      '</div></td>' +
     '</tr>';
   }).join('');
 
-  makeTableSearchable('facturas-table', 'facturas-search');
+  makePaginated('facturas-table', 8);
 }
 
 /* ── Invoice detail modal ─────────────────────────────────────────────────── */
@@ -327,8 +342,8 @@ function _renderDetalleFactura(data) {
   var items  = data.items   || [];
   var pagos  = data.pagos   || [];
 
-  var estadoInfo = _ESTADO_PAGO[fac.estado_pago] || _ESTADO_PAGO['default'];
-  var fecha = fac.emision ? new Date(fac.emision).toLocaleDateString('es-VE') : '—';
+  var estadoInfo = _ESTADO_PAGO[fac.estado] || _ESTADO_PAGO['default'];
+  var fecha = fac.fecha_emision ? new Date(fac.fecha_emision).toLocaleDateString('es-VE') : '—';
 
   var itemsHtml = items.length === 0
     ? '<p style="color:var(--color-text-muted);">Sin ítems registrados.</p>'
@@ -346,7 +361,7 @@ function _renderDetalleFactura(data) {
             '<td style="text-align:center;padding:.4rem;">' + it.cantidad + '</td>' +
             '<td style="text-align:right;padding:.4rem .5rem;font-family:var(--font-mono);font-size:.875rem;">$' + parseFloat(it.precio).toFixed(2) + '</td>' +
             '<td style="text-align:right;padding:.4rem .5rem;font-size:.875rem;">' + (parseFloat(it.impuesto)*100).toFixed(0) + '%</td>' +
-            '<td style="text-align:right;padding:.4rem .5rem;font-family:var(--font-mono);font-size:.875rem;font-weight:600;">$' + parseFloat(it.total_item).toFixed(2) + '</td>' +
+            '<td style="text-align:right;padding:.4rem .5rem;font-family:var(--font-mono);font-size:.875rem;font-weight:600;">$' + parseFloat(it.subtotal).toFixed(2) + '</td>' +
           '</tr>';
         }).join('') +
         '</tbody></table>';
@@ -375,13 +390,12 @@ function _renderDetalleFactura(data) {
     '<div class="info-box-title">Información de Factura</div>' +
     '<table style="width:100%;border-collapse:collapse;">' +
       '<tr><td class="det-label">ID</td><td><code style="font-size:.8rem;">' + fac.id_factura + '</code></td></tr>' +
-      '<tr><td class="det-label">Servicio</td><td>' + _esc(fac.nombre_servicio) + '</td></tr>' +
+      '<tr><td class="det-label">Servicio</td><td>' + _esc(fac.servicio) + '</td></tr>' +
       '<tr><td class="det-label">Fecha emisión</td><td>' + fecha + '</td></tr>' +
-      '<tr><td class="det-label">Total</td><td><strong>$' + parseFloat(fac.total).toFixed(2) + '</strong></td></tr>' +
-      '<tr><td class="det-label">Pagado</td><td style="color:var(--color-success);">$' + parseFloat(fac.pagado || 0).toFixed(2) + '</td></tr>' +
+      '<tr><td class="det-label">Total</td><td><strong>$' + parseFloat(fac.monto_total || 0).toFixed(2) + '</strong></td></tr>' +
+      '<tr><td class="det-label">Pagado</td><td style="color:var(--color-success);">$' + parseFloat(fac.total_pagado || 0).toFixed(2) + '</td></tr>' +
       '<tr><td class="det-label">Saldo</td><td style="color:var(--color-warning);font-weight:700;">$' + parseFloat(fac.saldo || 0).toFixed(2) + '</td></tr>' +
       '<tr><td class="det-label">Estado</td><td><span class="badge ' + estadoInfo.cls + '">' + estadoInfo.label + '</span></td></tr>' +
-      (fac.tercero ? '<tr><td class="det-label">Tercero</td><td>' + _esc(fac.tercero) + '</td></tr>' : '') +
     '</table></div>' +
 
     '<style>.det-label{color:var(--color-text-muted);padding:.3rem .5rem;white-space:nowrap;width:130px;vertical-align:top;}td{padding:.3rem .5rem;}</style>' +
@@ -396,9 +410,9 @@ function _renderDetalleFactura(data) {
       pagosHtml +
     '</div>' +
 
-    (fac.estado_pago !== 'Pagada'
+    (fac.estado !== 'Pagada'
       ? '<div class="modal-footer">' +
-          '<button class="btn btn-primary" onclick="closeModal(\'factura-detalle-modal\');abrirPago(\'' + fac.id_factura + '\',\'' + _esc(fac.nombre_servicio) + '\',' + parseFloat(fac.saldo || 0).toFixed(2) + ')">Registrar Pago</button>' +
+          '<button class="btn btn-primary" onclick="closeModal(\'factura-detalle-modal\');abrirPago(\'' + fac.id_factura + '\',\'' + _esc(fac.servicio) + '\',' + parseFloat(fac.saldo || 0).toFixed(2) + ')">Registrar Pago</button>' +
         '</div>'
       : '') +
     '</div>';

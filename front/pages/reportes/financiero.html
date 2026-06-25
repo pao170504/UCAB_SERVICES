@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Reporte Financiero</title>
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/layout.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/pages/reportes.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Section: Navbar -->
+  <nav class="navbar">
+    <a href="../dashboard.html" class="navbar-brand">
+      <div class="navbar-brand-icon">🎓</div>
+      UCAB Services
+    </a>
+    <div class="navbar-tabs">
+      <a href="../dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="../servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="../pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="../infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="../carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+    </div>
+    <div class="navbar-right">
+      <div class="role-switcher">
+        <button class="role-switcher-btn active">Estudiante</button>
+        <button class="role-switcher-btn">Profesor</button>
+      </div>
+      <div class="navbar-avatar">MP</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+
+    <!-- Section: Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar">MP</div>
+        <div class="sidebar-profile-name">María Pérez</div>
+        <div class="sidebar-profile-sub">Estudiante · 8vo Semestre</div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="../dashboard.html"       class="sidebar-item" data-nav="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="../servicios.html"       class="sidebar-item" data-nav="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="../pagos.html"           class="sidebar-item" data-nav="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="../infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="../estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="../carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="index.html"             class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="../login.html" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</a>
+      </div>
+    </aside>
+
+    <!-- Section: Main content -->
+    <main class="main-content">
+
+      <div class="page-header">
+        <h1 class="page-header-title">Conciliación Financiera</h1>
+        <p class="page-header-sub">Monitoreo de ingresos multimoneda y rentabilidad de espacios.</p>
+      </div>
+
+      <!-- BCV Banner -->
+      <div class="bcv-banner">
+        <div>
+          <div class="bcv-banner-label">💲 TASA BCV DEL DÍA</div>
+          <div class="bcv-banner-title">Referencia oficial para operaciones multimoneda</div>
+        </div>
+        <div style="text-align:right;">
+          <div class="bcv-rate">36.45 Bs/$</div>
+          <div class="bcv-updated">ACTUALIZADO HACE: 2 HORAS</div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <select class="form-select" style="width:160px;"><option>Todas las sedes</option><option>Montalbán</option><option>Guayana</option></select>
+        <select class="form-select" style="width:180px;"><option>Método de pago</option><option>Zelle</option><option>Pago Móvil</option><option>Efectivo</option><option>Transferencia</option></select>
+        <select class="form-select" style="width:180px;"><option>Edificio</option><option>Edif. Cincuentenario</option><option>Edif. Laboratorios</option></select>
+      </div>
+
+      <!-- Tabs + sidebar layout -->
+      <div class="financiero-layout">
+
+        <!-- Main content tabs -->
+        <div>
+          <div class="tab-section">
+            <div class="tab-group">
+              <button class="tab-item active" data-tab="tab-conciliacion">Conciliación Multimoneda</button>
+              <button class="tab-item" data-tab="tab-rentabilidad">Rentabilidad de Espacios</button>
+            </div>
+            <div class="tab-panels">
+
+              <!-- Tab 1 -->
+              <div class="tab-panel" id="tab-conciliacion">
+                <div class="section-header">
+                  <span class="section-title">Conciliación de Operaciones Recientes</span>
+                  <button class="btn btn-secondary btn-sm">↓ Exportar Reporte</button>
+                </div>
+                <div class="table-wrap">
+                  <table class="table" id="conciliacion-table">
+                    <thead>
+                      <tr>
+                        <th>NRO. FACTURA</th>
+                        <th>MÉTODO</th>
+                        <th>REFERENCIA</th>
+                        <th>MONTO ($)</th>
+                        <th>TASA BCV</th>
+                        <th>MONTO (Bs.)</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td class="font-mono text-sm">#FP-2024-8821</td>
+                        <td><span class="badge method-zelle">ZELLE</span></td>
+                        <td class="font-mono text-sm">TXN-9823184</td>
+                        <td class="monto-cell">$12.50</td>
+                        <td>36.45</td>
+                        <td class="monto-cell">455.62</td>
+                      </tr>
+                      <tr>
+                        <td class="font-mono text-sm">#FP-2024-8822</td>
+                        <td><span class="badge method-pago-movil">PAGO MÓVIL</span></td>
+                        <td class="font-mono text-sm">REF-881293</td>
+                        <td class="monto-cell">$5.00</td>
+                        <td>36.45</td>
+                        <td class="monto-cell">182.25</td>
+                      </tr>
+                      <tr>
+                        <td class="font-mono text-sm">#FP-2024-8823</td>
+                        <td><span class="badge method-efectivo">EFECTIVO</span></td>
+                        <td class="font-mono text-sm">CAJA-82-81</td>
+                        <td class="monto-cell">$20.00</td>
+                        <td>36.45</td>
+                        <td class="monto-cell">729.00</td>
+                      </tr>
+                      <tr>
+                        <td class="font-mono text-sm">#FP-2024-8824</td>
+                        <td><span class="badge method-transferencia">TRANSFERENCIA</span></td>
+                        <td class="font-mono text-sm">BNC-9921</td>
+                        <td class="monto-cell">$8.20</td>
+                        <td>36.45</td>
+                        <td class="monto-cell">298.89</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Tab 2 -->
+              <div class="tab-panel" id="tab-rentabilidad" style="display:none;">
+                <div class="alert alert-info">
+                  <span>ℹ</span>
+                  <span>Los datos de rentabilidad por espacio se actualizan a las 00:00 hrs cada día.</span>
+                </div>
+                <div class="table-wrap mt-4">
+                  <table class="table">
+                    <thead>
+                      <tr><th>ESPACIO</th><th>SEDE</th><th>INGRESOS ($)</th><th>OCUPACIÓN</th><th>RENTABILIDAD</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>Auditorio Principal</td>
+                        <td>Montalbán</td>
+                        <td class="monto-cell">$1,240.00</td>
+                        <td><div class="progress-bar-wrap" style="width:120px;"><div class="progress-bar-fill" style="width:78%"></div></div></td>
+                        <td><span class="badge badge-success">Alta</span></td>
+                      </tr>
+                      <tr>
+                        <td>Cancha de Tenis</td>
+                        <td>Guayana</td>
+                        <td class="monto-cell">$380.00</td>
+                        <td><div class="progress-bar-wrap" style="width:120px;"><div class="progress-bar-fill warning" style="width:42%"></div></div></td>
+                        <td><span class="badge badge-warning">Media</span></td>
+                      </tr>
+                      <tr>
+                        <td>Lab. Biotecnología</td>
+                        <td>Montalbán</td>
+                        <td class="monto-cell">$920.00</td>
+                        <td><div class="progress-bar-wrap" style="width:120px;"><div class="progress-bar-fill" style="width:88%"></div></div></td>
+                        <td><span class="badge badge-success">Alta</span></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Right sidebar -->
+        <div>
+          <div class="ingresos-card">
+            <div class="ingresos-card-header">INGRESOS HOY</div>
+            <div class="ingresos-row">
+              <span class="ingresos-label">Total Recaudado ($)</span>
+              <span class="ingresos-value">$4,821.50</span>
+            </div>
+            <div class="ingresos-row">
+              <span class="ingresos-label">Equivalente en Bs.</span>
+              <span class="ingresos-value">Bs. 175,743.68</span>
+            </div>
+          </div>
+
+          <div class="ingresos-card">
+            <div class="ingresos-card-header">OCUPACIÓN CRÍTICA</div>
+            <div style="padding:var(--space-4);display:flex;flex-direction:column;align-items:center;gap:var(--space-3);">
+              <div class="donut-placeholder">88%</div>
+              <div style="font-size:.8rem;text-align:center;color:var(--color-text-secondary);">Edif. Cincuentenario<br>Piso 1</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../../js/utils.js"></script>
+<script src="../../js/nav.js"></script>
+<script src="../../js/tables.js"></script>
+<script src="../../js/pages/reportes.js"></script>
+</body>
+</html>

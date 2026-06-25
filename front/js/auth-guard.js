@@ -1,14 +1,19 @@
 /* auth-guard.js — session helpers available on window */
 
 var NAV_PERMISOS = {
-  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
-  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion'],
-  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
-  administrativo: ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion']
+  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'acreditaciones'],
+  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'acreditaciones'],
+  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes', 'beneficiarios', 'acreditaciones'],
+  administrativo: ['dashboard', 'usuarios', 'admin', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'reportes', 'beneficiarios', 'acreditaciones']
 };
 
-function _loginPath() { return 'login.html'; }
-function _dashPath()  { return 'dashboard.html'; }
+function _loginPath() {
+  return window.location.pathname.includes('/reportes/') ? '../login.html' : 'login.html';
+}
+
+function _dashPath() {
+  return window.location.pathname.includes('/reportes/') ? '../dashboard.html' : 'dashboard.html';
+}
 
 function getUsuario() {
   var raw = sessionStorage.getItem('usuario');
@@ -36,6 +41,17 @@ function tieneRol(rol) {
   } catch (e) { return false; }
 }
 
+/* Cédulas con poderes de administrador del sistema (fuente ÚNICA del frontend).
+   Debe coincidir con back/config/admins.js. esAdminSistema() decide si se muestran
+   las acciones de admin (tasas, folios, servicios/precios, aprobar pasos, usuarios). */
+var ADMIN_CEDULAS = ['17890234'];
+function esAdminSistema() {
+  var raw = sessionStorage.getItem('usuario');
+  if (!raw) return false;
+  try { return ADMIN_CEDULAS.indexOf(JSON.parse(raw).cedula) !== -1; }
+  catch (e) { return false; }
+}
+
 function cerrarSesion() {
   sessionStorage.clear();
   window.location.href = _loginPath();
@@ -51,7 +67,11 @@ function checkPageAccess() {
   var filename = pathname.split('/').pop() || '';
   var currentPage;
 
-  currentPage = filename.replace('.html', '');
+  if (pathname.includes('/reportes/') && filename === 'index.html') {
+    currentPage = 'reportes';
+  } else {
+    currentPage = filename.replace('.html', '');
+  }
 
   /* Always allowed */
   if (currentPage === 'login' || currentPage === '') return;
@@ -79,5 +99,6 @@ window.getUsuario    = getUsuario;
 window.getRoles      = getRoles;
 window.getRolData    = getRolData;
 window.tieneRol      = tieneRol;
+window.esAdminSistema = esAdminSistema;
 window.cerrarSesion  = cerrarSesion;
 window.checkPageAccess = checkPageAccess;

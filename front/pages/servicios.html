@@ -36,14 +36,18 @@
       </div>
       <nav class="sidebar-nav">
         <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
         <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
         <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
         <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
         <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
-        <a href="configuracion.html" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
         <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
       </div>
     </aside>
@@ -80,33 +84,47 @@
         No hay servicios disponibles para los filtros seleccionados.
       </div>
 
-      <!-- Mis Solicitudes -->
+      <!-- Solicitudes (user + admin tabs) -->
       <div class="card">
         <div class="card-header">
-          <span class="card-header-title">Mis Solicitudes</span>
-          <div class="search-bar">
-            <span class="search-icon">🔍</span>
-            <input type="text" id="sol-search" placeholder="Buscar solicitud...">
+          <span class="card-header-title">Solicitudes</span>
+          <div style="display:flex;gap:var(--space-2);align-items:center;flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" id="tab-mis-solicitudes"
+              onclick="mostrarTabSolicitudes('mis')">Mis Solicitudes</button>
+            <button class="btn btn-outline btn-sm" id="tab-gestion-tramites"
+              style="display:none"
+              onclick="mostrarTabSolicitudes('admin')">Gestión de Trámites</button>
+            <div class="search-bar">
+              <span class="search-icon">🔍</span>
+              <input type="text" id="sol-search" placeholder="Buscar solicitud...">
+            </div>
           </div>
         </div>
-        <div class="table-wrap" style="border:none;border-radius:0;">
-          <table class="table" id="solicitudes-table">
-            <thead>
-              <tr>
-                <th>ID</th>
-                <th>SERVICIO</th>
-                <th>CATEGORÍA</th>
-                <th>FECHA</th>
-                <th>PROGRESO</th>
-                <th>ESTADO</th>
-                <th>ACCIONES</th>
-              </tr>
-            </thead>
-            <tbody id="solicitudes-body">
-              <tr><td colspan="7" class="table-empty">Cargando solicitudes...</td></tr>
-            </tbody>
-          </table>
+
+        <!-- User's own solicitudes -->
+        <div id="mis-solicitudes-panel">
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table" id="solicitudes-table">
+              <thead>
+                <tr>
+                  <th>ID</th>
+                  <th>SERVICIO</th>
+                  <th>CATEGORÍA</th>
+                  <th>FECHA</th>
+                  <th>PROGRESO</th>
+                  <th>ESTADO</th>
+                  <th>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody id="solicitudes-body">
+                <tr><td colspan="7" class="table-empty">Cargando solicitudes...</td></tr>
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        <!-- Admin gestión panel (hidden by default) -->
+        <div id="admin-tramites-container" style="display:none"></div>
       </div>
 
     </main>
@@ -144,6 +162,36 @@
       <button class="modal-close" onclick="closeModal('detalle-modal')">×</button>
     </div>
     <div id="detalle-body"></div>
+  </div>
+</div>
+
+<!-- Modal: Admin paso detail -->
+<div class="modal-overlay" id="modal-admin-pasos">
+  <div class="modal" style="width:min(500px,95vw)">
+    <div class="modal-header">
+      <h3 class="modal-title">Detalle del Trámite</h3>
+      <button class="modal-close" onclick="closeModal('modal-admin-pasos')">×</button>
+    </div>
+    <div id="modal-admin-pasos-lista"
+         style="max-height:400px;overflow-y:auto;padding:var(--space-4)"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-admin-pasos')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Requisitos del trámite (admin) -->
+<div class="modal-overlay" id="modal-admin-requisitos">
+  <div class="modal" style="width:min(560px,95vw)">
+    <div class="modal-header">
+      <h3 class="modal-title">Requisitos del Trámite</h3>
+      <button class="modal-close" onclick="closeModal('modal-admin-requisitos')">&times;</button>
+    </div>
+    <div id="modal-admin-requisitos-body"
+         style="max-height:460px;overflow-y:auto;padding:var(--space-4)"></div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-admin-requisitos')">Cerrar</button>
+    </div>
   </div>
 </div>
 

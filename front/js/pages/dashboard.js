@@ -13,8 +13,6 @@ window.renderForRole = function (role) {
     var el = document.getElementById(id);
     if (el) el.style.display = (id === targetId) ? '' : 'none';
   });
-  if (role === 'profesor' && document.getElementById('courses-table'))
-    makeTableSortable('courses-table');
   if ((role === 'estudiante' || role === 'egresado') && document.getElementById('audit-table'))
     makeTableSortable('audit-table');
 };
@@ -94,16 +92,33 @@ function renderEstudiante(data, view) {
     '</div>'
   );
 
-  var prepCard = view ? view.querySelector('.preparador-card') : null;
-  if (prepCard) {
-    if (preparador) {
-      prepCard.style.display = '';
-      var lines = prepCard.querySelectorAll('p');
-      if (lines[0]) lines[0].textContent = preparador.asignatura;
-      if (lines[1]) lines[1].textContent = preparador.horas + ' horas asignadas';
-    } else {
-      prepCard.style.display = 'none';
+  if (data.preparador) {
+    const prepSection = document.getElementById('preparador-section');
+    if (prepSection) {
+      prepSection.style.display = '';
+      prepSection.innerHTML = `
+        <div class="card">
+          <div class="card-body" style="padding:var(--space-4)">
+            <span class="card-eyebrow">MI PREPARADURÍA</span>
+            <div style="display:flex; align-items:center;
+                        gap:var(--space-3); margin-top:var(--space-3)">
+              <span style="font-size:1.4rem">📚</span>
+              <div>
+                <p style="font-weight:600; font-size:0.95rem; margin:0">
+                  ${data.preparador.asignatura}
+                </p>
+                <p style="color:var(--color-text-secondary);
+                          font-size:0.82rem; margin:2px 0 0 0">
+                  Horas asignadas: ${data.preparador.horas} hrs
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>`;
     }
+  } else {
+    const prepSection = document.getElementById('preparador-section');
+    if (prepSection) prepSection.style.display = 'none';
   }
 }
 
@@ -138,8 +153,8 @@ function renderEgresado(data, view) {
     '</div>'
   );
 
-  var prepCard = view ? view.querySelector('.preparador-card') : null;
-  if (prepCard) prepCard.style.display = 'none';
+  const prepSectionEg = document.getElementById('preparador-section');
+  if (prepSectionEg) prepSectionEg.style.display = 'none';
 
   /* CTA banner (idempotent) */
   if (!document.getElementById('cta-bolsa-egresado') && view) {
@@ -195,6 +210,8 @@ function renderProfesor(data, view) {
       card3 + _securityCard() +
     '</div>'
   );
+  const prepSectionProf = document.getElementById('preparador-section');
+  if (prepSectionProf) prepSectionProf.style.display = 'none';
 }
 
 function renderAdministrativo(data, view) {
@@ -218,6 +235,8 @@ function renderAdministrativo(data, view) {
       _securityCard() +
     '</div>'
   );
+  const prepSectionAdmin = document.getElementById('preparador-section');
+  if (prepSectionAdmin) prepSectionAdmin.style.display = 'none';
 
   /* Quick actions (idempotent) */
   if (!document.getElementById('quick-actions-admin') && view) {
@@ -228,9 +247,137 @@ function renderAdministrativo(data, view) {
       qa.style.cssText = 'display:flex;gap:var(--space-3);margin-bottom:var(--space-5);flex-wrap:wrap;';
       qa.innerHTML =
         '<a href="servicios.html" class="btn btn-secondary">📋 Nuevo Trámite</a>' +
-        '<a href="infraestructura.html" class="btn btn-secondary">📅 Gestionar Espacios</a>';
+        '<a href="infraestructura.html" class="btn btn-secondary">📅 Gestionar Espacios</a>' +
+        '<a href="reportes/index.html" class="btn btn-secondary">📊 Ver Reportes</a>';
       newRow.insertAdjacentElement('afterend', qa);
     }
+  }
+
+  cargarTramitesPendientesAdmin();
+}
+
+/* ---- Admin: load pending tramites ---- */
+async function cargarTramitesPendientesAdmin() {
+  // Solo el admin del sistema ve/usa el panel de aprobación de trámites.
+  var _cont = document.getElementById('admin-tramites-pendientes');
+  if (!esAdminSistema()) {
+    if (_cont) { var _card = _cont.closest('.card'); (_card || _cont).style.display = 'none'; }
+    return;
+  }
+  if (_cont) { var _c2 = _cont.closest('.card'); if (_c2) _c2.style.display = ''; }
+  var sid = sessionStorage.getItem('sessionID');
+  try {
+    var r    = await fetch('/api/admin/solicitudes/pendientes', {
+      headers: { 'Authorization': 'Bearer ' + sid }
+    });
+    var data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    var solicitudes = data.solicitudes || [];
+    var container   = document.getElementById('admin-tramites-pendientes');
+    if (!container) return;
+    if (solicitudes.length === 0) {
+      container.innerHTML = '<p style="color:var(--color-text-muted)">No hay trámites pendientes de aprobación.</p>';
+      return;
+    }
+    container.innerHTML = solicitudes.map(function (s) {
+      var btnAprobar = s.paso_pendiente_id
+        ? '<button class="btn btn-primary btn-sm" style="margin-top:8px" ' +
+          'onclick="aprobarPasoDesdePanel(\'' + s.id_solicitud + '\',\'' + s.paso_pendiente_id + '\')">' +
+          'Aprobar paso (' + (s.paso_pendiente_responsable || 'Revisar') + ')</button>'
+        : '<span style="font-size:.82rem;color:var(--color-text-muted)">Sin paso pendiente</span>';
+      return '<div style="padding:var(--space-3);border-bottom:1px solid var(--color-border)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:4px">' +
+          '<span style="font-weight:600;font-size:.9rem">' + s.servicio + '</span>' +
+          '<span class="badge badge-warning">' + s.pasos_completados + '/' + s.total_pasos + ' pasos</span>' +
+        '</div>' +
+        '<div style="font-size:.8rem;color:var(--color-text-secondary);margin:2px 0">' +
+          s.solicitante + ' · ' + s.cedula_solicitante +
+        '</div>' +
+        '<div style="font-size:.78rem;color:var(--color-text-muted)">Solicitud: ' + s.id_solicitud + '</div>' +
+        btnAprobar +
+      '</div>';
+    }).join('');
+  } catch (err) {
+    console.warn('No se pudieron cargar trámites:', err.message);
+  }
+}
+
+window.aprobarPasoDesdePanel = async function (idSolicitud, idPaso) {
+  if (!confirm('¿Confirmas la aprobación de este paso?')) return;
+  var sid = sessionStorage.getItem('sessionID');
+  try {
+    var r = await fetch('/api/admin/solicitudes/' + idSolicitud + '/paso/' + idPaso, {
+      method: 'PATCH',
+      headers: {
+        'Authorization': 'Bearer ' + sid,
+        'Content-Type':  'application/json'
+      },
+      body: JSON.stringify({})
+    });
+    var data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+    showToast(
+      data.completada
+        ? 'Trámite completado — todos los pasos aprobados'
+        : 'Paso aprobado — trámite avanzó al siguiente paso',
+      'success'
+    );
+    await cargarTramitesPendientesAdmin();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+};
+
+/* ---- Trámites recientes desde BD ---- */
+async function cargarTramitesRecientes() {
+  var cont = document.getElementById('tramites-recientes-container');
+  if (!cont) return;
+
+  var sid = sessionStorage.getItem('sessionID');
+  try {
+    var r    = await fetch('/api/perfil/tramites', {
+      headers: { 'Authorization': 'Bearer ' + sid }
+    });
+    var data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+
+    var tramites = data.tramites || [];
+    if (!tramites.length) {
+      cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">No tienes trámites registrados.</p>';
+      return;
+    }
+
+    var BADGE = {
+      'Completada': 'badge-success',
+      'En Proceso': 'badge-info',
+      'Pendiente':  'badge-warning',
+      'Cancelada':  'badge-danger'
+    };
+
+    var filas = tramites.map(function (t) {
+      var fecha = new Date(t.fecha_apertura).toLocaleDateString('es-VE');
+      var badge = BADGE[t.estado] || 'badge-info';
+      var btn   = t.estado === 'Completada'
+        ? '<a href="pagos.html" class="btn btn-outline btn-sm">Ver factura</a>'
+        : '<a href="servicios.html" class="btn btn-outline btn-sm">Ver estado</a>';
+      return '<tr>' +
+        '<td class="font-mono text-sm">' + t.id_solicitud + '</td>' +
+        '<td><strong>' + t.tramite + '</strong></td>' +
+        '<td>' + fecha + '</td>' +
+        '<td><span class="badge ' + badge + '">' + t.estado + '</span></td>' +
+        '<td>' + btn + '</td>' +
+        '</tr>';
+    }).join('');
+
+    cont.innerHTML =
+      '<div class="table-wrap" style="border:none;border-radius:0;">' +
+        '<table class="table">' +
+          '<thead><tr><th>N° SOLICITUD</th><th>TRÁMITE</th><th>FECHA</th><th>ESTADO</th><th></th></tr></thead>' +
+          '<tbody>' + filas + '</tbody>' +
+        '</table>' +
+      '</div>';
+  } catch (err) {
+    cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">No se pudieron cargar los trámites.</p>';
   }
 }
 
@@ -258,18 +405,103 @@ function renderPanel() {
   else if (rol === 'egresado')       renderEgresado(rolData, view);
   else if (rol === 'profesor')       renderProfesor(rolData, view);
   else if (rol === 'administrativo') renderAdministrativo(rolData, view);
+
+  cargarSesiones();
+  cargarTramitesRecientes();
+}
+
+/* ---- Session history ---- */
+async function cargarSesiones() {
+  var sessionID = sessionStorage.getItem('sessionID');
+  try {
+    var res  = await fetch('/api/perfil/sesiones', {
+      headers: { 'Authorization': 'Bearer ' + sessionID }
+    });
+    var data = await res.json();
+    renderSesiones(data.sesiones || []);
+  } catch (err) {
+    console.warn('No se pudo cargar el historial de sesiones:', err);
+    renderSesiones([]);
+  }
+}
+
+function renderSesiones(sesiones) {
+  const tbody = document.getElementById('sesiones-tbody');
+  if (!tbody) return;
+
+  if (sesiones.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="4"
+          style="text-align:center; color:var(--color-text-muted); padding:var(--space-6)">
+          Sin historial de sesiones registrado
+        </td>
+      </tr>`;
+    return;
+  }
+
+  const usuario   = getUsuario();
+  const currentID = sessionStorage.getItem('sessionID');
+
+  tbody.innerHTML = sesiones.map(s => `
+    <tr>
+      <td>
+        <div style="font-weight:500">
+          ${s.uuid === currentID
+            ? (usuario?.deviceName || 'Este dispositivo')
+            : 'Otro dispositivo'}
+          ${s.uuid === currentID
+            ? '<span class="badge badge-success" style="font-size:0.7rem;margin-left:6px">Actual</span>'
+            : ''}
+        </div>
+        <div style="font-size:0.75rem;color:var(--color-text-muted);font-family:monospace">
+          ${s.uuid.substring(0, 8)}...
+        </div>
+      </td>
+      <td style="font-family:monospace; font-size:0.85rem">
+        ${s.ip}
+      </td>
+      <td style="font-size:0.85rem">
+        ${s.ubicacion}
+      </td>
+      <td style="font-size:0.85rem; color:var(--color-text-secondary)">
+        ${s.tiempoAtras}
+      </td>
+    </tr>
+  `).join('');
 }
 
 /* ---- Misc helpers ---- */
-function openStudentModal(courseName) {
-  var titleEl = document.getElementById('modal-estudiantes-title');
-  if (titleEl) titleEl.textContent = 'Estudiantes — ' + courseName;
-  openModal('modal-estudiantes');
+
+/* Recarga los datos del usuario (roles, índices, etc.) desde la BD y refresca el
+   sessionStorage, para que los cambios del admin se vean sin re-login. */
+async function refrescarUsuarioYRender() {
+  var sessionID = sessionStorage.getItem('sessionID');
+  if (!sessionID) return;
+  try {
+    var res = await fetch('/api/perfil/me', { headers: { 'Authorization': 'Bearer ' + sessionID } });
+    if (!res.ok) return;
+    var data = await res.json();
+    if (!data || !data.usuario) return;
+    sessionStorage.setItem('usuario', JSON.stringify(data.usuario));
+
+    /* Si el rol activo guardado ya no existe en los roles frescos, reajustar */
+    var rolActivo = sessionStorage.getItem('rolActivo');
+    var roles = data.usuario.roles || [];
+    if (!rolActivo || !roles.some(function (r) { return r.rol === rolActivo; })) {
+      rolActivo = roles[0] ? roles[0].rol : null;
+      if (rolActivo) sessionStorage.setItem('rolActivo', rolActivo);
+    }
+    if (typeof window.activarRol === 'function' && rolActivo) window.activarRol(rolActivo);
+    renderPanel();
+  } catch (e) {
+    /* si falla, se queda con lo cacheado */
+  }
 }
-window.openStudentModal = openStudentModal;
 
 document.addEventListener('DOMContentLoaded', function () {
   if (document.getElementById('audit-table')) makeTableSortable('audit-table');
   renderPanel();
+  refrescarUsuarioYRender();              // refresca con datos frescos de la BD
   document.addEventListener('roleChanged', function () { renderPanel(); });
 });

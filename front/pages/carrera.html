@@ -36,14 +36,18 @@
       </div>
       <nav class="sidebar-nav">
         <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
         <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
         <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
         <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
         <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
-        <a href="configuracion.html" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
         <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
       </div>
     </aside>
@@ -69,12 +73,13 @@
           </div>
 
           <div class="cv-stats">
-            <div class="cv-stat-row"><span>GPA</span><strong id="cv-gpa">18.45</strong></div>
-            <div class="cv-stat-row"><span>UC Aprobadas</span><strong>162 / 180</strong></div>
-            <div class="cv-stat-row"><span>Facultad</span><strong>Ingeniería</strong></div>
-            <div class="cv-stat-row"><span>Escuela</span><strong>Informática</strong></div>
+            <div class="cv-stat-row"><span>GPA</span><strong id="cv-gpa">—</strong></div>
+            <div class="cv-stat-row" id="cv-stat-uc" style="display:none;"><span>UC Aprobadas</span><strong id="cv-stat-uc-val">—</strong></div>
+            <div class="cv-stat-row" id="cv-stat-facultad" style="display:none;"><span>Facultad</span><strong id="cv-stat-facultad-val">—</strong></div>
+            <div class="cv-stat-row" id="cv-stat-escuela" style="display:none;"><span>Escuela</span><strong id="cv-stat-escuela-val">—</strong></div>
+            <div class="cv-stat-row" id="cv-stat-titulo" style="display:none;"><span>Título</span><strong id="cv-stat-titulo-val">—</strong></div>
             <div class="cv-stat-row" id="cv-grad-year" style="display:none;">
-              <span>Año de egreso</span><strong>2023</strong>
+              <span>Año de egreso</span><strong id="cv-grad-year-val">—</strong>
             </div>
           </div>
 

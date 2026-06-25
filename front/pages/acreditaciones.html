@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Mis Acreditaciones</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
+    <div class="navbar-tabs">
+      <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-avatar">?</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-profile-name" id="sidebar-nombre">UCAB Services</div>
+        <div class="sidebar-profile-sub" id="sidebar-subtitulo"></div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
+        <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <div class="page-header">
+        <h1 class="page-header-title">Mis Acreditaciones</h1>
+        <p class="page-header-sub">Certificaciones, licencias y credenciales registradas en tu perfil.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:var(--space-5);">
+        <div class="card-header">
+          <span class="card-header-title">MIS ACREDITACIONES Y CREDENCIALES</span>
+          <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalAcred()">+ Agregar</button>
+        </div>
+        <div id="acred-container">
+          <p style="padding:var(--space-4);color:var(--color-text-muted);">Cargando...</p>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal: Agregar Acreditación -->
+<div class="modal-overlay" id="modal-acred-overlay">
+  <div class="modal" style="max-width:460px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Registrar Acreditación</h2>
+      <button type="button" class="modal-close" onclick="closeModal('modal-acred-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label class="form-label">Tipo de acreditación <span style="color:var(--color-danger)">*</span></label>
+        <select id="acred-select" class="form-select" required>
+          <option value="">Cargando catálogo...</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de obtención <span style="color:var(--color-danger)">*</span></label>
+        <input type="date" id="acred-obtencion" class="form-input" required>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Fecha de vencimiento (opcional)</label>
+        <input type="date" id="acred-vencimiento" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Estado</label>
+        <select id="acred-estado" class="form-select">
+          <option value="Vigente">Vigente</option>
+          <option value="Vencida">Vencida</option>
+          <option value="En renovación">En renovación</option>
+        </select>
+      </div>
+      <div class="modal-footer" style="margin-top:var(--space-4);">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-acred-overlay')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="guardarAcred()">Registrar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/pages/acreditaciones.js"></script>
+</body>
+</html>

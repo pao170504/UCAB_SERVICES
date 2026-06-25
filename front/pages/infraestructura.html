@@ -42,14 +42,18 @@
       </div>
       <nav class="sidebar-nav">
         <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
         <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
         <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
         <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
         <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
-        <a href="configuracion.html" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
         <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
       </div>
     </aside>
@@ -75,17 +79,14 @@
               </div>
               <div class="form-group">
                 <label class="form-label">Edificación</label>
-                <select class="form-select">
-                  <option>Edificio Laboratorios</option>
-                  <option>Edif. Cincuentenario</option>
+                <select class="form-select" id="sel-edificio">
+                  <option value="">Seleccionar edificio...</option>
                 </select>
               </div>
               <div class="form-group">
                 <label class="form-label">Espacio</label>
-                <select class="form-select">
-                  <option>Auditorio</option>
-                  <option>Sala de Cómputo A</option>
-                  <option>Sala de Conferencias</option>
+                <select class="form-select" id="sel-espacio">
+                  <option value="">Seleccionar espacio...</option>
                 </select>
               </div>
             </div>
@@ -95,32 +96,95 @@
           <div class="space-details-grid mt-4">
             <div class="space-detail-card">
               <div class="space-detail-label">📐 CAPACIDAD TOTAL</div>
-              <div class="space-detail-value">240 Asientos</div>
+              <div class="space-detail-value" id="det-capacidad">—</div>
             </div>
             <div class="space-detail-card">
               <div class="space-detail-label">🪑 MUEBLES</div>
-              <div class="space-detail-value"><span class="badge badge-blue">Ergonómico PREMIUM</span></div>
+              <div class="space-detail-value" id="det-mobiliario">—</div>
             </div>
             <div class="space-detail-card">
-              <div class="space-detail-label">🖥 TECNOLOGÍA</div>
-              <div class="space-detail-value" style="font-size:0.8rem;">4K Proyector | Surround 7.1</div>
+              <div class="space-detail-label">📋 ESTADO</div>
+              <div class="space-detail-value" id="det-estado">—</div>
             </div>
             <div class="space-detail-card">
-              <div class="space-detail-label">🔧 MANTENIMIENTO</div>
-              <div class="space-detail-value" style="font-size:0.8rem;">Programado | 24 Oct</div>
+              <div class="space-detail-label">✅ DISPONIBILIDAD</div>
+              <div class="space-detail-value" id="det-disponibilidad">—</div>
             </div>
           </div>
 
-          <!-- Tariff adjustment panel -->
-          <div class="tariff-panel mt-4">
-            <div class="tariff-panel-label">AJUSTE DE TARIFA <span style="opacity:.6;cursor:help;" title="Límite máximo por categoría">ⓘ</span></div>
-            <div class="tariff-input-row">
-              <input class="tariff-input" type="number" id="tariff-input" value="120.00" step="0.50">
+          <button id="btn-alquilar" class="btn btn-primary"
+            style="display:none; width:100%; margin-top:var(--space-4)"
+            onclick="abrirModalReserva()">
+            📅 Reservar espacio
+          </button>
+
+          <!-- Tariff panel (admin-only) -->
+          <div class="tariff-panel mt-4" id="tarifa-panel" style="display:none">
+            <div class="tariff-panel-label">
+              TARIFAS POR CATEGORÍA
+              <span style="font-size:.75rem;font-weight:400;color:var(--color-text-secondary);display:block;margin-top:2px">
+                Tu tarifa aplicable aparece resaltada
+              </span>
             </div>
-            <div class="tariff-warning" id="tariff-warning">
-              ⚠ La tarifa excede el límite de la categoría (95,00 $)
+
+            <!-- 3-tier tariff cards -->
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+              <div id="tarifa-card-miembro"
+                   style="text-align:center;padding:10px 6px;
+                          border:1px solid var(--color-border);
+                          border-radius:var(--radius-md)">
+                <div style="font-size:.7rem;font-weight:700;
+                            color:var(--color-text-secondary);margin-bottom:4px">MIEMBRO</div>
+                <div style="font-size:1rem;font-weight:700" id="tarifa-miembro">—</div>
+              </div>
+              <div id="tarifa-card-egresado"
+                   style="text-align:center;padding:10px 6px;
+                          border:1px solid var(--color-border);
+                          border-radius:var(--radius-md)">
+                <div style="font-size:.7rem;font-weight:700;
+                            color:var(--color-text-secondary);margin-bottom:4px">EGRESADO</div>
+                <div style="font-size:1rem;font-weight:700" id="tarifa-egresado">—</div>
+              </div>
+              <div id="tarifa-card-externo"
+                   style="text-align:center;padding:10px 6px;
+                          border:1px solid var(--color-border);
+                          border-radius:var(--radius-md)">
+                <div style="font-size:.7rem;font-weight:700;
+                            color:var(--color-text-secondary);margin-bottom:4px">EXTERNO</div>
+                <div style="font-size:1rem;font-weight:700" id="tarifa-externo">—</div>
+              </div>
             </div>
-            <button class="btn btn-primary btn-full" id="tariff-update-btn">Actualizar</button>
+
+            <!-- Admin tariff edit -->
+            <div id="tarifa-edit-admin"
+                 style="display:none;margin-top:14px;
+                        border-top:1px solid var(--color-border);padding-top:12px">
+              <div style="font-size:.75rem;font-weight:700;
+                          color:var(--color-text-secondary);margin-bottom:8px">
+                EDITAR TARIFA BASE (afecta las 3 categorías)
+              </div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div>
+                  <label class="form-label" style="font-size:.75rem">Mínimo ($)</label>
+                  <input class="form-input" type="number" id="input-tarifa-min"
+                         step="0.50" min="0" placeholder="0.00">
+                </div>
+                <div>
+                  <label class="form-label" style="font-size:.75rem">Máximo ($)</label>
+                  <input class="form-input" type="number" id="input-tarifa-max"
+                         step="0.50" min="0" placeholder="0.00">
+                </div>
+              </div>
+              <div class="tariff-warning" id="tarifa-error" style="display:none;margin-top:6px"></div>
+              <button class="btn btn-primary btn-full" id="btn-actualizar-tarifa"
+                      style="margin-top:8px">Actualizar tarifas</button>
+            </div>
+
+            <button class="btn btn-secondary btn-full" id="btn-mantenimiento"
+                    style="display:none;margin-top:.5rem"
+                    onclick="toggleMantenimiento()">
+              🔧 Poner en mantenimiento
+            </button>
           </div>
         </div>
 
@@ -129,73 +193,170 @@
           <div class="calendar-header">
             <span class="calendar-title">Calendario de reservas semanal</span>
             <div class="calendar-nav">
-              <button class="calendar-nav-btn">‹</button>
-              <span class="calendar-range">Octubre 14 — 20, 2026</span>
-              <button class="calendar-nav-btn">›</button>
+              <span class="calendar-range" id="semana-label">—</span>
             </div>
           </div>
 
           <div style="overflow-x:auto;">
-            <div class="calendar-grid" style="min-width:600px;">
-              <!-- Header row -->
-              <div class="cal-col-header cal-time-col"></div>
-              <div class="cal-col-header">LUN 14</div>
-              <div class="cal-col-header">MAR 15</div>
-              <div class="cal-col-header">MIÉ 16</div>
-              <div class="cal-col-header">JUE 17</div>
-              <div class="cal-col-header">VIE 18</div>
-              <div class="cal-col-header">SÁB 19</div>
-              <div class="cal-col-header">DOM 20</div>
-
-              <!-- Time labels -->
-              <div class="cal-col" style="background:var(--color-bg);border-right:1px solid var(--color-border);gap:var(--space-8);padding-top:var(--space-4);">
-                <span style="font-size:.65rem;color:var(--color-text-muted);">08:00</span>
-                <span style="font-size:.65rem;color:var(--color-text-muted);">10:00</span>
-                <span style="font-size:.65rem;color:var(--color-text-muted);">12:00</span>
-                <span style="font-size:.65rem;color:var(--color-text-muted);">14:00</span>
-              </div>
-
-              <!-- LUN 14 -->
-              <div class="cal-col">
-                <div class="cal-event cal-event-blue">
-                  CONF.
-                  <span class="cal-event-time">08:00–10:05</span>
-                </div>
-              </div>
-              <!-- MAR 15 -->
-              <div class="cal-col">
-                <div class="cal-event cal-event-teal" style="margin-top:calc(var(--space-8)*1.2);">
-                  PREP.
-                  <span class="cal-event-time">11:00–14:00</span>
-                </div>
-              </div>
-              <!-- MIÉ 16 -->
-              <div class="cal-col"></div>
-              <!-- JUE 17 -->
-              <div class="cal-col">
-                <div class="cal-event cal-event-amber">
-                  MANT.
-                  <span class="cal-event-time">08:00–09:30</span>
-                </div>
-              </div>
-              <!-- VIE 18 -->
-              <div class="cal-col">
-                <div class="cal-event cal-event-navy" style="margin-top:calc(var(--space-8)*.5);">
-                  GENERAL
-                  <span class="cal-event-time">09:00–15:06</span>
-                </div>
-              </div>
-              <!-- SÁB 19 -->
-              <div class="cal-col"></div>
-              <!-- DOM 20 -->
-              <div class="cal-col"></div>
+            <div id="calendario-grid" style="min-width:600px; display:flex;">
             </div>
           </div>
         </div>
 
       </div>
 
+      <!-- Section: Mis Reservas -->
+      <div style="margin-top:var(--space-6)">
+        <div style="margin-bottom:var(--space-4)">
+          <h2 style="font-size:1.15rem;font-weight:700;margin:0">Mis reservas de espacios</h2>
+        </div>
+        <div id="mis-reservas-container">
+          <p style="color:var(--color-text-secondary)">Cargando reservas...</p>
+        </div>
+      </div>
+
     </main>
+  </div>
+</div>
+
+<!-- Modal: Reservar espacio (3 pasos) -->
+<div class="modal-overlay" id="modal-reserva-espacio">
+  <div class="modal" style="width:min(500px,95vw)">
+
+    <div class="modal-header">
+      <h3>Reservar espacio</h3>
+      <button class="modal-close" onclick="closeModal('modal-reserva-espacio')">×</button>
+    </div>
+
+    <!-- Space info -->
+    <div style="background:var(--color-blue-light);
+                border-radius:var(--radius-md); padding:var(--space-4);
+                margin-bottom:var(--space-4)">
+      <p style="font-weight:600; margin:0" id="modal-res-espacio"></p>
+      <p style="color:var(--color-text-secondary); font-size:0.85rem; margin:4px 0 0 0"
+         id="modal-res-capacidad"></p>
+    </div>
+
+    <!-- Step indicators -->
+    <div style="display:flex;align-items:center;justify-content:center;
+                gap:8px;margin-bottom:var(--space-5)">
+      <div id="step-dot-1"
+           style="width:28px;height:28px;border-radius:50%;
+                  background:var(--color-primary);color:#fff;
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:.8rem;font-weight:700">1</div>
+      <div style="flex:1;height:2px;background:var(--color-border);max-width:40px"></div>
+      <div id="step-dot-2"
+           style="width:28px;height:28px;border-radius:50%;
+                  background:var(--color-border);color:var(--color-text-secondary);
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:.8rem;font-weight:700">2</div>
+      <div style="flex:1;height:2px;background:var(--color-border);max-width:40px"></div>
+      <div id="step-dot-3"
+           style="width:28px;height:28px;border-radius:50%;
+                  background:var(--color-border);color:var(--color-text-secondary);
+                  display:flex;align-items:center;justify-content:center;
+                  font-size:.8rem;font-weight:700">3</div>
+    </div>
+
+    <!-- Step 1: Date & block -->
+    <div id="reserva-step-1">
+      <div class="form-group" style="margin-bottom:var(--space-4)">
+        <label class="form-label">Fecha de uso</label>
+        <input id="modal-res-fecha" type="date" class="form-input"/>
+      </div>
+      <div class="form-group" style="margin-bottom:var(--space-4)">
+        <label class="form-label">Bloque horario</label>
+        <select id="modal-res-bloque" class="form-select">
+          <option value="">Seleccionar bloque...</option>
+          <option value="07:00-09:00">07:00 — 09:00</option>
+          <option value="09:00-11:00">09:00 — 11:00</option>
+          <option value="11:00-13:00">11:00 — 13:00</option>
+          <option value="13:00-15:00">13:00 — 15:00</option>
+          <option value="15:00-17:00">15:00 — 17:00</option>
+          <option value="17:00-19:00">17:00 — 19:00</option>
+        </select>
+      </div>
+      <div id="modal-res-error"
+           style="display:none;color:var(--color-danger);
+                  font-size:.85rem;margin-bottom:var(--space-3)"></div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal('modal-reserva-espacio')">Cancelar</button>
+        <button class="btn btn-primary" onclick="avanzarReservaStep1()">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Step 2: Acompañantes -->
+    <div id="reserva-step-2" style="display:none">
+      <p style="font-size:.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3)">
+        Agrega hasta 5 acompañantes (opcional).
+      </p>
+      <div style="display:grid;grid-template-columns:1fr 1fr auto;
+                  gap:8px;align-items:flex-end;margin-bottom:var(--space-3)">
+        <div>
+          <label class="form-label" style="font-size:.75rem">Nombre</label>
+          <input id="input-acomp-nombre" type="text" class="form-input" placeholder="Nombre completo">
+        </div>
+        <div>
+          <label class="form-label" style="font-size:.75rem">Documento</label>
+          <input id="input-acomp-doc" type="text" class="form-input" placeholder="V-12345678">
+        </div>
+        <button class="btn btn-secondary" onclick="agregarAcompanante()"
+                style="white-space:nowrap">+ Agregar</button>
+      </div>
+      <div id="lista-acompanantes" style="min-height:40px;margin-bottom:var(--space-3)">
+        <p style="color:var(--color-text-secondary);font-size:.85rem">Sin acompañantes agregados.</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="mostrarPasoReserva(1)">← Atrás</button>
+        <button class="btn btn-primary" onclick="avanzarReservaStep2()">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Step 3: Summary & confirm -->
+    <div id="reserva-step-3" style="display:none">
+      <div style="background:var(--color-surface-secondary);border-radius:var(--radius-md);
+                  padding:var(--space-4);margin-bottom:var(--space-4)">
+        <div style="font-size:.75rem;font-weight:700;
+                    color:var(--color-text-secondary);margin-bottom:10px">
+          RESUMEN DE RESERVA
+        </div>
+        <div style="display:grid;gap:6px;font-size:.85rem">
+          <div><span style="color:var(--color-text-secondary)">Espacio:</span>
+            <strong id="resumen-espacio"></strong></div>
+          <div><span style="color:var(--color-text-secondary)">Fecha:</span>
+            <strong id="resumen-fecha"></strong></div>
+          <div><span style="color:var(--color-text-secondary)">Bloque:</span>
+            <strong id="resumen-bloque"></strong></div>
+          <div><span style="color:var(--color-text-secondary)">Acompañantes:</span>
+            <strong id="resumen-acomp"></strong></div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="mostrarPasoReserva(2)">← Atrás</button>
+        <button class="btn btn-primary" id="btn-confirmar-reserva"
+          onclick="confirmarReservaEspacio()">
+          Confirmar reserva
+        </button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- Modal: Pasos de reserva -->
+<div class="modal-overlay" id="modal-pasos-reserva">
+  <div class="modal" style="width:min(460px,95vw)">
+    <div class="modal-header">
+      <h3 id="modal-pasos-titulo">Pasos de la solicitud</h3>
+      <button class="modal-close" onclick="closeModal('modal-pasos-reserva')">×</button>
+    </div>
+    <div id="modal-pasos-body"
+         style="max-height:400px;overflow-y:auto;padding-bottom:var(--space-2)">
+    </div>
+    <div class="modal-footer" style="margin-top:var(--space-4)">
+      <button class="btn btn-secondary" onclick="closeModal('modal-pasos-reserva')">Cerrar</button>
+    </div>
   </div>
 </div>
 

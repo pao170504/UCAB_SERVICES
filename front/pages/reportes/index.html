@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Reportes</title>
+  <link rel="stylesheet" href="../../css/global.css">
+  <link rel="stylesheet" href="../../css/layout.css">
+  <link rel="stylesheet" href="../../css/components.css">
+  <link rel="stylesheet" href="../../css/pages/reportes.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <nav class="navbar">
+    <a href="../dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
+    <div class="navbar-tabs">
+      <a href="../dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="../servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="../pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="../infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="../carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-avatar">MP</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-profile-name" id="sidebar-nombre">UCAB Services</div>
+        <div class="sidebar-profile-sub" id="sidebar-subtitulo"></div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="../dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="../servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="../pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="../infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="../estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="../carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="../beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="index.html"              class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <!-- ===== LOCKED VIEW (Estudiante + Egresado) ===== -->
+      <div id="view-locked">
+        <div class="page-header">
+          <h1 class="page-header-title">Reportes</h1>
+          <p class="page-header-sub">Módulo de análisis y control institucional.</p>
+        </div>
+        <div class="empty-state">
+          <div style="font-size:3rem;">🔒</div>
+          <h3>Acceso restringido</h3>
+          <p>El módulo de Reportes está disponible únicamente para el personal docente y administrativo de UCAB. Si necesitas información sobre tus transacciones, puedes consultarla en la sección de <strong>Pagos</strong>.</p>
+          <div style="display:flex;gap:var(--space-3);flex-wrap:wrap;justify-content:center;">
+            <a href="../pagos.html"     class="btn btn-primary">Ver mis Pagos →</a>
+            <a href="../dashboard.html" class="btn btn-secondary">Volver al Panel</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== PROFESOR VIEW: simplified ===== -->
+      <div id="view-profesor" style="display:none;">
+        <div class="page-header">
+          <h1 class="page-header-title">Mis Reportes</h1>
+          <p class="page-header-sub">Consulte el estado de sus trámites y reservas activas.</p>
+        </div>
+
+        <div class="content-row" style="margin-bottom:var(--space-5);">
+          <div class="stat-card">
+            <div class="stat-label">📋 TRÁMITES ACTIVOS</div>
+            <div class="stat-value">3</div>
+            <div><span class="stat-trend up">↗ 1 nuevo esta semana</span></div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">📅 RESERVAS PENDIENTES</div>
+            <div class="stat-value">2</div>
+            <div><span class="stat-trend">→ Sin cambios</span></div>
+          </div>
+        </div>
+
+        <div class="report-modules-grid" style="grid-template-columns:1fr 1fr;">
+
+          <div class="report-module-card" style="cursor:default;">
+            <div class="report-module-icon">📋</div>
+            <div>
+              <div class="report-module-name">Mis Trámites</div>
+              <div style="margin-top:var(--space-3);">
+                <table class="table" style="font-size:.82rem;">
+                  <thead><tr><th>TRÁMITE</th><th>FECHA</th><th>ESTADO</th></tr></thead>
+                  <tbody>
+                    <tr><td>Permiso de investigación</td><td>12/06/2026</td><td><span class="badge badge-warning">REVISIÓN</span></td></tr>
+                    <tr><td>Actualización de datos</td><td>05/06/2026</td><td><span class="badge badge-success">APROBADO</span></td></tr>
+                    <tr><td>Solicitud de constancia</td><td>01/06/2026</td><td><span class="badge badge-info">EN PROCESO</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <div class="report-module-card" style="cursor:default;">
+            <div class="report-module-icon">📅</div>
+            <div>
+              <div class="report-module-name">Mis Reservas</div>
+              <div style="margin-top:var(--space-3);">
+                <table class="table" style="font-size:.82rem;">
+                  <thead><tr><th>ESPACIO</th><th>FECHA</th><th>ESTADO</th></tr></thead>
+                  <tbody>
+                    <tr><td>Lab. Idiomas A</td><td>18/06/2026 · 07:00–09:00</td><td><span class="badge badge-blue">RESERVADO</span></td></tr>
+                    <tr><td>Sala 202</td><td>20/06/2026 · 14:00–16:00</td><td><span class="badge badge-warning">PENDIENTE</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="info-box" style="margin-top:var(--space-5);">
+          <div class="info-box-title">ℹ Acceso completo a reportes institucionales</div>
+          El panel de análisis completo (eficiencia operativa, financiero, comunidad) está disponible para el rol de <strong>Administrador</strong>. Contacte a la Dirección de Sistemas para solicitar acceso ampliado.
+        </div>
+      </div>
+
+      <!-- ===== ADMINISTRATIVO VIEW ===== -->
+      <div id="view-administrativo" style="display:none;">
+        <div class="page-header">
+          <h1 class="page-header-title">Reportes Institucionales</h1>
+          <p class="page-header-sub">Panel de análisis y control — acceso de administrador.</p>
+        </div>
+
+        <div class="content-row" style="margin-bottom:var(--space-5);">
+          <div class="stat-card"><div class="stat-label">📋 TRÁMITES ACTIVOS</div><div class="stat-value">47</div><div><span class="stat-trend up">↗ 8 nuevos esta semana</span></div></div>
+          <div class="stat-card"><div class="stat-label">📅 RESERVAS HOY</div><div class="stat-value">23</div><div><span class="stat-trend up">↗ 3 más que ayer</span></div></div>
+          <div class="stat-card"><div class="stat-label">💳 INGRESOS MES</div><div class="stat-value">$8,420</div><div><span class="stat-trend up">↗ +12% vs mes anterior</span></div></div>
+          <div class="stat-card"><div class="stat-label">👥 USUARIOS ACTIVOS</div><div class="stat-value">312</div><div><span class="stat-trend">→ Sin cambios</span></div></div>
+        </div>
+
+        <div class="report-modules-grid" style="margin-bottom:var(--space-5);">
+          <div class="report-module-card" data-roles="administrativo" onclick="window.location.href='eficiencia.html'">
+            <div class="report-module-icon">⚡</div>
+            <div>
+              <div class="report-module-name">Eficiencia Operativa</div>
+              <div class="report-module-desc">Tasas de uso, tiempos de respuesta, SLA de servicios.</div>
+            </div>
+          </div>
+          <div class="report-module-card" data-roles="administrativo" onclick="window.location.href='financiero.html'">
+            <div class="report-module-icon">💰</div>
+            <div>
+              <div class="report-module-name">Reporte Financiero</div>
+              <div class="report-module-desc">Ingresos, egresos, conciliaciones y estados de cuenta.</div>
+            </div>
+          </div>
+          <div class="report-module-card" data-roles="administrativo" onclick="window.location.href='comunidad.html'">
+            <div class="report-module-icon">👥</div>
+            <div>
+              <div class="report-module-name">Comunidad UCAB</div>
+              <div class="report-module-desc">Actividad de usuarios, matrículas, satisfacción y más.</div>
+            </div>
+          </div>
+          <div class="report-module-card" data-roles="administrativo profesor">
+            <div class="report-module-icon">📋</div>
+            <div>
+              <div class="report-module-name">Mis Trámites</div>
+              <div style="margin-top:var(--space-3);">
+                <table class="table" style="font-size:.82rem;">
+                  <thead><tr><th>TRÁMITE</th><th>FECHA</th><th>ESTADO</th></tr></thead>
+                  <tbody>
+                    <tr><td>Solicitud de acceso LDAP</td><td>12/06/2026</td><td><span class="badge badge-success">APROBADO</span></td></tr>
+                    <tr><td>Configuración de módulo</td><td>08/06/2026</td><td><span class="badge badge-info">EN PROCESO</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script src="../../js/auth-guard.js"></script>
+<script src="../../js/utils.js"></script>
+<script src="../../js/nav.js"></script>
+<script src="../../js/tables.js"></script>
+<script src="../../js/pages/reportes.js"></script>
+</body>
+</html>

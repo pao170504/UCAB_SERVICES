@@ -2,10 +2,10 @@
 
 /* Updated permissions: carrera is egresado-only */
 window.NAV_PERMISOS = {
-  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
-  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion'],
-  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'configuracion'],
-  administrativo: ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'configuracion']
+  estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'acreditaciones'],
+  egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'acreditaciones'],
+  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes', 'beneficiarios', 'acreditaciones'],
+  administrativo: ['dashboard', 'usuarios', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes', 'admin', 'beneficiarios', 'acreditaciones']
 };
 
 var _usuario = null;
@@ -38,12 +38,15 @@ document.addEventListener('DOMContentLoaded', function () {
   var filename = window.location.pathname.split('/').pop() || 'index.html';
   var PAGE_MAP = {
     'dashboard.html':       'dashboard',
+    'admin.html':           'usuarios',
     'servicios.html':       'servicios',
     'pagos.html':           'pagos',
     'infraestructura.html': 'infraestructura',
     'estacionamiento.html': 'estacionamiento',
     'carrera.html':         'carrera',
-    'index.html':           'dashboard'
+    'beneficiarios.html':   'beneficiarios',
+    'acreditaciones.html':  'acreditaciones',
+    'index.html':           'reportes'
   };
   var currentPage = PAGE_MAP[filename] || filename.replace('.html', '');
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function (el) {
@@ -79,11 +82,17 @@ function activarRol(rol) {
   var subEl = document.getElementById('sidebar-subtitulo');
   if (subEl) subEl.textContent = subtitulo;
 
-  /* Show/hide sidebar items based on permissions */
+  /* Show/hide sidebar items based on permissions.
+     Las páginas de administrador del sistema (usuarios/admin) además exigen
+     esAdminSistema(): un administrativo común NO debe verlas en el sidebar. */
   var permisos = (window.NAV_PERMISOS || {})[rol] || [];
+  var ADMIN_ONLY  = ['usuarios', 'admin'];
+  var _esAdminSys = (typeof esAdminSistema === 'function') && esAdminSistema();
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function (item) {
     var page = item.getAttribute('data-page');
-    item.style.display = permisos.indexOf(page) !== -1 ? '' : 'none';
+    var visible = permisos.indexOf(page) !== -1 &&
+                  (ADMIN_ONLY.indexOf(page) === -1 || _esAdminSys);
+    item.style.display = visible ? '' : 'none';
   });
 
   /* Call page-specific renderer (backward compat) */

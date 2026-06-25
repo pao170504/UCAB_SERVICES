@@ -1,16 +1,49 @@
+-- =====================================================================
+--  security.sql  —  Seguridad de UCAB-Services (PostgreSQL)
+--  Combina: cifrado de contraseñas (pgcrypto), RBAC completo con
+--  jerarquía de roles, vistas DAC y políticas RLS (MAC-like).
+--
+--  Orden de ejecución recomendado:
+--    create.sql  ->  inserts.sql  ->  logic.sql  ->  security.sql
+-- =====================================================================
+
+-- ---------------------------------------------------------------------
+-- 0. Limpieza idempotente (permite re-ejecutar el script)
+-- ---------------------------------------------------------------------
+DO $$
+DECLARE r RECORD;
+BEGIN
+  FOR r IN SELECT rolname FROM pg_roles
+           WHERE rolname IN (
+             'ucab_app',   'ucab_dba',
+             'ucab_lectura','ucab_auditor',
+             'ucab_estudiante','ucab_egresado',
+             'ucab_profesor','ucab_administrativo',
+             'ucab_cajero','ucab_aliado','ucab_entidad_interna',
+             'app_administrativo','app_cajero','app_profesor',
+             'app_estudiante','app_egresado','app_aliado','app_entidad'
+           )
+  LOOP
+    EXECUTE format('REVOKE ALL ON ALL TABLES    IN SCHEMA public FROM %I', r.rolname);
+    EXECUTE format('REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM %I', r.rolname);
+    EXECUTE format('REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM %I', r.rolname);
+    EXECUTE format('REVOKE ALL ON SCHEMA public FROM %I', r.rolname);
+    EXECUTE format('DROP ROLE IF EXISTS %I', r.rolname);
+  END LOOP;
+END$$;
+
+-- =====================================================================
+-- SECCIÓN 1: CIFRADO DE CONTRASEÑAS (pgcrypto)
+-- =====================================================================
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
--- Ampliar columna de contraseña para alojar el texto cifrado en base64
 ALTER TABLE Miembro_Comunidad
     ALTER COLUMN Contrasena TYPE TEXT;
 
--- Clave simétrica para la sesión actual (para la migración de datos)
 SET app.clave_simetrica = 'UCABServices';
-
--- Clave simétrica como parámetro por defecto para todas las conexiones futuras
 ALTER DATABASE proyectobd SET app.clave_simetrica = 'UCABServices';
 
--- Función de cifrado: recibe texto plano y devuelve el cifrado en base64
 CREATE OR REPLACE FUNCTION fn_cifrar_contrasena(p_contrasena TEXT)
 RETURNS TEXT
 LANGUAGE plpgsql
@@ -24,10 +57,9 @@ BEGIN
 END;
 $$;
 
--- Función de verificación: compara contraseña plana con la almacenada cifrada
 CREATE OR REPLACE FUNCTION fn_verificar_contrasena(
-    p_contrasena_plana    TEXT,
-    p_contrasena_cifrada  TEXT
+    p_contrasena_plana   TEXT,
+    p_contrasena_cifrada TEXT
 )
 RETURNS BOOLEAN
 LANGUAGE plpgsql
@@ -43,7 +75,6 @@ EXCEPTION WHEN OTHERS THEN
 END;
 $$;
 
--- Trigger: cifra automáticamente la contraseña en INSERT o en UPDATE de Contrasena
 CREATE OR REPLACE FUNCTION fn_trigger_cifrar_contrasena()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -55,12 +86,12 @@ BEGIN
 END;
 $$;
 
+DROP TRIGGER IF EXISTS trg_cifrar_contrasena ON Miembro_Comunidad;
 CREATE TRIGGER trg_cifrar_contrasena
 BEFORE INSERT OR UPDATE OF Contrasena ON Miembro_Comunidad
 FOR EACH ROW EXECUTE FUNCTION fn_trigger_cifrar_contrasena();
 
 -- Migrar contraseñas en texto plano existentes al formato cifrado
--- Se desactiva el trigger para hacer el cifrado directamente
 ALTER TABLE Miembro_Comunidad DISABLE TRIGGER trg_cifrar_contrasena;
 
 UPDATE Miembro_Comunidad
@@ -71,123 +102,117 @@ SET Contrasena = encode(
 
 ALTER TABLE Miembro_Comunidad ENABLE TRIGGER trg_cifrar_contrasena;
 
--- Roles funcionales del negocio UCAB
-CREATE ROLE ucab_dba;
-CREATE ROLE ucab_administrativo;
-CREATE ROLE ucab_cajero;
-CREATE ROLE ucab_profesor;
-CREATE ROLE ucab_estudiante;
-CREATE ROLE ucab_egresado;
-CREATE ROLE ucab_aliado;
-CREATE ROLE ucab_entidad_interna;
+-- =====================================================================
+-- SECCIÓN 2: ROLES DE GRUPO (NOLOGIN)
+-- =====================================================================
 
--- Cuentas de usuario del sistema (una por rol)
-CREATE USER app_administrativo  WITH PASSWORD 'Admin';
-CREATE USER app_cajero          WITH PASSWORD 'Cajero';
-CREATE USER app_profesor        WITH PASSWORD 'Profesor';
-CREATE USER app_estudiante      WITH PASSWORD 'Estudiante';
-CREATE USER app_egresado        WITH PASSWORD 'Egresado';
-CREATE USER app_aliado          WITH PASSWORD 'Aliado';
-CREATE USER app_entidad         WITH PASSWORD 'Entidad';
+CREATE ROLE ucab_dba             NOLOGIN;
+CREATE ROLE ucab_lectura         NOLOGIN;  -- base: solo lectura de catálogos públicos
+CREATE ROLE ucab_auditor         NOLOGIN;  -- lectura de sesiones y auditoría
+CREATE ROLE ucab_estudiante      NOLOGIN;
+CREATE ROLE ucab_egresado        NOLOGIN;
+CREATE ROLE ucab_profesor        NOLOGIN;
+CREATE ROLE ucab_cajero          NOLOGIN;
+CREATE ROLE ucab_aliado          NOLOGIN;
+CREATE ROLE ucab_entidad_interna NOLOGIN;
+CREATE ROLE ucab_administrativo  NOLOGIN;
 
--- Asignación de cuentas a sus roles correspondientes
-GRANT ucab_administrativo  TO app_administrativo;
-GRANT ucab_cajero          TO app_cajero;
-GRANT ucab_profesor        TO app_profesor;
-GRANT ucab_estudiante      TO app_estudiante;
-GRANT ucab_egresado        TO app_egresado;
-GRANT ucab_aliado          TO app_aliado;
-GRANT ucab_entidad_interna TO app_entidad;
+-- =====================================================================
+-- SECCIÓN 3: PRIVILEGIOS DE ESQUEMA
+-- =====================================================================
 
--- Acceso al esquema para todos los roles de la aplicación
 GRANT USAGE ON SCHEMA public TO
-    ucab_administrativo, ucab_cajero, ucab_profesor,
-    ucab_estudiante, ucab_egresado, ucab_aliado, ucab_entidad_interna;
+  ucab_lectura, ucab_auditor,
+  ucab_estudiante, ucab_egresado, ucab_profesor,
+  ucab_cajero, ucab_aliado, ucab_entidad_interna,
+  ucab_administrativo;
 
--- ==== ROL: ucab_estudiante ====
--- Estudiante activo: accede a servicios, reservas, pagos y su información académica
+-- =====================================================================
+-- SECCIÓN 4: PERFIL BASE (ucab_lectura)
+--   Catálogos de solo lectura accesibles por todos los perfiles.
+-- =====================================================================
 
-GRANT SELECT                         ON Sede                 TO ucab_estudiante;
-GRANT SELECT                         ON Categoria_Servicio   TO ucab_estudiante;
-GRANT SELECT                         ON Servicio             TO ucab_estudiante;
-GRANT SELECT                         ON Requisitos_Acceso    TO ucab_estudiante;
-GRANT SELECT                         ON Acreditacion         TO ucab_estudiante;
-GRANT SELECT, INSERT, UPDATE         ON Cumple               TO ucab_estudiante;
-GRANT SELECT, INSERT                 ON Solicitud_Servicio   TO ucab_estudiante;
+GRANT SELECT ON
+  Sede, Edificacion, Espacio_Fisico,
+  Categoria_Servicio, Servicio, Requisitos_Acceso, Regula,
+  Entidad_Prestadora, Entidad_Interna, Entidad_Externa,
+  Zona_Estacionamiento, Puesto, Tasa
+TO ucab_lectura;
+
+-- Todos los perfiles de usuario heredan la lectura base
+GRANT ucab_lectura TO ucab_estudiante, ucab_egresado, ucab_profesor,
+                      ucab_cajero, ucab_aliado, ucab_entidad_interna,
+                      ucab_administrativo, ucab_auditor;
+
+-- =====================================================================
+-- SECCIÓN 5: PERFIL AUDITOR DE SEGURIDAD
+--   Solo lectura de la huella de acceso.
+-- =====================================================================
+
+GRANT SELECT ON Sesion, Miembro_Comunidad, Persona,
+                Periodo_Vinculacion TO ucab_auditor;
+
+-- =====================================================================
+-- SECCIÓN 6: PERFIL ESTUDIANTE
+--   Gestión de sus propias solicitudes, folios, ítems, pagos y reservas.
+--   El filtrado por cédula lo imponen las RLS de la sección 9.
+-- =====================================================================
+
+GRANT SELECT, INSERT, UPDATE         ON Solicitud_Servicio  TO ucab_estudiante;
+GRANT SELECT, INSERT, UPDATE         ON Folio_Consumo        TO ucab_estudiante;
+GRANT SELECT, INSERT, UPDATE, DELETE ON Item_Consumo         TO ucab_estudiante;
+GRANT SELECT, INSERT                 ON Paso_Actividad       TO ucab_estudiante;
 GRANT SELECT, INSERT, DELETE         ON Acompanante          TO ucab_estudiante;
-GRANT SELECT                         ON Folio_Consumo        TO ucab_estudiante;
-GRANT SELECT                         ON Item_Consumo         TO ucab_estudiante;
-GRANT SELECT                         ON Factura              TO ucab_estudiante;
-GRANT SELECT, INSERT                 ON Pago                 TO ucab_estudiante;
-GRANT SELECT, INSERT                 ON TAI                  TO ucab_estudiante;
-GRANT SELECT                         ON Periodo_Vinculacion  TO ucab_estudiante;
-GRANT SELECT                         ON Estudiante           TO ucab_estudiante;
-GRANT SELECT                         ON Becario              TO ucab_estudiante;
-GRANT SELECT                         ON Preparador           TO ucab_estudiante;
-GRANT SELECT                         ON Sesion               TO ucab_estudiante;
-GRANT SELECT                         ON Zona_Estacionamiento TO ucab_estudiante;
-GRANT SELECT                         ON Puesto               TO ucab_estudiante;
-GRANT SELECT, INSERT, UPDATE         ON Registro_Acceso      TO ucab_estudiante;
-GRANT SELECT                         ON Vacante_Laboral      TO ucab_estudiante;
-GRANT SELECT                         ON Edificacion          TO ucab_estudiante;
-GRANT SELECT                         ON Espacio_Fisico       TO ucab_estudiante;
 GRANT SELECT, INSERT                 ON Reserva              TO ucab_estudiante;
-GRANT SELECT                         ON Paso_Actividad       TO ucab_estudiante;
-GRANT SELECT                         ON Entidad_Prestadora   TO ucab_estudiante;
-GRANT SELECT                         ON Tasa                 TO ucab_estudiante;
-GRANT SELECT                         ON Regula               TO ucab_estudiante;
--- El estudiante NO tiene acceso a: Contrasena (via vista), Personal_Administrativo,
---   Profesor, Entidad_Interna/Externa, Tercero_Corporativo, datos de otros miembros
+GRANT SELECT, INSERT                 ON Registro_Acceso      TO ucab_estudiante;
+GRANT SELECT, INSERT                 ON Factura              TO ucab_estudiante;
+GRANT SELECT, INSERT                 ON Pago, TAI, Efectivo,
+                                        Pago_Movil, Tarjeta,
+                                        Cripto, Zelle         TO ucab_estudiante;
+GRANT SELECT, INSERT, UPDATE         ON Cumple               TO ucab_estudiante;
+GRANT SELECT                         ON Acreditacion, Requiere TO ucab_estudiante;
+GRANT SELECT, INSERT, UPDATE         ON Sesion               TO ucab_estudiante;
+GRANT SELECT                         ON Persona, Miembro_Comunidad,
+                                        Periodo_Vinculacion,
+                                        Estudiante, Becario, Preparador TO ucab_estudiante;
 
--- ==== ROL: ucab_egresado ====
--- Hereda todos los privilegios de estudiante, añade acceso a vacantes laborales
+-- =====================================================================
+-- SECCIÓN 7: PERFIL EGRESADO
+--   Hereda estudiante + acceso a bolsa de trabajo.
+-- =====================================================================
+
 GRANT ucab_estudiante TO ucab_egresado;
 
-GRANT SELECT                         ON Egresado             TO ucab_egresado;
-GRANT SELECT, INSERT                 ON Postula              TO ucab_egresado;
-GRANT UPDATE (Estatus)               ON Postula              TO ucab_egresado;
+GRANT SELECT                  ON Egresado        TO ucab_egresado;
+GRANT SELECT, INSERT, DELETE  ON Postula         TO ucab_egresado;
+GRANT UPDATE (Estatus)        ON Postula         TO ucab_egresado;
+GRANT SELECT                  ON Vacante_Laboral TO ucab_egresado;
 
--- ==== ROL: ucab_profesor ====
--- Profesor: gestiona pasos de actividad y accede a reportes de la plataforma
+-- =====================================================================
+-- SECCIÓN 8: PERFIL PROFESOR
+--   Hereda estudiante + gestión académica + registro de beneficiarios.
+-- =====================================================================
 
-GRANT SELECT                         ON Sede                 TO ucab_profesor;
-GRANT SELECT                         ON Categoria_Servicio   TO ucab_profesor;
-GRANT SELECT                         ON Servicio             TO ucab_profesor;
-GRANT SELECT                         ON Requisitos_Acceso    TO ucab_profesor;
-GRANT SELECT                         ON Acreditacion         TO ucab_profesor;
-GRANT SELECT                         ON Cumple               TO ucab_profesor;
-GRANT SELECT, INSERT                 ON Solicitud_Servicio   TO ucab_profesor;
+GRANT ucab_estudiante TO ucab_profesor;
+
+GRANT SELECT                              ON Profesor, Personal_Administrativo TO ucab_profesor;
+GRANT SELECT, INSERT, UPDATE, DELETE      ON Beneficiario, Carga_Mayor,
+                                             Carga_Menor, Vacunacion           TO ucab_profesor;
 GRANT SELECT, UPDATE (Estado_Paso, Fecha_Completada)
-                                     ON Paso_Actividad       TO ucab_profesor;
-GRANT SELECT, INSERT, DELETE         ON Acompanante          TO ucab_profesor;
-GRANT SELECT                         ON Folio_Consumo        TO ucab_profesor;
-GRANT SELECT                         ON Item_Consumo         TO ucab_profesor;
-GRANT SELECT                         ON Factura              TO ucab_profesor;
-GRANT SELECT, INSERT                 ON Pago                 TO ucab_profesor;
-GRANT SELECT, INSERT                 ON TAI                  TO ucab_profesor;
-GRANT SELECT                         ON Periodo_Vinculacion  TO ucab_profesor;
-GRANT SELECT                         ON Profesor             TO ucab_profesor;
-GRANT SELECT                         ON Sesion               TO ucab_profesor;
-GRANT SELECT                         ON Zona_Estacionamiento TO ucab_profesor;
-GRANT SELECT                         ON Puesto               TO ucab_profesor;
-GRANT SELECT, INSERT, UPDATE         ON Registro_Acceso      TO ucab_profesor;
-GRANT SELECT                         ON Edificacion          TO ucab_profesor;
-GRANT SELECT                         ON Espacio_Fisico       TO ucab_profesor;
-GRANT SELECT, INSERT                 ON Reserva              TO ucab_profesor;
-GRANT SELECT                         ON Entidad_Prestadora   TO ucab_profesor;
-GRANT SELECT                         ON Tasa                 TO ucab_profesor;
-GRANT SELECT                         ON Regula               TO ucab_profesor;
--- Reportes (solo lectura sobre vistas analíticas)
-GRANT SELECT                         ON v_reporte_cuellos_botella     TO ucab_profesor;
-GRANT SELECT                         ON v_reporte_ocupacion_espacios  TO ucab_profesor;
-GRANT SELECT                         ON v_solicitudes_activas         TO ucab_profesor;
-GRANT SELECT                         ON v_espacios_disponibles        TO ucab_profesor;
-GRANT SELECT                         ON v_vinculaciones_activas       TO ucab_profesor;
+                                          ON Paso_Actividad                    TO ucab_profesor;
 
--- ==== ROL: ucab_cajero ====
--- Cajero: valida pagos, procesa facturas y verifica identidad del cliente
+-- Acceso de solo lectura a reportes analíticos (definidos en logic.sql)
+GRANT SELECT ON v_reporte_cuellos_botella     TO ucab_profesor;
+GRANT SELECT ON v_reporte_ocupacion_espacios  TO ucab_profesor;
+GRANT SELECT ON v_solicitudes_activas         TO ucab_profesor;
+GRANT SELECT ON v_espacios_disponibles        TO ucab_profesor;
+GRANT SELECT ON v_vinculaciones_activas       TO ucab_profesor;
 
-GRANT SELECT                         ON Sede                 TO ucab_cajero;
+-- =====================================================================
+-- SECCIÓN 8B: PERFIL CAJERO
+--   Valida pagos, procesa facturas e identifica al cliente.
+-- =====================================================================
+
 GRANT SELECT                         ON Persona              TO ucab_cajero;
 GRANT SELECT                         ON Solicitud_Servicio   TO ucab_cajero;
 GRANT SELECT                         ON Folio_Consumo        TO ucab_cajero;
@@ -201,52 +226,26 @@ GRANT SELECT, INSERT                 ON Pago_Movil           TO ucab_cajero;
 GRANT SELECT, INSERT                 ON Tarjeta              TO ucab_cajero;
 GRANT SELECT, INSERT                 ON Cripto               TO ucab_cajero;
 GRANT SELECT, INSERT                 ON Zelle                TO ucab_cajero;
-GRANT SELECT                         ON Zona_Estacionamiento TO ucab_cajero;
 GRANT SELECT, UPDATE (Estado)        ON Puesto               TO ucab_cajero;
 GRANT SELECT, INSERT, UPDATE         ON Registro_Acceso      TO ucab_cajero;
--- El cajero usa v_cliente_cajero en lugar de Miembro_Comunidad directamente
 
--- ==== ROL: ucab_administrativo ====
--- Personal administrativo: acceso amplio para gestionar la plataforma completa
+-- =====================================================================
+-- SECCIÓN 8C: PERFIL ALIADO EXTERNO
+--   Empresa aliada: gestiona vacantes y visualiza postulantes.
+-- =====================================================================
 
-GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO ucab_administrativo;
+GRANT SELECT, INSERT, UPDATE ON Vacante_Laboral      TO ucab_aliado;
+GRANT SELECT                 ON Postula              TO ucab_aliado;
+GRANT SELECT                 ON Periodo_Vinculacion  TO ucab_aliado;
+GRANT SELECT                 ON Egresado             TO ucab_aliado;
+GRANT SELECT                 ON Servicio             TO ucab_aliado;
+GRANT SELECT                 ON Categoria_Servicio   TO ucab_aliado;
 
--- El administrativo puede propagar acceso a vistas de reportes a otros roles
-GRANT SELECT ON v_reporte_cuellos_botella    TO ucab_administrativo WITH GRANT OPTION;
-GRANT SELECT ON v_reporte_ocupacion_espacios TO ucab_administrativo WITH GRANT OPTION;
-GRANT SELECT ON v_facturas_pendientes        TO ucab_administrativo WITH GRANT OPTION;
-GRANT SELECT ON v_vinculaciones_activas      TO ucab_administrativo WITH GRANT OPTION;
+-- =====================================================================
+-- SECCIÓN 8D: PERFIL ENTIDAD INTERNA
+--   Dependencias UCAB: gestionan sus propios servicios y pasos.
+-- =====================================================================
 
--- Restricción de auditoría: el administrativo NO puede borrar registros contables ni de sesión
--- Garantiza trazabilidad total (audit trail)
-REVOKE DELETE ON Sesion          FROM ucab_administrativo;
-REVOKE DELETE ON Factura         FROM ucab_administrativo;
-REVOKE DELETE ON Pago            FROM ucab_administrativo;
-REVOKE DELETE ON Paso_Actividad  FROM ucab_administrativo;
-REVOKE DELETE ON Item_Consumo    FROM ucab_administrativo;
-
--- ==== ROL: ucab_aliado ====
--- Empresa aliada: gestiona sus vacantes y visualiza currículos de postulantes
-
-GRANT SELECT                         ON Sede                 TO ucab_aliado;
-GRANT SELECT                         ON Entidad_Prestadora   TO ucab_aliado;
-GRANT SELECT                         ON Entidad_Externa      TO ucab_aliado;
-GRANT SELECT, INSERT, UPDATE         ON Vacante_Laboral      TO ucab_aliado;
-GRANT SELECT                         ON Postula              TO ucab_aliado;
-GRANT SELECT                         ON Periodo_Vinculacion  TO ucab_aliado;
-GRANT SELECT                         ON Egresado             TO ucab_aliado;
-GRANT SELECT                         ON Servicio             TO ucab_aliado;
-GRANT SELECT                         ON Categoria_Servicio   TO ucab_aliado;
--- El aliado NO tiene acceso a datos personales del miembro ni datos financieros
-
--- ==== ROL: ucab_entidad_interna ====
--- Dependencias UCAB: gestionan sus propios servicios y pasos de actividad
-
-GRANT SELECT                         ON Sede                 TO ucab_entidad_interna;
-GRANT SELECT                         ON Categoria_Servicio   TO ucab_entidad_interna;
-GRANT SELECT                         ON Regula               TO ucab_entidad_interna;
-GRANT SELECT                         ON Edificacion          TO ucab_entidad_interna;
-GRANT SELECT                         ON Espacio_Fisico       TO ucab_entidad_interna;
 GRANT SELECT, INSERT, UPDATE         ON Servicio             TO ucab_entidad_interna;
 GRANT SELECT, INSERT, UPDATE, DELETE ON Requisitos_Acceso    TO ucab_entidad_interna;
 GRANT SELECT, INSERT, UPDATE, DELETE ON Requiere             TO ucab_entidad_interna;
@@ -260,15 +259,68 @@ GRANT SELECT, INSERT                 ON Reserva              TO ucab_entidad_int
 GRANT SELECT                         ON Tasa                 TO ucab_entidad_interna;
 GRANT SELECT                         ON Acreditacion         TO ucab_entidad_interna;
 
+-- =====================================================================
+-- SECCIÓN 8E: PERFIL PERSONAL ADMINISTRATIVO
+--   Gestión operativa amplia con restricciones de auditoría.
+-- =====================================================================
 
--- ============================================================
--- SECCIÓN 4: VISTAS DE SEGURIDAD (DAC reforzado con vistas)
--- "Las vistas permiten acceso solo a un subconjunto específico de R"
--- ============================================================
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public
+  TO ucab_administrativo;
+
+-- Restricciones de auditoría: no puede borrar registros contables ni trazabilidad
+REVOKE DELETE ON Persona        FROM ucab_administrativo;
+REVOKE DELETE ON Sesion         FROM ucab_administrativo;
+REVOKE DELETE ON Factura        FROM ucab_administrativo;
+REVOKE DELETE ON Pago           FROM ucab_administrativo;
+REVOKE DELETE ON Paso_Actividad FROM ucab_administrativo;
+REVOKE DELETE ON Item_Consumo   FROM ucab_administrativo;
+
+-- Reportes con opción de delegar acceso a otros roles
+GRANT SELECT ON v_reporte_cuellos_botella    TO ucab_administrativo WITH GRANT OPTION;
+GRANT SELECT ON v_reporte_ocupacion_espacios TO ucab_administrativo WITH GRANT OPTION;
+GRANT SELECT ON v_facturas_pendientes        TO ucab_administrativo WITH GRANT OPTION;
+GRANT SELECT ON v_vinculaciones_activas      TO ucab_administrativo WITH GRANT OPTION;
+
+-- =====================================================================
+-- SECCIÓN 9: CUENTAS DE USUARIO
+-- =====================================================================
+
+-- Cuenta de aplicación de mínimo privilegio (la que usa el backend Node.js)
+-- Configura en back/.env: DB_USER=ucab_app  DB_PASSWORD=ucab_app_2026
+CREATE ROLE ucab_app LOGIN PASSWORD 'ucab_app_2026';
+GRANT ucab_administrativo TO ucab_app;
+
+-- Cuentas individuales por rol (para entornos con un usuario por perfil)
+CREATE USER app_administrativo WITH PASSWORD 'Admin';
+CREATE USER app_cajero         WITH PASSWORD 'Cajero';
+CREATE USER app_profesor       WITH PASSWORD 'Profesor';
+CREATE USER app_estudiante     WITH PASSWORD 'Estudiante';
+CREATE USER app_egresado       WITH PASSWORD 'Egresado';
+CREATE USER app_aliado         WITH PASSWORD 'Aliado';
+CREATE USER app_entidad        WITH PASSWORD 'Entidad';
+
+GRANT ucab_administrativo  TO app_administrativo;
+GRANT ucab_cajero          TO app_cajero;
+GRANT ucab_profesor        TO app_profesor;
+GRANT ucab_estudiante      TO app_estudiante;
+GRANT ucab_egresado        TO app_egresado;
+GRANT ucab_aliado          TO app_aliado;
+GRANT ucab_entidad_interna TO app_entidad;
+
+-- =====================================================================
+-- SECCIÓN 10: VALORES POR DEFECTO PARA OBJETOS FUTUROS
+-- =====================================================================
+
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT ON TABLES TO ucab_lectura;
+ALTER DEFAULT PRIVILEGES IN SCHEMA public
+  GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO ucab_administrativo;
+
+-- =====================================================================
+-- SECCIÓN 11: VISTAS DE SEGURIDAD (DAC reforzado con vistas)
+-- =====================================================================
 
 -- Vista 1: Perfil público del miembro (sin contraseña)
--- Permite que administrativos y cajeros vean datos del miembro
--- sin exponer la columna Contrasena cifrada
 CREATE OR REPLACE VIEW v_miembro_publico AS
 SELECT
     mc.Cedula,
@@ -292,7 +344,6 @@ COMMENT ON VIEW v_miembro_publico IS
 'DAC via vista: expone todos los atributos del miembro excepto Contrasena.';
 
 -- Vista 2: Datos mínimos del cliente para operaciones de caja
--- El cajero identifica al cliente sin ver datos académicos ni contraseña
 CREATE OR REPLACE VIEW v_cliente_cajero AS
 SELECT
     mc.Cedula,
@@ -308,7 +359,6 @@ COMMENT ON VIEW v_cliente_cajero IS
 'DAC via vista: permite al cajero identificar al cliente sin acceder a Contrasena ni datos académicos.';
 
 -- Vista 3: Perfil académico resumido del egresado para la bolsa de trabajo
--- El aliado externo solo ve el perfil académico, NO los datos de contacto personales
 CREATE OR REPLACE VIEW v_perfil_egresado_bolsa AS
 SELECT
     eg.Cedula,
@@ -322,7 +372,6 @@ FROM Egresado eg
 JOIN Periodo_Vinculacion pv
      ON eg.Cedula = pv.Cedula AND eg.Fecha_Inicio = pv.Fecha_Inicio
 JOIN Persona p ON p.Cedula = eg.Cedula;
--- Excluye deliberadamente: dirección, teléfono, correo y contraseña
 
 COMMENT ON VIEW v_perfil_egresado_bolsa IS
 'DAC via vista: aliados externos ven perfil académico del egresado sin datos personales de contacto.';
@@ -349,22 +398,21 @@ JOIN Persona p            ON p.Cedula  = s.Cedula;
 COMMENT ON VIEW v_auditoria_sesiones IS
 'Vista de auditoría (audit trail): historial de accesos para revisión por DBA o administrativo.';
 
--- Otorgar acceso a las vistas de seguridad
-GRANT SELECT ON v_miembro_publico         TO ucab_administrativo, ucab_profesor;
-GRANT SELECT ON v_cliente_cajero          TO ucab_cajero WITH GRANT OPTION;
-GRANT SELECT ON v_perfil_egresado_bolsa   TO ucab_aliado;
-GRANT SELECT ON v_auditoria_sesiones      TO ucab_administrativo;
+-- Acceso a las vistas de seguridad
+GRANT SELECT ON v_beneficiarios_mayoria_prox TO ucab_administrativo, ucab_profesor;
+GRANT SELECT ON v_miembro_publico            TO ucab_administrativo, ucab_profesor;
+GRANT SELECT ON v_cliente_cajero         TO ucab_cajero WITH GRANT OPTION;
+GRANT SELECT ON v_perfil_egresado_bolsa  TO ucab_aliado;
+GRANT SELECT ON v_auditoria_sesiones     TO ucab_administrativo, ucab_auditor;
 
+-- =====================================================================
+-- SECCIÓN 12: RLS — SEGURIDAD A NIVEL DE FILA (MAC-like)
+--   La aplicación establece el contexto al inicio de cada sesión:
+--     SELECT set_config('app.cedula_actual', '<cedula>', TRUE);
+--     SELECT set_config('app.rif_actual',    '<rif>',    TRUE);
+-- =====================================================================
 
--- ============================================================
--- SECCIÓN 5: RLS — SEGURIDAD A NIVEL DE FILA (MAC-like)
--- "El motor de la base de datos es el que obliga la política"
--- La aplicación establece el contexto por sesión:
---   SELECT set_config('app.cedula_actual', '<cedula>', TRUE);
---   SELECT set_config('app.rif_actual',    '<rif>',    TRUE);
--- ============================================================
-
--- 5.1 Sesion: cada miembro ve únicamente sus propias sesiones
+-- 12.1 Sesion: cada miembro ve solo sus propias sesiones
 ALTER TABLE Sesion ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY pol_sesion_propietario ON Sesion
@@ -377,7 +425,7 @@ CREATE POLICY pol_sesion_admin ON Sesion
     TO ucab_administrativo
     USING (true);
 
--- 5.2 Periodo_Vinculacion: cada miembro ve solo sus periodos
+-- 12.2 Periodo_Vinculacion: cada miembro ve solo sus periodos
 ALTER TABLE Periodo_Vinculacion ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY pol_vinculacion_propietario ON Periodo_Vinculacion
@@ -390,7 +438,7 @@ CREATE POLICY pol_vinculacion_admin ON Periodo_Vinculacion
     TO ucab_administrativo, ucab_cajero, ucab_entidad_interna
     USING (true);
 
--- 5.3 Solicitud_Servicio: cada miembro ve solo sus solicitudes
+-- 12.3 Solicitud_Servicio: cada miembro ve solo sus solicitudes
 ALTER TABLE Solicitud_Servicio ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY pol_solicitud_propietario ON Solicitud_Servicio
@@ -403,7 +451,7 @@ CREATE POLICY pol_solicitud_admin ON Solicitud_Servicio
     TO ucab_administrativo, ucab_cajero, ucab_entidad_interna
     USING (true);
 
--- 5.4 Factura: el miembro ve solo sus facturas (vía folio → solicitud → cedula)
+-- 12.4 Factura: el miembro ve solo sus facturas
 ALTER TABLE Factura ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY pol_factura_propietario ON Factura
@@ -428,7 +476,7 @@ CREATE POLICY pol_factura_admin ON Factura
     TO ucab_administrativo
     USING (true);
 
--- 5.5 Vacante_Laboral: aliados gestionan solo sus vacantes; miembros ven solo las disponibles
+-- 12.5 Vacante_Laboral
 ALTER TABLE Vacante_Laboral ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY pol_vacante_aliado ON Vacante_Laboral
@@ -446,7 +494,7 @@ CREATE POLICY pol_vacante_admin ON Vacante_Laboral
     TO ucab_administrativo
     USING (true);
 
--- 5.6 Postula: egresados ven sus propias postulaciones; aliados ven las de sus vacantes
+-- 12.6 Postula: egresados ven sus postulaciones; aliados ven las de sus vacantes
 ALTER TABLE Postula ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY pol_postula_egresado ON Postula
@@ -469,7 +517,7 @@ CREATE POLICY pol_postula_admin ON Postula
     TO ucab_administrativo
     USING (true);
 
--- 5.7 Registro_Acceso: miembros solo ven sus propios registros de estacionamiento
+-- 12.7 Registro_Acceso: miembros ven solo sus propios registros de estacionamiento
 ALTER TABLE Registro_Acceso ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY pol_acceso_parking_miembro ON Registro_Acceso
@@ -491,32 +539,32 @@ CREATE POLICY pol_acceso_parking_cajero ON Registro_Acceso
     TO ucab_cajero, ucab_administrativo
     USING (true);
 
+-- =====================================================================
+-- SECCIÓN 13: PRIVILEGIOS SOBRE FUNCIONES Y PROCEDIMIENTOS
+-- =====================================================================
 
--- ============================================================
--- SECCIÓN 6: PRIVILEGIOS SOBRE FUNCIONES Y PROCEDIMIENTOS
--- ============================================================
-
--- Todos los roles de la aplicación pueden verificar contraseñas (para login)
+-- Verificación de contraseña: todos los roles la necesitan para el login
 GRANT EXECUTE ON FUNCTION fn_verificar_contrasena(TEXT, TEXT) TO
     ucab_administrativo, ucab_cajero, ucab_profesor,
     ucab_estudiante, ucab_egresado, ucab_aliado, ucab_entidad_interna;
 
--- Solo el DBA puede invocar fn_cifrar_contrasena directamente
--- (el trigger la llama internamente como SECURITY DEFINER)
+-- Cifrado directo: solo el DBA (el trigger lo invoca como SECURITY DEFINER)
 REVOKE EXECUTE ON FUNCTION fn_cifrar_contrasena(TEXT) FROM PUBLIC;
 GRANT  EXECUTE ON FUNCTION fn_cifrar_contrasena(TEXT) TO ucab_dba;
 
--- Funciones de negocio según rol
+-- Funciones de negocio (definidas en logic.sql)
 GRANT EXECUTE ON FUNCTION fn_tiempo_resolucion(VARCHAR)
     TO ucab_administrativo, ucab_profesor;
 
 GRANT EXECUTE ON FUNCTION fn_indice_recurrencia(VARCHAR)
-    TO ucab_administrativo, ucab_cajero, ucab_profesor, ucab_estudiante, ucab_egresado;
+    TO ucab_administrativo, ucab_cajero, ucab_profesor,
+       ucab_estudiante, ucab_egresado;
 
 GRANT EXECUTE ON FUNCTION fn_costo_final_servicio(VARCHAR, VARCHAR)
-    TO ucab_administrativo, ucab_cajero, ucab_estudiante, ucab_egresado, ucab_profesor;
+    TO ucab_administrativo, ucab_cajero, ucab_estudiante,
+       ucab_egresado, ucab_profesor;
 
-GRANT EXECUTE ON FUNCTION fn_dias_habiles(DATE, DATE)
+GRANT EXECUTE ON FUNCTION fn_dias_habiles(TIMESTAMP, TIMESTAMP)
     TO ucab_administrativo, ucab_profesor;
 
 -- Procedimientos almacenados (solo administrativo)
@@ -524,4 +572,8 @@ GRANT EXECUTE ON PROCEDURE proc_cierre_masivo_folios()            TO ucab_admini
 GRANT EXECUTE ON PROCEDURE proc_actualizar_tasa(DATE, REAL, REAL) TO ucab_administrativo;
 GRANT EXECUTE ON PROCEDURE proc_archivar_expirados()              TO ucab_administrativo;
 GRANT EXECUTE ON PROCEDURE proc_transicion_mayoria_edad()         TO ucab_administrativo;
-GRANT EXECUTE ON PROCEDURE proc_conciliacion_financiera(DATE)     TO ucab_administrativo;
+GRANT EXECUTE ON PROCEDURE proc_conciliacion_financiera(DATE, DATE) TO ucab_administrativo;
+
+-- =====================================================================
+--  Fin de security.sql
+-- =====================================================================
