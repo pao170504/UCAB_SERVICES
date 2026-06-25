@@ -622,6 +622,14 @@ BEGIN
     RETURN NEW;
   END IF;
 
+  -- El estacionamiento es un servicio MEDIDO POR TIEMPO (tarifa variable),
+  -- no una tarifa fija de catálogo: se exime del rango [min,max] de Regula.
+  -- En /entrada el item base entra con precio 0 y en /salida se recalcula
+  -- segun las horas, pudiendo superar el maximo. Por eso queda exento.
+  IF v_cat_id = 'CAT-ESTAC' THEN
+    RETURN NEW;
+  END IF;
+
   SELECT Costo_Min, Costo_Max
   INTO   v_costo_min, v_costo_max
   FROM   Regula
@@ -633,8 +641,9 @@ BEGIN
 
   IF NEW.Precio < v_costo_min OR NEW.Precio > v_costo_max THEN
     RAISE EXCEPTION
-      'Precio base %.2f fuera del rango permitido [%.2f, %.2f] para la categoría % en sede %',
-      NEW.Precio, v_costo_min, v_costo_max, v_cat_id, v_sede_id;
+      'Precio base % fuera del rango permitido [%, %] para la categoria % en sede %',
+      ROUND(NEW.Precio::numeric,2), ROUND(v_costo_min::numeric,2),
+      ROUND(v_costo_max::numeric,2), v_cat_id, v_sede_id;
   END IF;
 
   RETURN NEW;
@@ -645,6 +654,47 @@ DROP TRIGGER IF EXISTS trg_validar_precio_regula ON Item_Consumo;
 CREATE TRIGGER trg_validar_precio_regula
   BEFORE INSERT OR UPDATE ON Item_Consumo
   FOR EACH ROW EXECUTE FUNCTION trg_fn_validar_precio_regula();
+
+
+-- Actualizar estado del Puesto al registrar entrada/salida en estacionamiento
+CREATE OR REPLACE FUNCTION trg_fn_actualizar_puesto_estatus()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF TG_OP = 'INSERT' AND NEW.Estatus = 'Activo' THEN
+    UPDATE Puesto SET Estado = 'Ocupado'
+    WHERE ID_Zona = NEW.ID_Zona AND Numero_Puesto = NEW.Numero_Puesto;
+
+  ELSIF TG_OP = 'UPDATE'
+    AND NEW.Estatus = 'Finalizado'
+    AND OLD.Estatus = 'Activo' THEN
+    UPDATE Puesto SET Estado = 'Libre'
+    WHERE ID_Zona = OLD.ID_Zona AND Numero_Puesto = OLD.Numero_Puesto;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_actualizar_puesto_estatus ON Registro_Acceso;
+CREATE TRIGGER trg_actualizar_puesto_estatus
+  AFTER INSERT OR UPDATE ON Registro_Acceso
+  FOR EACH ROW EXECUTE FUNCTION trg_fn_actualizar_puesto_estatus();
+
+
+-- Auto-actualizar Fecha_Cambio_Clave cuando cambia la contraseña
+CREATE OR REPLACE FUNCTION trg_fn_fecha_cambio_clave()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF NEW.Contrasena IS DISTINCT FROM OLD.Contrasena THEN
+    NEW.Fecha_Cambio_Clave := CURRENT_DATE;
+  END IF;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_fecha_cambio_clave ON Miembro_Comunidad;
+CREATE TRIGGER trg_fecha_cambio_clave
+  BEFORE UPDATE OF Contrasena ON Miembro_Comunidad
+  FOR EACH ROW EXECUTE FUNCTION trg_fn_fecha_cambio_clave();
 
 
 -- Bloquear cuenta con 5 o más intentos fallidos de sesión

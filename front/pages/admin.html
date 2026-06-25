@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Control de Usuarios</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+  <link rel="stylesheet" href="../css/pages/admin.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <!-- Navbar -->
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand">
+      <div class="navbar-brand-icon">🎓</div>
+      UCAB Services
+    </a>
+    <div class="navbar-tabs">
+      <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-avatar">AS</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-profile-name" id="sidebar-nombre">UCAB Services</div>
+        <div class="sidebar-profile-sub" id="sidebar-subtitulo"></div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
+        <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <!-- Main -->
+    <main class="main-content">
+
+      <div class="page-header">
+        <h1 class="page-header-title">Control de Usuarios</h1>
+        <p class="page-header-sub">Gestión de cuentas, estados, vinculaciones y aprobación de trámites.</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-pills" style="margin-bottom:var(--space-5);flex-wrap:wrap;gap:var(--space-2);">
+        <button class="tab-pill active" data-tab="usuarios"     onclick="cambiarTab('usuarios')">Usuarios</button>
+        <button class="tab-pill"        data-tab="vinculaciones" onclick="cambiarTab('vinculaciones')">Vinculaciones</button>
+        <button class="tab-pill"        data-tab="aprobaciones" onclick="cambiarTab('aprobaciones')">
+          Aprobaciones <span class="badge badge-warning" id="badge-aprob" style="display:none;margin-left:4px;">0</span>
+        </button>
+        <button class="tab-pill"        data-tab="vacantes"     onclick="cambiarTab('vacantes')">Vacantes</button>
+        <button class="tab-pill"        data-tab="tasas"        onclick="cambiarTab('tasas')">Tasas</button>
+        <button class="tab-pill"        data-tab="acreditaciones" onclick="cambiarTab('acreditaciones')">Acreditaciones</button>
+        <button class="tab-pill"        data-tab="folios"       onclick="cambiarTab('folios')">Cierre de Folios</button>
+      </div>
+
+      <!-- ===== TAB USUARIOS ===== -->
+      <section id="tab-usuarios">
+        <div class="card">
+          <div class="filter-bar" style="padding:var(--space-4) var(--space-4) 0;">
+            <div class="search-bar" style="width:320px;max-width:100%;">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="buscar-usuario" placeholder="Buscar por nombre, CI o correo…" oninput="filtrarUsuarios()">
+            </div>
+            <select class="form-select" id="filtro-estado" style="width:auto;" onchange="filtrarUsuarios()">
+              <option value="">Todos los estados</option>
+              <option value="Activa">Activa</option>
+              <option value="Suspendida">Suspendida</option>
+              <option value="Bloqueada">Bloqueada</option>
+            </select>
+          </div>
+
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table" id="tabla-usuarios">
+              <thead>
+                <tr>
+                  <th>CI</th><th>NOMBRE</th><th>CORREO</th>
+                  <th>ROLES</th><th>ESTADO</th><th>ÚLT. SESIÓN</th><th>ACCIONES</th>
+                </tr>
+              </thead>
+              <tbody id="usuarios-tbody">
+                <tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <span class="pagination-info" id="usuarios-info">—</span>
+            <div class="pagination-controls" id="usuarios-paginacion"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TAB VINCULACIONES ===== -->
+      <section id="tab-vinculaciones" style="display:none;">
+        <div class="card">
+          <div class="filter-bar" style="padding:var(--space-4) var(--space-4) 0;">
+            <div class="search-bar" style="width:320px;max-width:100%;">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="buscar-vinc" placeholder="Buscar por nombre o CI…" oninput="filtrarVinc()">
+            </div>
+            <select class="form-select" id="filtro-subtipo" style="width:auto;" onchange="filtrarVinc()">
+              <option value="">Todos los subtipos</option>
+              <option value="Estudiante">Estudiante</option>
+              <option value="Profesor">Profesor</option>
+              <option value="Administrativo">Administrativo</option>
+              <option value="Egresado">Egresado</option>
+              <option value="__sin__">Sin rol</option>
+            </select>
+          </div>
+
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table" id="tabla-vinc">
+              <thead>
+                <tr><th>CI</th><th>NOMBRE</th><th>ROLES ACTUALES</th><th>PERÍODO</th><th>ACCIONES</th></tr>
+              </thead>
+              <tbody id="vinc-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="pagination">
+            <span class="pagination-info" id="vinc-info">—</span>
+            <div class="pagination-controls" id="vinc-paginacion"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TAB APROBACIONES ===== -->
+      <section id="tab-aprobaciones" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">Trámites pendientes de aprobación</span>
+            <span class="badge badge-warning" id="aprob-count">0</span>
+          </div>
+          <div class="card-body" id="aprobaciones-lista">
+            <p style="color:var(--color-text-muted);">Cargando…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TAB VACANTES ===== -->
+      <section id="tab-vacantes" style="display:none;">
+        <div class="card" style="margin-bottom:var(--space-4);">
+          <div class="card-header">
+            <span class="card-header-title">EMPRESAS EXTERNAS</span>
+            <button class="btn btn-outline btn-sm" onclick="abrirModalEmpresa()">+ Nueva empresa</button>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr>
+                <th>RIF</th><th>RAZÓN SOCIAL</th><th>CONTACTO</th><th>CORREO</th><th>VIGENCIA</th>
+              </tr></thead>
+              <tbody id="empresas-tbody">
+                <tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">VACANTES LABORALES</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalVacante()">+ Nueva vacante</button>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr>
+                <th>ID</th><th>CARGO</th><th>EMPRESA</th><th>FECHA</th><th>ESTATUS</th><th>POSTULANTES</th><th></th>
+              </tr></thead>
+              <tbody id="vacantes-tbody">
+                <tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TAB TASAS ===== -->
+      <section id="tab-tasas" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">TASA DE CAMBIO</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalTasa()">+ Registrar tasa</button>
+          </div>
+          <div style="padding:var(--space-4);">
+            <div id="tasa-vigente" style="margin-bottom:var(--space-4);padding:var(--space-4);background:var(--color-bg-secondary);border-radius:var(--radius);"></div>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr><th>FECHA</th><th>EUR (Bs.)</th><th>USD (Bs.)</th></tr></thead>
+              <tbody id="tasas-tbody">
+                <tr><td colspan="3" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TAB ACREDITACIONES ===== -->
+      <section id="tab-acreditaciones" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">CATÁLOGO DE ACREDITACIONES</span>
+            <button class="btn btn-primary btn-sm" onclick="abrirModalAcredAdmin()">+ Nueva acreditación</button>
+          </div>
+          <div class="table-wrap" style="border:none;border-radius:0;">
+            <table class="table">
+              <thead><tr><th>ID</th><th>TIPO</th><th>DESCRIPCIÓN</th><th></th></tr></thead>
+              <tbody id="acred-admin-tbody">
+                <tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===== TAB CIERRE DE FOLIOS ===== -->
+      <section id="tab-folios" style="display:none;">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">CIERRE MASIVO DE FOLIOS</span>
+          </div>
+          <div style="padding:var(--space-6);text-align:center;">
+            <span style="font-size:3rem;">📁</span>
+            <h2 style="margin:var(--space-4) 0 var(--space-2);">Ejecutar cierre masivo</h2>
+            <p style="color:var(--color-text-muted);max-width:480px;margin:0 auto var(--space-5);">
+              Esta operación ejecuta el procedimiento almacenado <code>proc_cierre_masivo_folios()</code>
+              que cierra todos los folios activos del período. La acción no se puede deshacer.
+            </p>
+            <button class="btn btn-primary" style="background:var(--color-danger);" onclick="ejecutarCierreMasivo()">
+              Ejecutar cierre masivo
+            </button>
+            <div id="cierre-resultado" style="margin-top:var(--space-4);"></div>
+          </div>
+        </div>
+      </section>
+
+    </main>
+  </div>
+</div>
+
+<!-- ===== Modal: Vinculaciones / Roles ===== -->
+<div class="modal-overlay" id="modal-vinc">
+  <div class="modal" style="width:min(560px,95vw);">
+    <div class="modal-header">
+      <h3 class="modal-title" id="vinc-title">Roles del miembro</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-vinc')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="section-title" style="margin-bottom:var(--space-3);">Roles actuales</div>
+      <div id="vinc-actuales"><p style="color:var(--color-text-muted);">Cargando…</p></div>
+
+      <div class="divider" style="margin:var(--space-4) 0;"></div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:var(--space-3);">
+        <div class="section-title" style="margin:0;">Añadir rol</div>
+        <button type="button" class="btn btn-outline btn-sm" onclick="toggleAddRol()">+ Nuevo rol</button>
+      </div>
+
+      <div id="add-rol-form" style="display:none;">
+        <div class="form-group" style="margin-bottom:var(--space-3);">
+          <label class="form-label">Tipo de rol</label>
+          <select class="form-select" id="add-rol-tipo" onchange="renderCamposRol()">
+            <option value="profesor">Profesor</option>
+            <option value="administrativo">Administrativo</option>
+            <option value="egresado">Egresado</option>
+            <option value="estudiante">Estudiante</option>
+          </select>
+        </div>
+        <div id="add-rol-campos" class="form-row"></div>
+        <div style="display:flex;gap:var(--space-2);justify-content:flex-end;margin-top:var(--space-3);">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="toggleAddRol()">Cancelar</button>
+          <button type="button" class="btn btn-primary btn-sm" id="btn-add-rol" onclick="guardarRol()">Añadir rol</button>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-vinc')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Modal: Reset contraseña ===== -->
+<div class="modal-overlay" id="modal-pwd">
+  <div class="modal" style="width:min(440px,95vw);">
+    <div class="modal-header">
+      <h3 class="modal-title">Restablecer contraseña</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-pwd')">×</button>
+    </div>
+    <div class="modal-body">
+      <p class="text-sm text-secondary" id="pwd-target" style="margin-bottom:var(--space-4);"></p>
+      <div class="form-group">
+        <label class="form-label">Nueva contraseña (mínimo 6 caracteres)</label>
+        <input class="form-input" type="text" id="pwd-input" placeholder="Nueva contraseña">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-pwd')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="guardarPassword()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nueva empresa externa -->
+<div class="modal-overlay" id="modal-empresa">
+  <div class="modal" style="max-width:500px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Registrar empresa externa</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-empresa')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">RIF <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" id="emp-rif" class="form-input" placeholder="J-00000000-0"></div>
+      <div class="form-group"><label class="form-label">Razón social <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" id="emp-razon" class="form-input"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+        <div class="form-group"><label class="form-label">Nombre contacto <span style="color:var(--color-danger)">*</span></label>
+          <input type="text" id="emp-contacto" class="form-input"></div>
+        <div class="form-group"><label class="form-label">Correo contacto <span style="color:var(--color-danger)">*</span></label>
+          <input type="email" id="emp-correo" class="form-input"></div>
+      </div>
+      <div class="form-group"><label class="form-label">Vigencia contrato hasta <span style="color:var(--color-danger)">*</span></label>
+        <input type="date" id="emp-vigencia" class="form-input"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-empresa')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="guardarEmpresa()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nueva vacante -->
+<div class="modal-overlay" id="modal-vacante">
+  <div class="modal" style="max-width:540px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Crear vacante laboral</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-vacante')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Empresa <span style="color:var(--color-danger)">*</span></label>
+        <select id="vac-empresa" class="form-select"><option value="">Cargando...</option></select></div>
+      <div class="form-group"><label class="form-label">Cargo <span style="color:var(--color-danger)">*</span></label>
+        <input type="text" id="vac-cargo" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Responsabilidades <span style="color:var(--color-danger)">*</span></label>
+        <textarea id="vac-responsabilidades" class="form-input" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">Perfil buscado <span style="color:var(--color-danger)">*</span></label>
+        <textarea id="vac-perfil" class="form-input" rows="2"></textarea></div>
+      <div class="form-group"><label class="form-label">Beneficios</label>
+        <input type="text" id="vac-beneficios" class="form-input"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-vacante')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="guardarVacante()">Crear vacante</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar vacante -->
+<div class="modal-overlay" id="modal-editar-vacante">
+  <div class="modal" style="max-width:480px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Editar vacante</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-editar-vacante')">×</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-vac-id">
+      <div class="form-group"><label class="form-label">Cargo</label>
+        <input type="text" id="edit-vac-cargo" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Responsabilidades</label>
+        <textarea id="edit-vac-resp" class="form-input" rows="3"></textarea></div>
+      <div class="form-group"><label class="form-label">Perfil buscado</label>
+        <textarea id="edit-vac-perfil" class="form-input" rows="2"></textarea></div>
+      <div class="form-group"><label class="form-label">Beneficios</label>
+        <input type="text" id="edit-vac-beneficios" class="form-input"></div>
+      <div class="form-group"><label class="form-label">Estatus</label>
+        <select id="edit-vac-estatus" class="form-select">
+          <option value="Disponible">Disponible</option>
+          <option value="Finalizada">Finalizada</option>
+        </select></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-editar-vacante')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="actualizarVacante()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar tasa -->
+<div class="modal-overlay" id="modal-tasa">
+  <div class="modal" style="max-width:400px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Registrar tasa de cambio</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-tasa')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Fecha <span style="color:var(--color-danger)">*</span></label>
+        <input type="date" id="tasa-fecha" class="form-input"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+        <div class="form-group"><label class="form-label">EUR (Bs.) <span style="color:var(--color-danger)">*</span></label>
+          <input type="number" id="tasa-eur" class="form-input" step="0.01" min="0.01" placeholder="0.00"></div>
+        <div class="form-group"><label class="form-label">USD (Bs.) <span style="color:var(--color-danger)">*</span></label>
+          <input type="number" id="tasa-usd" class="form-input" step="0.01" min="0.01" placeholder="0.00"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-tasa')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="guardarTasa()">Registrar</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Nueva acreditación (catálogo) -->
+<div class="modal-overlay" id="modal-acred-admin">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h3 class="modal-title">Nueva acreditación en catálogo</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-acred-admin')">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group"><label class="form-label">Tipo <span style="color:var(--color-danger)">*</span></label>
+        <select id="acred-admin-tipo" class="form-select">
+          <option value="Certificación">Certificación</option>
+          <option value="Formación">Formación</option>
+          <option value="Licencia">Licencia</option>
+          <option value="Idioma">Idioma</option>
+          <option value="Posgrado">Posgrado</option>
+          <option value="Otro">Otro</option>
+        </select></div>
+      <div class="form-group"><label class="form-label">Descripción</label>
+        <input type="text" id="acred-admin-desc" class="form-input" placeholder="Descripción de la acreditación"></div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-acred-admin')">Cancelar</button>
+      <button type="button" class="btn btn-primary" onclick="guardarAcredAdmin()">Crear</button>
+    </div>
+  </div>
+</div>
+
+<script src="../js/auth-guard.js"></script>
+<script src="../js/utils.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/pages/admin.js"></script>
+</body>
+</html>

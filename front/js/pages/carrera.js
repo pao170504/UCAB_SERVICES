@@ -12,22 +12,57 @@ function _updateCVPanel() {
     .map(function (w) { return w[0] || ''; }).join('').toUpperCase();
 
   var set = function (id, val) { var el = document.getElementById(id); if (el) el.textContent = val; };
+  var show = function (id, visible) { var el = document.getElementById(id); if (el) el.style.display = visible ? '' : 'none'; };
+
   set('cv-avatar', initials);
   set('cv-name',   usuario.nombre);
 
   var matchEl = document.getElementById('cv-match');
-  var gradEl  = document.getElementById('cv-grad-year');
 
   if (rol === 'egresado' && rolData) {
-    set('cv-role-label', 'Egresado/a · ' + (rolData.titulo || '') + ' ' + (rolData.ano_graduacion || ''));
-    set('cv-gpa', (parseFloat(rolData.indice_academico) || 0).toFixed(2));
+    var indice = parseFloat(rolData.indice_academico || rolData.indiceAcademico) || 0;
+    var ano    = rolData.ano_graduacion || rolData.anoGraduacion || '';
+    var titulo = rolData.titulo || '';
+
+    set('cv-role-label', 'Egresado/a · ' + titulo + (ano ? ' · ' + ano : ''));
+    set('cv-gpa', indice.toFixed(2));
+    set('cv-stat-titulo-val', titulo);
+    set('cv-grad-year-val',   ano || '—');
+
+    show('cv-stat-uc',       false);
+    show('cv-stat-facultad', false);
+    show('cv-stat-escuela',  false);
+    show('cv-stat-titulo',   true);
+    show('cv-grad-year',     true);
     if (matchEl) matchEl.style.display = '';
-    if (gradEl)  { gradEl.style.display = ''; gradEl.querySelector('strong').textContent = rolData.ano_graduacion || ''; }
-  } else {
-    set('cv-role-label', 'Estudiante');
-    set('cv-gpa', '—');
+  } else if (rol === 'estudiante' && rolData) {
+    var promedio = parseFloat(rolData.promedio) || 0;
+    var uc       = rolData.ucAprobadas || rolData.uc_aprobadas || 0;
+    var facultad = rolData.facultad || '—';
+    var escuela  = rolData.escuela  || '—';
+    var semestre = rolData.semestre || '';
+
+    set('cv-role-label', 'Estudiante' + (semestre ? ' · ' + semestre + 'vo Semestre' : ''));
+    set('cv-gpa', promedio.toFixed(2));
+    set('cv-stat-uc-val',       uc + ' / 180');
+    set('cv-stat-facultad-val', facultad);
+    set('cv-stat-escuela-val',  escuela);
+
+    show('cv-stat-uc',       true);
+    show('cv-stat-facultad', true);
+    show('cv-stat-escuela',  true);
+    show('cv-stat-titulo',   false);
+    show('cv-grad-year',     false);
     if (matchEl) matchEl.style.display = 'none';
-    if (gradEl)  gradEl.style.display  = 'none';
+  } else {
+    set('cv-role-label', rol || 'Miembro UCAB');
+    set('cv-gpa', '—');
+    show('cv-stat-uc',       false);
+    show('cv-stat-facultad', false);
+    show('cv-stat-escuela',  false);
+    show('cv-stat-titulo',   false);
+    show('cv-grad-year',     false);
+    if (matchEl) matchEl.style.display = 'none';
   }
 }
 
@@ -91,6 +126,17 @@ function renderVacantes(vacantes, containerId) {
   }
   var cards = vacantes.map(function (j) { return _jobCard(j); }).join('');
   container.innerHTML = '<div class="job-list">' + cards + '</div>';
+
+  /* Update cv-match score with best available match */
+  var scores = vacantes.map(function (v) { return typeof v.match_score === 'number' ? v.match_score : 0; });
+  var best   = scores.length ? Math.max.apply(null, scores) : 0;
+  var matchEl = document.getElementById('cv-match');
+  if (matchEl) {
+    var scoreEl = matchEl.querySelector('.cv-match-score');
+    var labelEl = matchEl.querySelector('.cv-match-label');
+    if (scoreEl) scoreEl.textContent = best + '%';
+    if (labelEl) labelEl.textContent = best > 0 ? 'Compatibilidad de perfil' : 'Sin vacantes compatibles';
+  }
 }
 window.renderVacantes = renderVacantes;
 

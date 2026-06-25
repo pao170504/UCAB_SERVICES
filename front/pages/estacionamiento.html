@@ -36,14 +36,18 @@
       </div>
       <nav class="sidebar-nav">
         <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
         <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
         <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
         <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
         <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
-        <a href="configuracion.html" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
         <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
       </div>
     </aside>
@@ -55,28 +59,24 @@
         <p class="page-header-sub">Monitoreo en tiempo real de sensores, disponibilidad y ocupación por zona.</p>
       </div>
 
-      <div class="tab-pills mb-5">
-        <button class="tab-pill active" data-zone="sambilito">Sambilito</button>
-        <button class="tab-pill" data-zone="playa">Playa</button>
-        <button class="tab-pill" data-zone="padel">Padel</button>
-        <button class="tab-pill" data-zone="esequibo">Esequibo</button>
-        <button class="tab-pill" data-zone="solarium">Solarium</button>
+      <div class="tab-pills mb-5" id="zona-tabs" style="margin-bottom: 2rem;">
+        <!-- populated by estacionamiento.js -->
       </div>
 
       <div class="parking-stats-row">
         <div class="stat-card">
           <div class="stat-label">🅿 TOTAL DISPONIBILIDAD</div>
-          <div class="stat-value">142</div>
-          <div class="stat-sub">/ 250 puestos</div>
+          <div class="stat-value" id="stat-disponibilidad">—</div>
+          <div class="stat-sub" id="stat-total-puestos">/ — puestos</div>
         </div>
         <div class="stat-card">
           <div class="stat-label">📊 TASA DE OCUPACIÓN</div>
-          <div class="stat-value" style="font-size:1.8rem;">43.2%</div>
+          <div class="stat-value" id="stat-tasa" style="font-size:1.8rem;">—%</div>
           <div><span class="stat-trend down">↘ Baja</span></div>
         </div>
         <div class="stat-card">
           <div class="stat-label">📡 SENSORES ACTIVOS</div>
-          <div class="stat-value" style="font-size:1.8rem;">248</div>
+          <div class="stat-value" id="stat-sensores" style="font-size:1.8rem;">—</div>
           <div><span class="badge badge-success">Online</span></div>
         </div>
         <div class="stat-card dark">
@@ -86,33 +86,28 @@
       </div>
 
       <div class="parking-filterbar">
-        <select class="form-select" style="width:160px;"><option>Vehículos</option><option>Carro</option><option>Moto</option><option>Carga</option><option>Preferencial</option></select>
-        <select class="form-select" style="width:160px;"><option>Estado</option><option>Libre</option><option>Ocupado</option><option>Reservado</option><option>Mantenimiento</option></select>
-        <button class="btn btn-secondary btn-sm">🔄 Actualizar</button>
+        <select class="form-select" id="filtro-vehiculo" style="width:160px;">
+          <option value="todos">Vehículos</option>
+          <option value="Carro">Carro</option>
+          <option value="Moto">Moto</option>
+          <option value="Carga">Carga</option>
+          <option value="Preferencial">Preferencial</option>
+        </select>
+        <select class="form-select" id="filtro-estado" style="width:160px;">
+          <option value="todos">Estado</option>
+          <option value="Libre">Libre</option>
+          <option value="Ocupado">Ocupado</option>
+          <option value="Reservado">Reservado</option>
+          <option value="Mantenimiento">Mantenimiento</option>
+        </select>
+        <button class="btn btn-secondary btn-sm" id="btn-actualizar">🔄 Actualizar</button>
       </div>
 
       <div class="parking-main">
 
         <div class="spot-grid" id="spot-grid-container">
-          <div class="spot-grid-inner">
-            <div class="spot libre"         data-spot="S-01"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-01</span></div>
-            <div class="spot ocupado"       data-spot="S-02"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-02</span></div>
-            <div class="spot ocupado"       data-spot="S-03"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-03</span></div>
-            <div class="spot libre"         data-spot="S-04"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-04</span></div>
-            <div class="spot reservado"     data-spot="S-05"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-05</span></div>
-            <div class="spot mantenimiento" data-spot="S-06"><span class="spot-dot"></span><span class="spot-icon">🔧</span><span class="spot-label">S-06</span></div>
-            <div class="spot libre"         data-spot="M-01"><span class="spot-dot"></span><span class="spot-icon">🏍</span><span class="spot-label">M-01</span></div>
-            <div class="spot ocupado"       data-spot="M-02"><span class="spot-dot"></span><span class="spot-icon">🏍</span><span class="spot-label">M-02</span></div>
-            <div class="spot libre"         data-spot="M-03"><span class="spot-dot"></span><span class="spot-icon">🏍</span><span class="spot-label">M-03</span></div>
-            <div class="spot libre"         data-spot="C-01"><span class="spot-dot"></span><span class="spot-icon">🚛</span><span class="spot-label">C-01</span></div>
-            <div class="spot ocupado"       data-spot="C-02"><span class="spot-dot"></span><span class="spot-icon">🚛</span><span class="spot-label">C-02</span></div>
-            <div class="spot libre"         data-spot="P-01"><span class="spot-dot"></span><span class="spot-icon">♿</span><span class="spot-label">P-01</span></div>
-            <div class="spot libre"         data-spot="P-02"><span class="spot-dot"></span><span class="spot-icon">♿</span><span class="spot-label">P-02</span></div>
-            <div class="spot ocupado"       data-spot="S-07"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-07</span></div>
-            <div class="spot libre"         data-spot="S-08"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-08</span></div>
-            <div class="spot reservado"     data-spot="S-09"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-09</span></div>
-            <div class="spot libre"         data-spot="S-10"><span class="spot-dot"></span><span class="spot-icon">🚗</span><span class="spot-label">S-10</span></div>
-            <div class="spot mantenimiento" data-spot="S-11"><span class="spot-dot"></span><span class="spot-icon">🔧</span><span class="spot-label">S-11</span></div>
+          <div class="spot-grid-inner" id="parking-grid">
+            <!-- populated by estacionamiento.js -->
           </div>
 
           <div class="spot-legend">
@@ -127,20 +122,30 @@
           <div class="spot-detail-header" id="spot-detail-header">Detalle del Puesto</div>
           <div class="spot-detail-body" id="spot-detail-body" style="display:none;">
             <div class="spot-detail-row">
-              <span class="spot-detail-label">Estado del Sensor</span>
-              <span class="spot-detail-value flex items-center gap-2">
-                <span class="dot" id="detail-estado"></span>
-                <span id="detail-sensor"></span>
-              </span>
+              <span class="spot-detail-label">Puesto</span>
+              <span class="spot-detail-value" id="detalle-id">—</span>
             </div>
             <div class="spot-detail-row">
-              <span class="spot-detail-label">Última Actualización</span>
-              <span class="spot-detail-value" id="detail-updated"></span>
+              <span class="spot-detail-label">Tipo de vehículo</span>
+              <span class="spot-detail-value" id="detalle-tipo">—</span>
             </div>
             <div class="spot-detail-row">
-              <span class="spot-detail-label">Tiempo de Ocupación</span>
-              <span class="spot-timer" id="detail-timer"></span>
+              <span class="spot-detail-label">Estado</span>
+              <span class="spot-detail-value" id="detalle-estado">—</span>
             </div>
+            <div class="spot-detail-row">
+              <span class="spot-detail-label">Zona</span>
+              <span class="spot-detail-value" id="detalle-zona">—</span>
+            </div>
+            <div class="spot-detail-row">
+              <span class="spot-detail-label">Placa</span>
+              <span class="spot-detail-value" id="detalle-placa">—</span>
+            </div>
+            <div class="spot-detail-row">
+              <span class="spot-detail-label">Entrada</span>
+              <span class="spot-detail-value" id="detalle-entrada">—</span>
+            </div>
+            <div id="detalle-acciones" style="margin-top:.75rem; display:flex; flex-direction:column; gap:.5rem;"></div>
           </div>
           <div class="spot-detail-empty" id="spot-detail-empty">Seleccione un puesto para ver los detalles</div>
         </div>
@@ -189,6 +194,33 @@
         <button class="btn btn-secondary" onclick="closeModal('reserve-modal')">Cancelar</button>
         <button class="btn btn-primary" onclick="confirmReservation()">Confirmar reserva →</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- Reservation modal -->
+<div class="modal-overlay" id="modal-reserva">
+  <div class="modal" style="width:min(420px,95vw)">
+    <div class="modal-header">
+      <h3 id="modal-reserva-titulo">Reservar puesto</h3>
+      <button class="modal-close" onclick="closeModal('modal-reserva')">×</button>
+    </div>
+    <div class="card-body" style="padding:var(--space-6) 0">
+      <label class="form-label">Placa del vehículo</label>
+      <input id="modal-reserva-placa" class="form-input"
+             type="text" placeholder="ABC-123"
+             maxlength="8"
+             oninput="this.value=this.value.toUpperCase()"
+             style="font-family:monospace; letter-spacing:0.1em"/>
+      <p style="font-size:0.8rem;color:var(--color-text-muted);margin-top:8px">
+        La placa se usará para registrar la entrada cuando el vehículo llegue.
+      </p>
+    </div>
+    <input type="hidden" id="modal-reserva-zona"/>
+    <input type="hidden" id="modal-reserva-numero"/>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-reserva')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarReserva()">Confirmar reserva</button>
     </div>
   </div>
 </div>

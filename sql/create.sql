@@ -17,7 +17,7 @@ CREATE TABLE Miembro_Comunidad (
   Cedula VARCHAR(20) PRIMARY KEY,
   Correo_Institucional VARCHAR(100) NOT NULL CHECK (Correo_Institucional LIKE '%@ucab%'),
   ID_Sede INT NOT NULL,
-  Contrasena TEXT NOT NULL,
+  Contrasena VARCHAR(100) NOT NULL,
   Estado_de_Cuenta VARCHAR(20) NOT NULL CHECK (Estado_de_Cuenta IN ('Activa', 'Suspendida', 'Bloqueada')),
   Fecha_Cambio_Clave DATE NOT NULL,
   Ciudad VARCHAR(50),

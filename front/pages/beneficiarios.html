@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>UCAB Services — Beneficiarios</title>
+  <link rel="stylesheet" href="../css/global.css">
+  <link rel="stylesheet" href="../css/layout.css">
+  <link rel="stylesheet" href="../css/components.css">
+</head>
+<body>
+
+<div class="app-shell">
+
+  <nav class="navbar">
+    <a href="dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
+    <div class="navbar-tabs">
+      <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
+      <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
+      <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+    </div>
+    <div class="navbar-right">
+      <div class="navbar-avatar">MP</div>
+    </div>
+  </nav>
+
+  <div class="app-body">
+    <aside class="sidebar">
+      <div class="sidebar-profile">
+        <div class="sidebar-avatar" id="sidebar-avatar">?</div>
+        <div class="sidebar-profile-name" id="sidebar-nombre">UCAB Services</div>
+        <div class="sidebar-profile-sub" id="sidebar-subtitulo"></div>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
+        <a href="servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
+        <a href="pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
+        <a href="infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
+        <a href="estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
+        <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
+        <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
+        <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
+        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
+        <button type="button" id="btn-cerrar-sesion" class="sidebar-footer-item danger"><span>⬚</span> Cerrar sesión</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+
+      <div class="page-header">
+        <h1 class="page-header-title">Beneficiarios</h1>
+        <p class="page-header-sub">Gestión de cargas menores (hijos) y cargas mayores (dependientes adultos).</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="tab-pills" style="margin-bottom:var(--space-5);">
+        <button class="tab-pill active"  data-tab="menor" onclick="cambiarTabBenef('menor')">Carga Menor (Hijos)</button>
+        <button class="tab-pill"         data-tab="mayor" onclick="cambiarTabBenef('mayor')">Carga Mayor (Adultos)</button>
+      </div>
+
+      <!-- ═══ TAB CARGA MENOR ═══════════════════════════════════════ -->
+      <div id="tab-menor">
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-header">
+            <span class="card-header-title">MIS CARGAS MENORES</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalMenor()">+ Registrar hijo</button>
+          </div>
+          <div id="beneficiarios-container">
+            <p style="padding:var(--space-4);color:var(--color-text-muted);">Cargando...</p>
+          </div>
+        </div>
+
+        <div class="card" id="panel-vacunas" style="display:none;margin-bottom:var(--space-5);">
+          <div class="card-header">
+            <span class="card-header-title" id="vacunas-titulo">ESQUEMA DE VACUNACIÓN</span>
+            <button type="button" class="btn btn-outline btn-sm" onclick="cerrarPanelVacunas()">Cerrar</button>
+          </div>
+          <div style="padding:var(--space-4);">
+            <div id="vacunas-list" style="margin-bottom:var(--space-4);"></div>
+            <div style="display:flex;gap:var(--space-3);align-items:center;">
+              <input type="text" id="nueva-vacuna-input" class="form-input" placeholder="Nombre vacuna (ej. BCG, Polio, MMR)" style="flex:1;">
+              <button type="button" class="btn btn-primary btn-sm" onclick="agregarVacuna()">Agregar</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══ TAB CARGA MAYOR ═══════════════════════════════════════ -->
+      <div id="tab-mayor" style="display:none;">
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-header">
+            <span class="card-header-title">MIS CARGAS MAYORES</span>
+            <button type="button" class="btn btn-primary btn-sm" onclick="abrirModalMayor()">+ Registrar dependiente</button>
+          </div>
+          <div id="carga-mayor-container">
+            <p style="padding:var(--space-4);color:var(--color-text-muted);">Cargando...</p>
+          </div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<!-- Modal: Registrar Carga Menor -->
+<div class="modal-overlay" id="modal-menor-overlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Registrar Carga Menor (hijo)</h2>
+      <button type="button" class="modal-close" onclick="closeModal('modal-menor-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-menor" onsubmit="guardarMenor(event)">
+        <div class="form-group">
+          <label class="form-label">Cédula <span style="color:var(--color-danger)">*</span></label>
+          <input type="text" id="cm-cedula" class="form-input" placeholder="Solo números" required>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="form-group">
+            <label class="form-label">Primer nombre <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" id="cm-primer-nombre" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo nombre</label>
+            <input type="text" id="cm-segundo-nombre" class="form-input">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="form-group">
+            <label class="form-label">Primer apellido <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" id="cm-primer-apellido" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo apellido <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" id="cm-segundo-apellido" class="form-input" required>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="form-group">
+            <label class="form-label">Fecha de nacimiento <span style="color:var(--color-danger)">*</span></label>
+            <input type="date" id="cm-fecha-nac" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sexo <span style="color:var(--color-danger)">*</span></label>
+            <select id="cm-sexo" class="form-select" required>
+              <option value="">Seleccionar</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Parentesco <span style="color:var(--color-danger)">*</span></label>
+          <select id="cm-parentesco" class="form-select" required>
+            <option value="">Seleccionar</option>
+            <option value="Hijo/a">Hijo/a</option>
+            <option value="Hijastro/a">Hijastro/a</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Centro de Educación Inicial</label>
+          <input type="text" id="cm-centro" class="form-input" placeholder="Nombre del preescolar (opcional)">
+        </div>
+        <div class="modal-footer" style="margin-top:var(--space-4);">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-menor-overlay')">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-guardar-menor">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Carga Menor -->
+<div class="modal-overlay" id="modal-editar-menor">
+  <div class="modal" style="max-width:420px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Editar centro educativo</h2>
+      <button type="button" class="modal-close" onclick="closeModal('modal-editar-menor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-menor-cedula">
+      <div class="form-group">
+        <label class="form-label">Centro de Educación Inicial</label>
+        <input type="text" id="edit-menor-centro" class="form-input">
+      </div>
+      <div class="modal-footer" style="margin-top:var(--space-4);">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-editar-menor')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="guardarEdicionMenor()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Registrar Carga Mayor -->
+<div class="modal-overlay" id="modal-mayor-overlay">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Registrar Carga Mayor (adulto dependiente)</h2>
+      <button type="button" class="modal-close" onclick="closeModal('modal-mayor-overlay')">✕</button>
+    </div>
+    <div class="modal-body">
+      <form id="form-mayor" onsubmit="guardarMayor(event)">
+        <div class="form-group">
+          <label class="form-label">Cédula <span style="color:var(--color-danger)">*</span></label>
+          <input type="text" id="maj-cedula" class="form-input" placeholder="Solo números" required>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="form-group">
+            <label class="form-label">Primer nombre <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" id="maj-primer-nombre" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo nombre</label>
+            <input type="text" id="maj-segundo-nombre" class="form-input">
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="form-group">
+            <label class="form-label">Primer apellido <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" id="maj-primer-apellido" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Segundo apellido <span style="color:var(--color-danger)">*</span></label>
+            <input type="text" id="maj-segundo-apellido" class="form-input" required>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:var(--space-3);">
+          <div class="form-group">
+            <label class="form-label">Fecha de nacimiento <span style="color:var(--color-danger)">*</span></label>
+            <input type="date" id="maj-fecha-nac" class="form-input" required>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Sexo <span style="color:var(--color-danger)">*</span></label>
+            <select id="maj-sexo" class="form-select" required>
+              <option value="">Seleccionar</option>
+              <option value="M">Masculino</option>
+              <option value="F">Femenino</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Parentesco <span style="color:var(--color-danger)">*</span></label>
+          <select id="maj-parentesco" class="form-select" required>
+            <option value="">Seleccionar</option>
+            <option value="Hijo/a mayor">Hijo/a mayor</option>
+            <option value="Cónyuge">Cónyuge</option>
+            <option value="Padre/Madre">Padre/Madre</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Constancia de Estudio Universitario <span style="color:var(--color-danger)">*</span></label>
+          <input type="text" id="maj-constancia" class="form-input" placeholder="N° de constancia o nombre de institución" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Estado civil: ¿Es soltero/a? <span style="color:var(--color-danger)">*</span></label>
+          <select id="maj-soltero" class="form-select" required>
+            <option value="">Seleccionar</option>
+            <option value="S">Sí</option>
+            <option value="N">No</option>
+          </select>
+        </div>
+        <div class="modal-footer" style="margin-top:var(--space-4);">
+          <button type="button" class="btn btn-outline" onclick="closeModal('modal-mayor-overlay')">Cancelar</button>
+          <button type="submit" class="btn btn-primary" id="btn-guardar-mayor">Registrar</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- Modal: Editar Carga Mayor -->
+<div class="modal-overlay" id="modal-editar-mayor">
+  <div class="modal" style="max-width:440px;">
+    <div class="modal-header">
+      <h2 class="modal-title">Editar Carga Mayor</h2>
+      <button type="button" class="modal-close" onclick="closeModal('modal-editar-mayor')">✕</button>
+    </div>
+    <div class="modal-body">
+      <input type="hidden" id="edit-mayor-cedula">
+      <div class="form-group">
+        <label class="form-label">Constancia de Estudio Universitario</label>
+        <input type="text" id="edit-mayor-constancia" class="form-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">¿Es soltero/a?</label>
+        <select id="edit-mayor-soltero" class="form-select">
+          <option value="">Sin cambio</option>
+          <option value="S">Sí</option>
+          <option value="N">No</option>
+        </select>
+      </div>
+      <div class="modal-footer" style="margin-top:var(--space-4);">
+        <button type="button" class="btn btn-outline" onclick="closeModal('modal-editar-mayor')">Cancelar</button>
+        <button type="button" class="btn btn-primary" onclick="guardarEdicionMayor()">Guardar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../js/utils.js"></script>
+<script src="../js/auth-guard.js"></script>
+<script src="../js/nav.js"></script>
+<script src="../js/pages/beneficiarios.js"></script>
+</body>
+</html>
