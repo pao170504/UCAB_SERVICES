@@ -15,6 +15,10 @@ const perfilRoutes = require('./routes/perfilRoutes');
 const estacionamientoRoutes = require('./routes/estacionamientoRoutes');
 const serviciosRoutes       = require('./routes/serviciosRoutes');
 const pagosRoutes           = require('./routes/pagosRoutes');
+const infraestructuraRoutes = require('./routes/infraestructuraRoutes');
+const adminRoutes           = require('./routes/adminRoutes');
+const beneficiariosRoutes   = require('./routes/beneficiariosRoutes');
+const acreditacionesRoutes  = require('./routes/acreditacionesRoutes');
 
 app.use('/api/auth', authRoutes);
 app.use('/api/vacantes', auth, vacanteRoutes);
@@ -23,6 +27,10 @@ app.use('/api/perfil', auth, perfilRoutes);
 app.use('/api/estacionamiento', auth, estacionamientoRoutes);
 app.use('/api/servicios', auth, serviciosRoutes);
 app.use('/api/pagos', auth, pagosRoutes);
+app.use('/api/infraestructura', auth, infraestructuraRoutes);
+app.use('/api/admin', auth, adminRoutes);
+app.use('/api/beneficiarios', auth, beneficiariosRoutes);
+app.use('/api/acreditaciones', auth, acreditacionesRoutes);
 
 app.get('/api/status', (req, res) => {
   res.json({ message: 'Servidor UCAB Services funcionando correctamente' });

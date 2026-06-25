@@ -1,8 +1,10 @@
 const express = require('express');
 const router  = express.Router();
 const pool    = require('../config/db');
+const { ADMIN_CEDULAS } = require('../config/admins');
 
 async function esAdmin(cedula) {
+  if (!ADMIN_CEDULAS.includes(String(cedula))) return false;   // candado: solo admin del sistema
   const { rows } = await pool.query(`
     SELECT 1 FROM Personal_Administrativo pa
     JOIN   Periodo_Vinculacion pv ON pv.cedula = pa.cedula AND pv.fecha_inicio = pa.fecha_inicio
@@ -282,35 +284,34 @@ router.post('/folios/:id/factura', async (req, res) => {
 
 /* ── GET /api/pagos/facturas ──────────────────────────────────────────────── */
 router.get('/facturas', async (req, res) => {
-  const admin = await esAdmin(req.cedula);
-  const whereClause = admin ? '' : 'WHERE ss.cedula = $1';
-  const params      = admin ? [] : [req.cedula];
-
   try {
-    const { rows } = await pool.query(`
+    const { rows: facturas } = await pool.query(`
       SELECT
         f.id_factura,
-        f.emisión               AS emision,
-        f.monto                 AS total,
-        f.monto - f.saldo       AS pagado,
-        f.saldo,
-        f.estado                AS estado_pago,
-        fc.id_folio,
-        ss.id_solicitud,
-        ss.cedula,
-        p_info.primer_nombre || ' ' || p_info.primer_apellido AS nombre_miembro,
-        s.descripcion           AS nombre_servicio,
-        tc.razon_social         AS tercero
-      FROM Factura f
-      JOIN Folio_Consumo           fc       ON fc.id_folio      = f.id_folio
-      JOIN Solicitud_Servicio      ss       ON ss.id_solicitud  = fc.id_solicitud
-      JOIN Servicio                s        ON s.id_servicio    = ss.id_servicio
-      JOIN Persona                 p_info   ON p_info.cedula    = ss.cedula
-      LEFT JOIN Tercero_Corporativo tc      ON tc.rif           = f.rif
-      ${whereClause}
-      ORDER BY f.emisión DESC
-    `, params);
-    res.json({ facturas: rows });
+        f.emisión                                        AS fecha_emision,
+        f.monto                                          AS monto_total,
+        f.id_folio,
+        sv.descripcion                                   AS servicio,
+        sv.id_servicio,
+        COALESCE(SUM(pg.monto), 0)                       AS total_pagado,
+        GREATEST(f.monto - COALESCE(SUM(pg.monto), 0), 0) AS saldo,
+        CASE
+          WHEN f.monto <= 0                               THEN 'Gratuito'
+          WHEN COALESCE(SUM(pg.monto), 0) = 0            THEN 'Pendiente'
+          WHEN f.monto - COALESCE(SUM(pg.monto), 0) <= 0 THEN 'Pagada'
+          ELSE 'Parcial'
+        END AS estado
+      FROM   Factura f
+      JOIN   Folio_Consumo      fc ON fc.id_folio     = f.id_folio
+      JOIN   Solicitud_Servicio ss ON ss.id_solicitud = fc.id_solicitud
+      JOIN   Servicio           sv ON sv.id_servicio  = ss.id_servicio
+      LEFT   JOIN Pago          pg ON pg.id_factura   = f.id_factura
+      WHERE  ss.cedula = $1
+      GROUP  BY f.id_factura, f.emisión, f.monto, f.id_folio,
+                sv.descripcion, sv.id_servicio
+      ORDER  BY f.emisión DESC
+    `, [req.cedula]);
+    res.json({ facturas });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error interno' });
@@ -321,66 +322,66 @@ router.get('/facturas', async (req, res) => {
 router.get('/facturas/:id', async (req, res) => {
   const { id } = req.params;
   try {
-    const { rows: facRows } = await pool.query(`
+    const { rows } = await pool.query(`
       SELECT
-        f.id_factura, f.emisión AS emision, f.monto AS total,
-        f.monto - f.saldo       AS pagado,
-        f.saldo,
-        f.estado                AS estado_pago,
-        fc.id_folio, fc.estado  AS estado_folio,
-        ss.id_solicitud, ss.cedula,
-        p_info.primer_nombre || ' ' || p_info.primer_apellido AS nombre_miembro,
-        s.descripcion AS nombre_servicio,
-        tc.razon_social AS tercero
-      FROM Factura f
-      JOIN Folio_Consumo           fc       ON fc.id_folio     = f.id_folio
-      JOIN Solicitud_Servicio      ss       ON ss.id_solicitud = fc.id_solicitud
-      JOIN Servicio                s        ON s.id_servicio   = ss.id_servicio
-      JOIN Persona                 p_info   ON p_info.cedula   = ss.cedula
-      LEFT JOIN Tercero_Corporativo tc      ON tc.rif          = f.rif
-      WHERE f.id_factura = $1
-    `, [id]);
+        f.id_factura,
+        f.emisión                                        AS fecha_emision,
+        f.monto                                          AS monto_total,
+        f.id_folio,
+        sv.descripcion                                   AS servicio,
+        COALESCE(SUM(pg.monto), 0)                       AS total_pagado,
+        GREATEST(f.monto - COALESCE(SUM(pg.monto), 0), 0) AS saldo,
+        CASE
+          WHEN f.monto <= 0                               THEN 'Gratuito'
+          WHEN COALESCE(SUM(pg.monto), 0) = 0            THEN 'Pendiente'
+          WHEN f.monto - COALESCE(SUM(pg.monto), 0) <= 0 THEN 'Pagada'
+          ELSE 'Parcial'
+        END AS estado
+      FROM   Factura f
+      JOIN   Folio_Consumo      fc ON fc.id_folio     = f.id_folio
+      JOIN   Solicitud_Servicio ss ON ss.id_solicitud = fc.id_solicitud
+      JOIN   Servicio           sv ON sv.id_servicio  = ss.id_servicio
+      LEFT   JOIN Pago          pg ON pg.id_factura   = f.id_factura
+      WHERE  f.id_factura = $1
+        AND  ss.cedula    = $2
+      GROUP  BY f.id_factura, f.emisión, f.monto, f.id_folio, sv.descripcion
+    `, [id, req.cedula]);
 
-    if (facRows.length === 0) return res.status(404).json({ error: 'Factura no encontrada' });
-
-    const factura = facRows[0];
-    const admin   = await esAdmin(req.cedula);
-    if (!admin && factura.cedula !== req.cedula)
-      return res.status(403).json({ error: 'Acceso denegado' });
+    if (!rows.length)
+      return res.status(404).json({ error: 'Factura no encontrada' });
 
     const { rows: items } = await pool.query(`
-      SELECT numero, concepto, cantidad, precio, impuesto,
-             precio * cantidad                  AS subtotal,
-             precio * cantidad * (1 + impuesto) AS total_item
-      FROM Item_Consumo WHERE id_folio = $1 ORDER BY numero
-    `, [factura.id_folio]);
+      SELECT ic.numero, ic.concepto, ic.cantidad,
+             ic.precio, ic.impuesto,
+             (ic.precio * ic.cantidad + ic.impuesto) AS subtotal
+      FROM   Item_Consumo ic
+      WHERE  ic.id_folio = $1
+      ORDER  BY ic.numero
+    `, [rows[0].id_folio]);
 
     const { rows: pagos } = await pool.query(`
-      SELECT
-        pg.id_pago, pg.monto, pg.fecha_pago,
-        t.usd AS tasa_usd,
+      SELECT p.id_pago, p.monto, p.fecha_pago,
         CASE
-          WHEN tai.id_pago IS NOT NULL THEN 'tai'
-          WHEN ef.id_pago  IS NOT NULL THEN 'efectivo'
-          WHEN pm.id_pago  IS NOT NULL THEN 'movil'
-          WHEN tar.id_pago IS NOT NULL THEN 'tarjeta'
-          WHEN cr.id_pago  IS NOT NULL THEN 'cripto'
-          WHEN ze.id_pago  IS NOT NULL THEN 'zelle'
-          ELSE 'desconocido'
+          WHEN t.id_pago  IS NOT NULL THEN 'TAI'
+          WHEN e.id_pago  IS NOT NULL THEN 'Efectivo'
+          WHEN m.id_pago  IS NOT NULL THEN 'Pago Móvil'
+          WHEN tj.id_pago IS NOT NULL THEN 'Tarjeta'
+          WHEN c.id_pago  IS NOT NULL THEN 'Cripto'
+          WHEN z.id_pago  IS NOT NULL THEN 'Zelle'
+          ELSE 'Desconocido'
         END AS metodo
-      FROM Pago pg
-      LEFT JOIN Tasa        t   ON t.fecha_tasa  = pg.fecha_tasa
-      LEFT JOIN TAI         tai ON tai.id_pago   = pg.id_pago
-      LEFT JOIN Efectivo    ef  ON ef.id_pago    = pg.id_pago
-      LEFT JOIN Pago_Movil  pm  ON pm.id_pago    = pg.id_pago
-      LEFT JOIN Tarjeta     tar ON tar.id_pago   = pg.id_pago
-      LEFT JOIN Cripto      cr  ON cr.id_pago    = pg.id_pago
-      LEFT JOIN Zelle       ze  ON ze.id_pago    = pg.id_pago
-      WHERE pg.id_factura = $1
-      ORDER BY pg.fecha_pago DESC
-    `, [id]);
+      FROM   Pago p
+      LEFT   JOIN TAI         t  ON t.id_pago  = p.id_pago
+      LEFT   JOIN Efectivo    e  ON e.id_pago  = p.id_pago
+      LEFT   JOIN Pago_Movil  m  ON m.id_pago  = p.id_pago
+      LEFT   JOIN Tarjeta     tj ON tj.id_pago = p.id_pago
+      LEFT   JOIN Cripto      c  ON c.id_pago  = p.id_pago
+      LEFT   JOIN Zelle       z  ON z.id_pago  = p.id_pago
+      WHERE  p.id_factura = $1
+      ORDER  BY p.fecha_pago DESC
+    `, [rows[0].id_factura]);
 
-    res.json({ factura, items, pagos });
+    res.json({ factura: rows[0], items, pagos });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error interno' });
@@ -401,11 +402,15 @@ router.post('/facturas/:id/pagar', async (req, res) => {
     const admin = await esAdmin(req.cedula);
 
     const { rows: facRows } = await pool.query(`
-      SELECT f.id_factura, f.monto, f.saldo, ss.cedula
+      SELECT f.id_factura, f.monto,
+             f.monto - COALESCE(SUM(p.monto), 0) AS saldo,
+             ss.cedula
       FROM Factura f
       JOIN Folio_Consumo      fc ON fc.id_folio     = f.id_folio
       JOIN Solicitud_Servicio ss ON ss.id_solicitud = fc.id_solicitud
+      LEFT JOIN Pago           p ON p.id_factura    = f.id_factura
       WHERE f.id_factura = $1
+      GROUP BY f.id_factura, f.monto, ss.cedula
     `, [id]);
 
     if (facRows.length === 0) return res.status(404).json({ error: 'Factura no encontrada' });
@@ -480,11 +485,17 @@ router.post('/facturas/:id/pagar', async (req, res) => {
         return res.status(400).json({ error: 'Método de pago no reconocido: ' + metodo });
     }
 
-    const { rows: updRows } = await pool.query(
-      `SELECT saldo, estado FROM Factura WHERE id_factura = $1`, [id]
-    );
+    const { rows: updRows } = await pool.query(`
+      SELECT f.monto - COALESCE(SUM(p.monto), 0) AS saldo
+      FROM Factura f
+      LEFT JOIN Pago p ON p.id_factura = f.id_factura
+      WHERE f.id_factura = $1
+      GROUP BY f.monto
+    `, [id]);
     const nuevoSaldo  = parseFloat(updRows[0].saldo);
-    const nuevoEstado = updRows[0].estado;
+    const nuevoEstado = nuevoSaldo <= 0.001
+      ? 'Pagada'
+      : nuevoSaldo < parseFloat(fac.monto) ? 'Parcial' : 'Pendiente';
 
     res.json({
       message:  'Pago registrado exitosamente',
