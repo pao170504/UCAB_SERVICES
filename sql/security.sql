@@ -136,7 +136,7 @@ GRANT SELECT ON
   Sede, Edificacion, Espacio_Fisico,
   Categoria_Servicio, Servicio, Requisitos_Acceso, Regula,
   Entidad_Prestadora, Entidad_Interna, Entidad_Externa,
-  Zona_Estacionamiento, Puesto, Tasa
+  Zona_Estacionamiento, Puesto, Tasa, Feriado
 TO ucab_lectura;
 
 -- Todos los perfiles de usuario heredan la lectura base
@@ -235,8 +235,9 @@ GRANT SELECT, INSERT, UPDATE         ON Registro_Acceso      TO ucab_cajero;
 -- =====================================================================
 
 GRANT SELECT, INSERT, UPDATE ON Vacante_Laboral      TO ucab_aliado;
-GRANT SELECT                 ON Postula              TO ucab_aliado;
-GRANT SELECT                 ON Periodo_Vinculacion  TO ucab_aliado;
+GRANT SELECT                              ON Postula             TO ucab_aliado;
+GRANT UPDATE (Estatus, Fecha_Contratacion) ON Postula            TO ucab_aliado;
+GRANT SELECT                              ON Periodo_Vinculacion TO ucab_aliado;
 GRANT SELECT                 ON Egresado             TO ucab_aliado;
 GRANT SELECT                 ON Servicio             TO ucab_aliado;
 GRANT SELECT                 ON Categoria_Servicio   TO ucab_aliado;
@@ -376,7 +377,7 @@ JOIN Persona p ON p.Cedula = eg.Cedula;
 COMMENT ON VIEW v_perfil_egresado_bolsa IS
 'DAC via vista: aliados externos ven perfil académico del egresado sin datos personales de contacto.';
 
--- Vista 4: Historial de sesiones para auditoría (audit trail)
+-- Vista 4: Historial de sesiones para auditoría (audit trail), incluye MFA_Verificado
 CREATE OR REPLACE VIEW v_auditoria_sesiones AS
 SELECT
     s.Cedula,
@@ -385,6 +386,7 @@ SELECT
     s.Fecha_Hora_Acceso,
     s.Direccion_IP,
     s.Intentos_Fallidos,
+    s.MFA_Verificado,
     CASE
         WHEN s.Latitud IS NOT NULL AND s.Longitud IS NOT NULL
         THEN s.Latitud::TEXT || ', ' || s.Longitud::TEXT
@@ -398,12 +400,21 @@ JOIN Persona p            ON p.Cedula  = s.Cedula;
 COMMENT ON VIEW v_auditoria_sesiones IS
 'Vista de auditoría (audit trail): historial de accesos para revisión por DBA o administrativo.';
 
--- Acceso a las vistas de seguridad
+-- Acceso a las vistas de seguridad (DAC)
 GRANT SELECT ON v_beneficiarios_mayoria_prox TO ucab_administrativo, ucab_profesor;
 GRANT SELECT ON v_miembro_publico            TO ucab_administrativo, ucab_profesor;
-GRANT SELECT ON v_cliente_cajero         TO ucab_cajero WITH GRANT OPTION;
-GRANT SELECT ON v_perfil_egresado_bolsa  TO ucab_aliado;
-GRANT SELECT ON v_auditoria_sesiones     TO ucab_administrativo, ucab_auditor;
+GRANT SELECT ON v_cliente_cajero             TO ucab_cajero WITH GRANT OPTION;
+GRANT SELECT ON v_perfil_egresado_bolsa      TO ucab_aliado;
+GRANT SELECT ON v_auditoria_sesiones         TO ucab_administrativo, ucab_auditor;
+
+-- Acceso a las vistas de reportes PowerBI (definidas en extras.sql)
+GRANT SELECT ON v_tiempos_respuesta          TO ucab_administrativo, ucab_profesor;
+GRANT SELECT ON v_conciliacion_pagos         TO ucab_administrativo, ucab_cajero;
+GRANT SELECT ON v_rentabilidad_espacios      TO ucab_administrativo;
+GRANT SELECT ON v_trayectoria_institucional  TO ucab_administrativo, ucab_profesor;
+GRANT SELECT ON v_bolsa_trabajo_efectividad  TO ucab_administrativo, ucab_aliado;
+GRANT SELECT ON v_ocupacion_estacionamiento  TO ucab_administrativo, ucab_cajero;
+GRANT SELECT ON v_recaudacion_estacionamiento TO ucab_administrativo, ucab_cajero;
 
 -- =====================================================================
 -- SECCIÓN 12: RLS — SEGURIDAD A NIVEL DE FILA (MAC-like)

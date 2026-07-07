@@ -70,6 +70,7 @@ CREATE TABLE Sesion (
   Intentos_Fallidos INT NOT NULL CHECK (Intentos_Fallidos >= 0),
   Latitud REAL CHECK (Latitud >= -90.0 AND Latitud <= 90.0),
   Longitud REAL CHECK (Longitud >= -180.0 AND Longitud <= 180.0),
+  MFA_Verificado BOOLEAN NOT NULL DEFAULT FALSE,
   PRIMARY KEY (Cedula, UUID, Fecha_Hora_Acceso),
   FOREIGN KEY (Cedula) REFERENCES Miembro_Comunidad(Cedula) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -189,7 +190,8 @@ CREATE TABLE Postula (
   Fecha_Inicio DATE,
   ID_Vacante VARCHAR(50),
   Fecha_Postulacion DATE NOT NULL,
-  Estatus VARCHAR(20) NOT NULL,
+  Estatus VARCHAR(20) NOT NULL CHECK (Estatus IN ('Postulado','En Revisión','Entrevistado','Contratado','Rechazado','Descartado')),
+  Fecha_Contratacion DATE,
   PRIMARY KEY (Cedula, Fecha_Inicio, ID_Vacante),
   FOREIGN KEY (Cedula, Fecha_Inicio) REFERENCES Egresado(Cedula, Fecha_Inicio) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (ID_Vacante) REFERENCES Vacante_Laboral(ID_Vacante) ON DELETE CASCADE ON UPDATE CASCADE
@@ -250,6 +252,7 @@ CREATE TABLE Solicitud_Servicio (
   Fecha_Apertura DATE NOT NULL,
   Cedula VARCHAR(20) NOT NULL,
   ID_Servicio VARCHAR(50) NOT NULL,
+  Tipo_Uso VARCHAR(20) NOT NULL DEFAULT 'Académico' CHECK (Tipo_Uso IN ('Académico','Comercial','Institucional','Externo')),
   FOREIGN KEY (Cedula) REFERENCES Miembro_Comunidad(Cedula) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (ID_Servicio) REFERENCES Servicio(ID_Servicio) ON DELETE CASCADE ON UPDATE CASCADE
 );
@@ -329,6 +332,8 @@ CREATE TABLE Reserva (
   Nombre_Edificacion VARCHAR(100),
   Numero_Espacio INT,
   Bloque_Horario VARCHAR(50),
+  Hora_Inicio TIME,
+  Hora_Fin    TIME,
   Fecha_Uso DATE,
   ID_Paso VARCHAR(50) NOT NULL,
   ID_Solicitud VARCHAR(50) NOT NULL,
@@ -393,11 +398,19 @@ CREATE TABLE Tasa (
   USD REAL NOT NULL CHECK (USD > 0.0)
 );
 
+CREATE TABLE Feriado (
+  Fecha       DATE         PRIMARY KEY,
+  Descripcion VARCHAR(100) NOT NULL,
+  Tipo        VARCHAR(30)  NOT NULL DEFAULT 'Nacional'
+    CHECK (Tipo IN ('Nacional','Regional','Universitario'))
+);
+
 CREATE TABLE Pago (
   ID_Pago VARCHAR(50) PRIMARY KEY,
   Monto REAL NOT NULL CHECK (Monto > 0.0),
   Fecha_Pago DATE NOT NULL,
   ID_Factura VARCHAR(50) NOT NULL,
+  Moneda VARCHAR(10) NOT NULL DEFAULT 'BsD' CHECK (Moneda IN ('BsD','USD','EUR')),
   Fecha_Tasa DATE,
   FOREIGN KEY (ID_Factura) REFERENCES Factura(ID_Factura) ON DELETE CASCADE ON UPDATE CASCADE,
   FOREIGN KEY (Fecha_Tasa) REFERENCES Tasa(Fecha_Tasa) ON DELETE SET NULL ON UPDATE CASCADE
@@ -407,6 +420,7 @@ CREATE TABLE TAI (
   ID_Pago VARCHAR(50) PRIMARY KEY,
   UUID VARCHAR(36) NOT NULL,
   POS VARCHAR(50) NOT NULL,
+  Canal VARCHAR(20) NOT NULL DEFAULT 'Digital' CHECK (Canal IN ('NFC','Digital','Taquilla')),
   FOREIGN KEY (ID_Pago) REFERENCES Pago(ID_Pago) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
@@ -438,6 +452,7 @@ CREATE TABLE Cripto (
   TXID VARCHAR(100) NOT NULL,
   Billetera VARCHAR(100) NOT NULL,
   Red VARCHAR(50) NOT NULL,
+  Token VARCHAR(20) NOT NULL DEFAULT 'USDT',
   FOREIGN KEY (ID_Pago) REFERENCES Pago(ID_Pago) ON DELETE CASCADE ON UPDATE CASCADE
 );
 

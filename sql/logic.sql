@@ -180,7 +180,7 @@ WHERE DATE_PART('year', AGE(CURRENT_DATE, p.Fecha_Nacimiento)) >= 17;
 
 -- FUNCIONES
 
--- Cuenta dias habiles entre dos timestamps (excluye sab y dom)
+-- Cuenta dias habiles entre dos timestamps (excluye sab, dom y feriados de la tabla Feriado)
 CREATE OR REPLACE FUNCTION fn_dias_habiles(
   p_inicio TIMESTAMP,
   p_fin    TIMESTAMP
@@ -193,14 +193,15 @@ BEGIN
     RETURN 0;
   END IF;
   WHILE v_actual <= p_fin::DATE LOOP
-    IF EXTRACT(DOW FROM v_actual) NOT IN (0, 6) THEN  -- 0=domingo, 6=sabado
+    IF EXTRACT(DOW FROM v_actual) NOT IN (0, 6)
+       AND NOT EXISTS (SELECT 1 FROM Feriado WHERE Fecha = v_actual) THEN
       v_dias := v_dias + 1;
     END IF;
     v_actual := v_actual + INTERVAL '1 day';
   END LOOP;
   RETURN v_dias;
 END;
-$$ LANGUAGE plpgsql IMMUTABLE;
+$$ LANGUAGE plpgsql;
 
 
 -- Tiempo de resolucion de una solicitud en horas habiles

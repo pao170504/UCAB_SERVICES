@@ -327,7 +327,7 @@ $$;
 -- A4. VIEWS FOR POWERBI
 -- ================================================================
 
--- View 1: Response times by office
+-- View 1: Response times by office (horas brutas + días hábiles excluyendo fines de semana y feriados)
 CREATE OR REPLACE VIEW v_tiempos_respuesta AS
 SELECT
   ss.id_solicitud,
@@ -340,7 +340,11 @@ SELECT
     EXTRACT(EPOCH FROM (
       COALESCE(pa.fecha_completada, CURRENT_TIMESTAMP) - pa.fecha_inicio
     )) / 3600, 2
-  )                                           AS horas_transcurridas,
+  )                                           AS horas_brutas,
+  fn_dias_habiles(
+    pa.fecha_inicio,
+    COALESCE(pa.fecha_completada, CURRENT_TIMESTAMP)
+  )                                           AS dias_habiles,
   mc.cedula,
   p.primer_nombre || ' ' || p.primer_apellido AS solicitante,
   se.nombre                                   AS sede
@@ -351,7 +355,7 @@ JOIN   Miembro_Comunidad   mc ON mc.cedula       = ss.cedula
 JOIN   Persona             p  ON p.cedula        = mc.cedula
 JOIN   Sede                se ON se.id_sede      = mc.id_sede;
 
--- View 2: Session audit
+-- View 2: Session audit (incluye MFA_Verificado)
 CREATE OR REPLACE VIEW v_auditoria_sesiones AS
 SELECT
   s.cedula,
@@ -362,6 +366,7 @@ SELECT
   s.direccion_ip,
   s.uuid                                      AS session_uuid,
   s.intentos_fallidos,
+  s.mfa_verificado,
   s.latitud,
   s.longitud,
   CASE
@@ -373,7 +378,7 @@ FROM   Sesion            s
 JOIN   Persona           p  ON p.cedula  = s.cedula
 JOIN   Miembro_Comunidad mc ON mc.cedula = s.cedula;
 
--- View 3: Multi-currency payment reconciliation
+-- View 3: Multi-currency payment reconciliation (con moneda, referencia por método y monto en BsD)
 CREATE OR REPLACE VIEW v_conciliacion_pagos AS
 SELECT
   f.id_factura,
@@ -388,8 +393,15 @@ SELECT
   END                                         AS estado,
   pg.id_pago,
   pg.monto                                    AS monto_pago,
+  pg.moneda,
+  ROUND((pg.monto * CASE pg.moneda
+    WHEN 'USD' THEN COALESCE(t.usd, 1)
+    WHEN 'EUR' THEN COALESCE(t.eur, 1)
+    ELSE 1
+  END)::NUMERIC, 2)                           AS monto_bsd,
   pg.fecha_pago,
   t.usd                                       AS tasa_usd,
+  t.eur                                       AS tasa_eur,
   CASE
     WHEN tai.id_pago IS NOT NULL THEN 'TAI'
     WHEN ef.id_pago  IS NOT NULL THEN 'Efectivo'
@@ -398,6 +410,10 @@ SELECT
     WHEN cr.id_pago  IS NOT NULL THEN 'Cripto'
     WHEN ze.id_pago  IS NOT NULL THEN 'Zelle'
   END                                         AS metodo_pago,
+  tai.uuid                                    AS referencia_tai,
+  pm.referencia                               AS referencia_pm,
+  cr.txid                                     AS referencia_cripto,
+  ze.confirmación                             AS referencia_zelle,
   sv.descripcion                              AS servicio,
   mc.cedula,
   p.primer_nombre || ' ' || p.primer_apellido AS miembro,
@@ -418,13 +434,15 @@ LEFT   JOIN Tarjeta       tj  ON tj.id_pago      = pg.id_pago
 LEFT   JOIN Cripto        cr  ON cr.id_pago      = pg.id_pago
 LEFT   JOIN Zelle         ze  ON ze.id_pago      = pg.id_pago
 GROUP  BY f.id_factura, f.monto, f.emisión, pg.id_pago,
-          pg.monto, pg.fecha_pago, t.usd,
-          tai.id_pago, ef.id_pago, pm.id_pago,
-          tj.id_pago, cr.id_pago, ze.id_pago,
+          pg.monto, pg.moneda, pg.fecha_pago, t.usd, t.eur,
+          tai.id_pago, tai.uuid,
+          ef.id_pago, pm.id_pago, pm.referencia,
+          tj.id_pago, cr.id_pago, cr.txid,
+          ze.id_pago, ze.confirmación,
           sv.descripcion, mc.cedula,
           p.primer_nombre, p.primer_apellido, se.nombre;
 
--- View 4: Space profitability
+-- View 4: Space profitability (con horas reservadas y distinción académico/comercial)
 CREATE OR REPLACE VIEW v_rentabilidad_espacios AS
 SELECT
   se.nombre                                   AS sede,
@@ -433,7 +451,20 @@ SELECT
   e.tipo_espacio,
   e.capacidad_max,
   COUNT(r.id_solicitud)                       AS total_reservas,
-  COALESCE(SUM(ic.precio * ic.cantidad), 0)   AS ingresos_totales
+  COALESCE(
+    SUM(
+      CASE
+        WHEN r.hora_inicio IS NOT NULL AND r.hora_fin IS NOT NULL
+        THEN EXTRACT(EPOCH FROM (r.hora_fin - r.hora_inicio)) / 3600.0
+        ELSE NULL
+      END
+    ), 0
+  )                                           AS total_horas_reservadas,
+  COALESCE(SUM(ic.precio * ic.cantidad), 0)   AS ingresos_totales,
+  COUNT(r.id_solicitud)
+    FILTER (WHERE ss.tipo_uso = 'Académico')  AS reservas_academicas,
+  COUNT(r.id_solicitud)
+    FILTER (WHERE ss.tipo_uso IN ('Comercial','Externo')) AS reservas_comerciales
 FROM   Espacio_Fisico e
 JOIN   Edificacion    ef ON ef.id_sede            = e.id_sede
                         AND ef.nombre_edificacion = e.nombre_edificacion
@@ -468,6 +499,7 @@ SELECT
     WHEN pa.cedula IS NOT NULL THEN pa.unidad_adscripcion
     WHEN eg.cedula IS NOT NULL THEN eg.titulo
   END                                         AS atributo_principal,
+  e.promedio                                  AS promedio_estudiante,
   se.nombre                                   AS sede
 FROM   Periodo_Vinculacion          pv
 JOIN   Miembro_Comunidad            mc ON mc.cedula      = pv.cedula
@@ -478,7 +510,7 @@ LEFT   JOIN Profesor                pr ON pr.cedula      = pv.cedula AND pr.fech
 LEFT   JOIN Personal_Administrativo pa ON pa.cedula      = pv.cedula AND pa.fecha_inicio = pv.fecha_inicio
 LEFT   JOIN Egresado                eg ON eg.cedula      = pv.cedula AND eg.fecha_inicio = pv.fecha_inicio;
 
--- View 6: Job board effectiveness
+-- View 6: Job board effectiveness (con Fecha_Contratacion y conteo de contratados)
 CREATE OR REPLACE VIEW v_bolsa_trabajo_efectividad AS
 SELECT
   vl.id_vacante,
@@ -489,10 +521,13 @@ SELECT
   COUNT(po.cedula)                            AS total_postulaciones,
   COUNT(po.cedula)
     FILTER (WHERE po.estatus = 'Contactado')  AS contactados,
+  COUNT(po.cedula)
+    FILTER (WHERE po.estatus = 'Contratado')  AS contratados,
   p.primer_nombre || ' ' || p.primer_apellido AS egresado,
   eg.titulo,
   eg.indice_academico,
   po.fecha_postulacion,
+  po.fecha_contratacion,
   po.estatus                                  AS estado_postulacion
 FROM   Vacante_Laboral vl
 JOIN   Entidad_Externa ee ON ee.rif        = vl.rif
@@ -503,12 +538,13 @@ LEFT   JOIN Persona    p  ON p.cedula      = po.cedula
 GROUP  BY vl.id_vacante, vl.cargo, vl.estatus, vl.fecha_oferta,
           ee.razon_social, p.primer_nombre, p.primer_apellido,
           eg.titulo, eg.indice_academico,
-          po.fecha_postulacion, po.estatus;
+          po.fecha_postulacion, po.fecha_contratacion, po.estatus;
 
--- View 7: Parking occupancy
+-- View 7: Parking occupancy (con hora pico histórica y tiempo promedio de uso)
 CREATE OR REPLACE VIEW v_ocupacion_estacionamiento AS
 SELECT
   se.nombre                                   AS sede,
+  z.id_zona,
   z.nombre                                    AS zona,
   z.capacidad,
   pu.tipo_vehiculo,
@@ -525,13 +561,29 @@ SELECT
     COUNT(pu.numero_puesto)
       FILTER (WHERE pu.estado = 'Ocupado') * 100.0
     / NULLIF(COUNT(pu.numero_puesto), 0), 2
-  )                                           AS tasa_ocupacion_pct
+  )                                           AS tasa_ocupacion_pct,
+  (
+    SELECT EXTRACT(HOUR FROM ra_h.fecha_entrada)
+    FROM   Registro_Acceso ra_h
+    WHERE  ra_h.id_zona = z.id_zona
+    GROUP  BY EXTRACT(HOUR FROM ra_h.fecha_entrada)
+    ORDER  BY COUNT(*) DESC
+    LIMIT  1
+  )                                           AS hora_pico,
+  (
+    SELECT ROUND(
+      AVG(EXTRACT(EPOCH FROM (ra_avg.fecha_salida - ra_avg.fecha_entrada)) / 3600)::NUMERIC, 2
+    )
+    FROM   Registro_Acceso ra_avg
+    WHERE  ra_avg.id_zona       = z.id_zona
+      AND  ra_avg.fecha_salida IS NOT NULL
+  )                                           AS promedio_horas_uso
 FROM   Zona_Estacionamiento z
 JOIN   Sede                 se ON se.id_sede = z.id_sede
 LEFT   JOIN Puesto          pu ON pu.id_zona = z.id_zona
-GROUP  BY se.nombre, z.nombre, z.capacidad, pu.tipo_vehiculo;
+GROUP  BY se.nombre, z.id_zona, z.nombre, z.capacidad, pu.tipo_vehiculo;
 
--- View 8: Parking revenue
+-- View 8: Parking revenue (con canal TAI, horas facturadas y monto en BsD)
 CREATE OR REPLACE VIEW v_recaudacion_estacionamiento AS
 SELECT
   f.id_factura,
@@ -557,13 +609,29 @@ SELECT
   ra.placa,
   ra.fecha_entrada,
   ra.fecha_salida,
+  ROUND(
+    EXTRACT(EPOCH FROM (
+      COALESCE(ra.fecha_salida, CURRENT_TIMESTAMP) - ra.fecha_entrada
+    )) / 3600::NUMERIC, 2
+  )                                           AS horas_facturadas,
   CASE
-    WHEN tai.id_pago IS NOT NULL THEN 'TAI NFC'
+    WHEN tai.id_pago IS NOT NULL THEN
+      CASE tai.canal
+        WHEN 'NFC'      THEN 'TAI NFC'
+        WHEN 'Taquilla' THEN 'TAI Taquilla'
+        ELSE                 'TAI Digital'
+      END
     WHEN pm.id_pago  IS NOT NULL THEN 'Pago Móvil'
     WHEN ef.id_pago  IS NOT NULL THEN 'Efectivo'
     ELSE 'Pendiente'
   END                                         AS metodo_pago,
-  t.usd                                       AS tasa_bcv
+  pg.moneda,
+  t.usd                                       AS tasa_bcv,
+  ROUND((COALESCE(SUM(pg.monto), 0) * CASE pg.moneda
+    WHEN 'USD' THEN COALESCE(t.usd, 1)
+    WHEN 'EUR' THEN COALESCE(t.eur, 1)
+    ELSE 1
+  END)::NUMERIC, 2)                           AS total_bsd
 FROM   Registro_Acceso      ra
 JOIN   Zona_Estacionamiento z   ON z.id_zona         = ra.id_zona
 JOIN   Item_Consumo         ic  ON ic.id_folio        = ra.id_folio
@@ -592,7 +660,9 @@ GROUP  BY f.id_factura, f.emisión, f.monto, mc.cedula,
           est.cedula, pr.cedula, pa.cedula, eg.cedula,
           ra.id_zona, z.nombre, ra.placa,
           ra.fecha_entrada, ra.fecha_salida,
-          tai.id_pago, pm.id_pago, ef.id_pago, t.usd;
+          tai.id_pago, tai.canal,
+          pm.id_pago, ef.id_pago,
+          pg.moneda, t.usd, t.eur;
 
 
 -- TRIGGER: Auto-complete Solicitud when all pasos are done
