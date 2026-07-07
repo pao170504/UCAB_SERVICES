@@ -136,7 +136,7 @@ GRANT SELECT ON
   Sede, Edificacion, Espacio_Fisico,
   Categoria_Servicio, Servicio, Requisitos_Acceso, Regula,
   Entidad_Prestadora, Entidad_Interna, Entidad_Externa,
-  Zona_Estacionamiento, Puesto, Tasa, Feriado
+  Zona_Estacionamiento, Puesto, Tasa
 TO ucab_lectura;
 
 -- Todos los perfiles de usuario heredan la lectura base

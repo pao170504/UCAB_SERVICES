@@ -398,13 +398,6 @@ CREATE TABLE Tasa (
   USD REAL NOT NULL CHECK (USD > 0.0)
 );
 
-CREATE TABLE Feriado (
-  Fecha       DATE         PRIMARY KEY,
-  Descripcion VARCHAR(100) NOT NULL,
-  Tipo        VARCHAR(30)  NOT NULL DEFAULT 'Nacional'
-    CHECK (Tipo IN ('Nacional','Regional','Universitario'))
-);
-
 CREATE TABLE Pago (
   ID_Pago VARCHAR(50) PRIMARY KEY,
   Monto REAL NOT NULL CHECK (Monto > 0.0),
