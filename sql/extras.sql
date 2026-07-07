@@ -343,7 +343,7 @@ SELECT
   )                                           AS horas_brutas,
   fn_dias_habiles(
     pa.fecha_inicio,
-    COALESCE(pa.fecha_completada, CURRENT_TIMESTAMP)
+    COALESCE(pa.fecha_completada, CURRENT_TIMESTAMP::TIMESTAMP)
   )                                           AS dias_habiles,
   mc.cedula,
   p.primer_nombre || ' ' || p.primer_apellido AS solicitante,
