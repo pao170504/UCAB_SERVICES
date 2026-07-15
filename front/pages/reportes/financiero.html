@@ -13,7 +13,7 @@
 
 <div class="app-shell">
 
-  <!-- Section: Navbar -->
+  <!-- Navbar -->
   <nav class="navbar">
     <a href="../dashboard.html" class="navbar-brand">
       <div class="navbar-brand-icon">🎓</div>
@@ -21,10 +21,14 @@
     </a>
     <div class="navbar-tabs">
       <a href="../dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="../admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="../servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="../pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="../infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="../estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
       <a href="../carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="../beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="../acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="role-switcher">
@@ -37,7 +41,7 @@
 
   <div class="app-body">
 
-    <!-- Section: Sidebar -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-profile">
         <div class="sidebar-avatar">MP</div>
@@ -51,7 +55,6 @@
         <a href="../infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
         <a href="../estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
         <a href="../carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
-        <a href="index.html"             class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -59,7 +62,7 @@
       </div>
     </aside>
 
-    <!-- Section: Main content -->
+    <!-- Contenido principal -->
     <main class="main-content">
 
       <div class="page-header">
@@ -67,7 +70,7 @@
         <p class="page-header-sub">Monitoreo de ingresos multimoneda y rentabilidad de espacios.</p>
       </div>
 
-      <!-- BCV Banner -->
+      <!-- Banner BCV -->
       <div class="bcv-banner">
         <div>
           <div class="bcv-banner-label">💲 TASA BCV DEL DÍA</div>
@@ -79,17 +82,17 @@
         </div>
       </div>
 
-      <!-- Filter bar -->
+      <!-- Barra de filtros -->
       <div class="filter-bar">
         <select class="form-select" style="width:160px;"><option>Todas las sedes</option><option>Montalbán</option><option>Guayana</option></select>
         <select class="form-select" style="width:180px;"><option>Método de pago</option><option>Zelle</option><option>Pago Móvil</option><option>Efectivo</option><option>Transferencia</option></select>
         <select class="form-select" style="width:180px;"><option>Edificio</option><option>Edif. Cincuentenario</option><option>Edif. Laboratorios</option></select>
       </div>
 
-      <!-- Tabs + sidebar layout -->
+      <!-- Layout de pestañas + barra lateral -->
       <div class="financiero-layout">
 
-        <!-- Main content tabs -->
+        <!-- Pestañas del contenido principal -->
         <div>
           <div class="tab-section">
             <div class="tab-group">
@@ -98,7 +101,7 @@
             </div>
             <div class="tab-panels">
 
-              <!-- Tab 1 -->
+              <!-- Pestaña 1 -->
               <div class="tab-panel" id="tab-conciliacion">
                 <div class="section-header">
                   <span class="section-title">Conciliación de Operaciones Recientes</span>
@@ -154,7 +157,7 @@
                 </div>
               </div>
 
-              <!-- Tab 2 -->
+              <!-- Pestaña 2 -->
               <div class="tab-panel" id="tab-rentabilidad" style="display:none;">
                 <div class="alert alert-info">
                   <span>ℹ</span>
@@ -196,7 +199,7 @@
           </div>
         </div>
 
-        <!-- Right sidebar -->
+        <!-- Barra lateral derecha -->
         <div>
           <div class="ingresos-card">
             <div class="ingresos-card-header">INGRESOS HOY</div>

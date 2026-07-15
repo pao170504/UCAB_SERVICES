@@ -146,19 +146,23 @@ function cargarTasas() {
     .catch(function () { /* silently fail — banner stays empty */ });
 }
 
+var _tasasTablaInit = false;
 function _renderTasasTable() {
   var tbody = document.getElementById('tasas-body');
   if (!tbody) return;
-  if (_tasas.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="table-empty">Sin tasas registradas.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = _tasas.map(function (t) {
+  tbody.innerHTML = _tasas.length ? _tasas.map(function (t) {
     var fecha = new Date(t.fecha_tasa).toLocaleDateString('es-VE');
     return '<tr><td>' + fecha + '</td>' +
            '<td class="mono">' + parseFloat(t.usd).toFixed(2) + '</td>' +
            '<td class="mono">' + parseFloat(t.eur).toFixed(2) + '</td></tr>';
-  }).join('');
+  }).join('') : '<tr><td colspan="3" class="table-empty">Sin tasas registradas.</td></tr>';
+
+  if (!_tasasTablaInit) {
+    makeTableSortable('tasas-table');
+    makeTableSearchable('tasas-table', 'buscar-tasa-pagos');
+    _tasasTablaInit = true;
+  }
+  makePaginated('tasas-table', 10);
 }
 
 window.registrarTasa = function () {
@@ -196,20 +200,24 @@ function cargarTerceros() {
     .catch(function () {});
 }
 
+var _tercerosTablaInit = false;
 function _renderTercerosTable() {
   var tbody = document.getElementById('terceros-body');
   if (!tbody) return;
-  if (_terceros.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="3" class="table-empty">Sin terceros registrados.</td></tr>';
-    return;
-  }
-  tbody.innerHTML = _terceros.map(function (t) {
+  tbody.innerHTML = _terceros.length ? _terceros.map(function (t) {
     return '<tr>' +
       '<td><code style="font-size:.78rem;">' + _esc(t.rif) + '</code></td>' +
       '<td>' + _esc(t.razon_social) + '</td>' +
       '<td><button class="btn btn-danger btn-sm" onclick="eliminarTercero(\'' + _esc(t.rif) + '\')">Eliminar</button></td>' +
     '</tr>';
-  }).join('');
+  }).join('') : '<tr><td colspan="3" class="table-empty">Sin terceros registrados.</td></tr>';
+
+  if (!_tercerosTablaInit) {
+    makeTableSortable('terceros-table');
+    makeTableSearchable('terceros-table', 'buscar-tercero');
+    _tercerosTablaInit = true;
+  }
+  makePaginated('terceros-table', 10);
 }
 
 function _populateTercerosSelect() {

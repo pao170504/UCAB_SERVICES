@@ -217,9 +217,9 @@ async function cargarTarifas(esp) {
     const elM = document.getElementById('tarifa-miembro');
     const elE = document.getElementById('tarifa-egresado');
     const elX = document.getElementById('tarifa-externo');
-    if (elM) { elM.style.fontWeight = esMiembro               ? '700' : '400'; elM.style.color = esMiembro               ? 'var(--color-primary)' : ''; }
-    if (elE) { elE.style.fontWeight = esEgresado              ? '700' : '400'; elE.style.color = esEgresado              ? 'var(--color-primary)' : ''; }
-    if (elX) { elX.style.fontWeight = !esMiembro && !esEgresado ? '700' : '400'; elX.style.color = !esMiembro && !esEgresado ? 'var(--color-primary)' : ''; }
+    if (elM) { elM.style.fontWeight = esMiembro               ? '700' : '400'; elM.style.color = esMiembro               ? 'var(--color-blue)' : ''; }
+    if (elE) { elE.style.fontWeight = esEgresado              ? '700' : '400'; elE.style.color = esEgresado              ? 'var(--color-blue)' : ''; }
+    if (elX) { elX.style.fontWeight = !esMiembro && !esEgresado ? '700' : '400'; elX.style.color = !esMiembro && !esEgresado ? 'var(--color-blue)' : ''; }
 
     /* Populate admin edit inputs */
     const inputMin = document.getElementById('input-tarifa-min');

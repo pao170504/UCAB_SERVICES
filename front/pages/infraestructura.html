@@ -13,7 +13,7 @@
 
 <div class="app-shell">
 
-  <!-- Section: Navbar -->
+  <!-- Navbar -->
   <nav class="navbar">
     <a href="dashboard.html" class="navbar-brand">
       <div class="navbar-brand-icon">🎓</div>
@@ -21,10 +21,14 @@
     </a>
     <div class="navbar-tabs">
       <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
       <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="navbar-avatar">MP</div>
@@ -33,7 +37,7 @@
 
   <div class="app-body">
 
-    <!-- Section: Sidebar -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-profile">
         <div class="sidebar-avatar" id="sidebar-avatar">?</div>
@@ -50,7 +54,6 @@
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
         <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
         <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -58,7 +61,7 @@
       </div>
     </aside>
 
-    <!-- Section: Main content -->
+    <!-- Contenido principal -->
     <main class="main-content">
 
       <div class="page-header">
@@ -68,7 +71,7 @@
 
       <div class="infra-layout">
 
-        <!-- Left: Location selector + details -->
+        <!-- Izquierda: selector de ubicación + detalles -->
         <div>
           <div class="infra-panel">
             <div class="infra-panel-header">Selector de espacio</div>
@@ -92,7 +95,7 @@
             </div>
           </div>
 
-          <!-- Space detail mini cards -->
+          <!-- Mini tarjetas de detalle del espacio -->
           <div class="space-details-grid mt-4">
             <div class="space-detail-card">
               <div class="space-detail-label">📐 CAPACIDAD TOTAL</div>
@@ -118,7 +121,7 @@
             📅 Reservar espacio
           </button>
 
-          <!-- Tariff panel (admin-only) -->
+          <!-- Panel de tarifas (solo admin) -->
           <div class="tariff-panel mt-4" id="tarifa-panel" style="display:none">
             <div class="tariff-panel-label">
               TARIFAS POR CATEGORÍA
@@ -127,7 +130,7 @@
               </span>
             </div>
 
-            <!-- 3-tier tariff cards -->
+            <!-- Tarjetas de tarifa (3 niveles) -->
             <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
               <div id="tarifa-card-miembro"
                    style="text-align:center;padding:10px 6px;
@@ -155,7 +158,7 @@
               </div>
             </div>
 
-            <!-- Admin tariff edit -->
+            <!-- Edición de tarifa (admin) -->
             <div id="tarifa-edit-admin"
                  style="display:none;margin-top:14px;
                         border-top:1px solid var(--color-border);padding-top:12px">
@@ -188,7 +191,7 @@
           </div>
         </div>
 
-        <!-- Right: Weekly calendar -->
+        <!-- Derecha: calendario semanal -->
         <div class="calendar-panel">
           <div class="calendar-header">
             <span class="calendar-title">Calendario de reservas semanal</span>
@@ -205,7 +208,7 @@
 
       </div>
 
-      <!-- Section: Mis Reservas -->
+      <!-- Mis Reservas -->
       <div style="margin-top:var(--space-6)">
         <div style="margin-bottom:var(--space-4)">
           <h2 style="font-size:1.15rem;font-weight:700;margin:0">Mis reservas de espacios</h2>
@@ -228,7 +231,7 @@
       <button class="modal-close" onclick="closeModal('modal-reserva-espacio')">×</button>
     </div>
 
-    <!-- Space info -->
+    <!-- Info del espacio -->
     <div style="background:var(--color-blue-light);
                 border-radius:var(--radius-md); padding:var(--space-4);
                 margin-bottom:var(--space-4)">
@@ -237,7 +240,7 @@
          id="modal-res-capacidad"></p>
     </div>
 
-    <!-- Step indicators -->
+    <!-- Indicadores de paso -->
     <div style="display:flex;align-items:center;justify-content:center;
                 gap:8px;margin-bottom:var(--space-5)">
       <div id="step-dot-1"
@@ -259,7 +262,7 @@
                   font-size:.8rem;font-weight:700">3</div>
     </div>
 
-    <!-- Step 1: Date & block -->
+    <!-- Paso 1: fecha y bloque -->
     <div id="reserva-step-1">
       <div class="form-group" style="margin-bottom:var(--space-4)">
         <label class="form-label">Fecha de uso</label>
@@ -286,7 +289,7 @@
       </div>
     </div>
 
-    <!-- Step 2: Acompañantes -->
+    <!-- Paso 2: acompañantes -->
     <div id="reserva-step-2" style="display:none">
       <p style="font-size:.85rem;color:var(--color-text-secondary);margin-bottom:var(--space-3)">
         Agrega hasta 5 acompañantes (opcional).
@@ -313,7 +316,7 @@
       </div>
     </div>
 
-    <!-- Step 3: Summary & confirm -->
+    <!-- Paso 3: resumen y confirmación -->
     <div id="reserva-step-3" style="display:none">
       <div style="background:var(--color-surface-secondary);border-radius:var(--radius-md);
                   padding:var(--space-4);margin-bottom:var(--space-4)">

@@ -76,11 +76,11 @@ router.get('/espacios/:sede/:edificio/:numero/calendario', async (req, res) => {
   }
 });
 
-// GET /api/infraestructura/tarifas/:idServicio — returns 3 differentiated tariffs
+// GET /api/infraestructura/tarifas/:idServicio — devuelve las 3 tarifas diferenciadas
 router.get('/tarifas/:idServicio', async (req, res) => {
   try {
     const { rows } = await pool.query(`
-      SELECT r.costo_min, r.costo_max, r.ubicación,
+      SELECT r.costo_min, r.costo_max, r.ubicacion,
              cs.nombre AS categoria, cs.id_categoria
       FROM   Servicio s
       JOIN   Categoria_Servicio cs ON cs.id_categoria = s.id_categoria
@@ -92,19 +92,28 @@ router.get('/tarifas/:idServicio', async (req, res) => {
       return res.status(404).json({ error: 'Servicio no encontrado' });
 
     const t = rows[0];
-    const base = parseFloat(t.costo_min);
+
+    const { rows: tarRows } = await pool.query(`
+      SELECT tarifa_miembro, tarifa_egresado, tarifa_externo
+      FROM   Tarifa
+      WHERE  id_servicio = $1 AND fecha_vigencia <= CURRENT_DATE
+      ORDER  BY fecha_vigencia DESC
+      LIMIT  1
+    `, [req.params.idServicio]);
+    const tar = tarRows[0];
+    const base = tar ? parseFloat(tar.tarifa_miembro) : parseFloat(t.costo_min);
 
     res.json({
       tarifas: {
         id_categoria:    t.id_categoria,
         idCategoria:     t.id_categoria,
         categoria:       t.categoria,
-        costo_min:       base,
+        costo_min:       parseFloat(t.costo_min),
         costo_max:       parseFloat(t.costo_max),
-        ubicacion:       t.ubicación,
+        ubicacion:       t.ubicacion,
         tarifa_miembro:  parseFloat(base.toFixed(2)),
-        tarifa_egresado: parseFloat((base * 1.20).toFixed(2)),
-        tarifa_externo:  parseFloat((base * 1.60).toFixed(2))
+        tarifa_egresado: tar ? parseFloat(tar.tarifa_egresado).toFixed(2) * 1 : parseFloat((base * 1.20).toFixed(2)),
+        tarifa_externo:  tar ? parseFloat(tar.tarifa_externo).toFixed(2)  * 1 : parseFloat((base * 1.60).toFixed(2))
       }
     });
   } catch (err) {
@@ -210,7 +219,7 @@ router.post('/reservar', async (req, res) => {
       !fechaUso || !bloqueHorario || !idServicio)
     return res.status(400).json({ error: 'Faltan datos requeridos' });
 
-  // Check for block conflicts (before opening transaction)
+  // Verifica conflictos de bloque horario antes de abrir la transacción
   try {
     const { rows: conflicto } = await pool.query(`
       SELECT 1 FROM Reserva
@@ -230,7 +239,7 @@ router.post('/reservar', async (req, res) => {
     return res.status(500).json({ error: err.message || 'Error interno' });
   }
 
-  // Tariff lookup (outside transaction — read-only)
+  // Busca la tarifa fuera de la transacción (solo lectura)
   let precio = 10.00;
   try {
     const { rows: tarifaRows } = await pool.query(`
@@ -261,8 +270,8 @@ router.post('/reservar', async (req, res) => {
     const idPaso = `PASO-INFRA-${ts}`;
     await client.query(`
       INSERT INTO Paso_Actividad
-        (id_paso, fecha_inicio, responsable, fecha_completada, estado_paso, id_solicitud)
-      VALUES ($1, CURRENT_TIMESTAMP, 'Dir. Planta Física', NULL, 'Pendiente', $2)
+        (id_paso, fecha_inicio, responsable, fecha_completada, estado_paso, id_solicitud, orden)
+      VALUES ($1, CURRENT_TIMESTAMP, 'Dir. Planta Física', NULL, 'Pendiente', $2, 1)
     `, [idPaso, idSolicitud]);
 
     await client.query(`
@@ -413,7 +422,7 @@ router.get('/reservas/:idSolicitud/pasos', async (req, res) => {
       SELECT id_paso, responsable, fecha_inicio, fecha_completada, estado_paso
       FROM   Paso_Actividad
       WHERE  id_solicitud = $1
-      ORDER  BY fecha_inicio ASC
+      ORDER  BY orden ASC
     `, [idSolicitud]);
 
     const { rows: acompanantes } = await pool.query(`
@@ -454,7 +463,7 @@ router.delete('/reservas/:idSolicitud', async (req, res) => {
       [idSolicitud]
     );
 
-    // Free space only if no other active reservations exist for it
+    // Libera el espacio solo si no quedan otras reservas activas
     const { rows: otras } = await pool.query(`
       SELECT 1 FROM Reserva r
       JOIN   Solicitud_Servicio ss ON ss.id_solicitud = r.id_solicitud

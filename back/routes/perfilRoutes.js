@@ -95,6 +95,62 @@ router.get('/tramites', async (req, res) => {
   }
 });
 
+// GET /api/perfil/trayectoria — historial completo de vinculación con roles
+router.get('/trayectoria', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT pv.fecha_inicio, pv.fecha_fin,
+        e.cedula  IS NOT NULL AS es_estudiante,
+        pr.cedula IS NOT NULL AS es_profesor,
+        pa.cedula IS NOT NULL AS es_administrativo,
+        eg.cedula IS NOT NULL AS es_egresado,
+        e.escuela, e.uc_aprobadas, e.promedio, e.facultad, e.semestre,
+        b.tipo_beca, b.estatus AS estatus_beca,
+        prep.asignatura,
+        pr.escalafon, pr.codigo_investigador,
+        pa.cargo, pa.unidad_adscripcion,
+        eg.titulo, eg.indice_academico, eg.ano_graduacion
+      FROM Periodo_Vinculacion pv
+      LEFT JOIN Estudiante              e    ON e.cedula    = pv.cedula AND e.fecha_inicio    = pv.fecha_inicio
+      LEFT JOIN Becario                 b    ON b.cedula    = e.cedula  AND b.fecha_inicio    = e.fecha_inicio
+      LEFT JOIN Preparador             prep  ON prep.cedula = e.cedula  AND prep.fecha_inicio = e.fecha_inicio
+      LEFT JOIN Profesor               pr    ON pr.cedula   = pv.cedula AND pr.fecha_inicio   = pv.fecha_inicio
+      LEFT JOIN Personal_Administrativo pa   ON pa.cedula   = pv.cedula AND pa.fecha_inicio   = pv.fecha_inicio
+      LEFT JOIN Egresado                eg   ON eg.cedula   = pv.cedula AND eg.fecha_inicio   = pv.fecha_inicio
+      WHERE pv.cedula = $1
+      ORDER BY pv.fecha_inicio DESC
+    `, [req.cedula]);
+
+    const periodos = rows.map(p => ({
+      fecha_inicio: p.fecha_inicio,
+      fecha_fin:    p.fecha_fin,
+      roles: [
+        p.es_estudiante ? {
+          rol: 'estudiante', escuela: p.escuela, facultad: p.facultad, semestre: p.semestre,
+          promedio: parseFloat(p.promedio), ucAprobadas: p.uc_aprobadas,
+          beca: p.tipo_beca ? { tipo: p.tipo_beca, estatus: p.estatus_beca } : null,
+          preparador: p.asignatura ? { asignatura: p.asignatura } : null
+        } : null,
+        p.es_profesor ? {
+          rol: 'profesor', escalafon: p.escalafon, codigoInvestigador: p.codigo_investigador
+        } : null,
+        p.es_administrativo ? {
+          rol: 'administrativo', cargo: p.cargo, unidadAdscripcion: p.unidad_adscripcion
+        } : null,
+        p.es_egresado ? {
+          rol: 'egresado', titulo: p.titulo,
+          indiceAcademico: parseFloat(p.indice_academico), anoGraduacion: p.ano_graduacion
+        } : null
+      ].filter(Boolean)
+    }));
+
+    res.json({ periodos });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 router.get('/recurrencia', async (req, res) => {
   try {
     const { rows } = await pool.query(
@@ -107,9 +163,7 @@ router.get('/recurrencia', async (req, res) => {
   }
 });
 
-// GET /api/perfil/me — devuelve el usuario con sus roles FRESCOS desde la BD.
-// Sirve para refrescar el sessionStorage sin necesidad de re-login, de modo que
-// los cambios que haga el admin (índice, roles, etc.) se reflejen al abrir el panel.
+// GET /api/perfil/me — refresca el sessionStorage con los roles frescos de la BD
 router.get('/me', async (req, res) => {
   try {
     const { rows } = await pool.query(`

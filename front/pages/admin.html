@@ -21,10 +21,14 @@
     </a>
     <div class="navbar-tabs">
       <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
-      <a href="admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
+      <a href="estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
+      <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="navbar-avatar">AS</div>
@@ -50,7 +54,6 @@
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
         <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
         <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -76,7 +79,7 @@
         <button class="tab-pill"        data-tab="vacantes"     onclick="cambiarTab('vacantes')">Vacantes</button>
         <button class="tab-pill"        data-tab="tasas"        onclick="cambiarTab('tasas')">Tasas</button>
         <button class="tab-pill"        data-tab="acreditaciones" onclick="cambiarTab('acreditaciones')">Acreditaciones</button>
-        <button class="tab-pill"        data-tab="folios"       onclick="cambiarTab('folios')">Cierre de Folios</button>
+        <button class="tab-pill"        data-tab="folios"       onclick="cambiarTab('folios')">Procesos Masivos</button>
       </div>
 
       <!-- ===== TAB USUARIOS ===== -->
@@ -172,8 +175,14 @@
             <span class="card-header-title">EMPRESAS EXTERNAS</span>
             <button class="btn btn-outline btn-sm" onclick="abrirModalEmpresa()">+ Nueva empresa</button>
           </div>
+          <div class="filter-bar" style="padding:var(--space-4) var(--space-4) 0;">
+            <div class="search-bar" style="width:320px;max-width:100%;">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="buscar-empresa" placeholder="Buscar por RIF o razón social…">
+            </div>
+          </div>
           <div class="table-wrap" style="border:none;border-radius:0;">
-            <table class="table">
+            <table class="table" id="empresas-table">
               <thead><tr>
                 <th>RIF</th><th>RAZÓN SOCIAL</th><th>CONTACTO</th><th>CORREO</th><th>VIGENCIA</th>
               </tr></thead>
@@ -189,8 +198,14 @@
             <span class="card-header-title">VACANTES LABORALES</span>
             <button class="btn btn-primary btn-sm" onclick="abrirModalVacante()">+ Nueva vacante</button>
           </div>
+          <div class="filter-bar" style="padding:var(--space-4) var(--space-4) 0;">
+            <div class="search-bar" style="width:320px;max-width:100%;">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="buscar-vacante" placeholder="Buscar por cargo o empresa…">
+            </div>
+          </div>
           <div class="table-wrap" style="border:none;border-radius:0;">
-            <table class="table">
+            <table class="table" id="vacantes-table">
               <thead><tr>
                 <th>ID</th><th>CARGO</th><th>EMPRESA</th><th>FECHA</th><th>ESTATUS</th><th>POSTULANTES</th><th></th>
               </tr></thead>
@@ -212,8 +227,14 @@
           <div style="padding:var(--space-4);">
             <div id="tasa-vigente" style="margin-bottom:var(--space-4);padding:var(--space-4);background:var(--color-bg-secondary);border-radius:var(--radius);"></div>
           </div>
+          <div class="filter-bar" style="padding:0 var(--space-4);">
+            <div class="search-bar" style="width:320px;max-width:100%;">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="buscar-tasa" placeholder="Buscar por fecha…">
+            </div>
+          </div>
           <div class="table-wrap" style="border:none;border-radius:0;">
-            <table class="table">
+            <table class="table" id="tasas-admin-table">
               <thead><tr><th>FECHA</th><th>EUR (Bs.)</th><th>USD (Bs.)</th></tr></thead>
               <tbody id="tasas-tbody">
                 <tr><td colspan="3" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
@@ -230,8 +251,14 @@
             <span class="card-header-title">CATÁLOGO DE ACREDITACIONES</span>
             <button class="btn btn-primary btn-sm" onclick="abrirModalAcredAdmin()">+ Nueva acreditación</button>
           </div>
+          <div class="filter-bar" style="padding:var(--space-4) var(--space-4) 0;">
+            <div class="search-bar" style="width:320px;max-width:100%;">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="buscar-acred-admin" placeholder="Buscar por tipo o descripción…">
+            </div>
+          </div>
           <div class="table-wrap" style="border:none;border-radius:0;">
-            <table class="table">
+            <table class="table" id="acred-admin-table">
               <thead><tr><th>ID</th><th>TIPO</th><th>DESCRIPCIÓN</th><th></th></tr></thead>
               <tbody id="acred-admin-tbody">
                 <tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:var(--space-5);">Cargando…</td></tr>
@@ -241,9 +268,9 @@
         </div>
       </section>
 
-      <!-- ===== TAB CIERRE DE FOLIOS ===== -->
+      <!-- ===== TAB PROCESOS MASIVOS ===== -->
       <section id="tab-folios" style="display:none;">
-        <div class="card">
+        <div class="card" style="margin-bottom:var(--space-4);">
           <div class="card-header">
             <span class="card-header-title">CIERRE MASIVO DE FOLIOS</span>
           </div>
@@ -258,6 +285,57 @@
               Ejecutar cierre masivo
             </button>
             <div id="cierre-resultado" style="margin-top:var(--space-4);"></div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:var(--space-4);">
+          <div class="card-header">
+            <span class="card-header-title">ACTUALIZACIÓN GLOBAL DE TASAS</span>
+          </div>
+          <div style="padding:var(--space-6);text-align:center;">
+            <span style="font-size:3rem;">💱</span>
+            <h2 style="margin:var(--space-4) 0 var(--space-2);">Registrar tasa del día</h2>
+            <p style="color:var(--color-text-muted);max-width:480px;margin:0 auto var(--space-5);">
+              Ejecuta <code>proc_actualizar_tasa()</code>. Usa el formulario de la pestaña
+              "Tasas" ("+ Registrar tasa") para registrar el valor EUR/USD del día.
+            </p>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:var(--space-4);">
+          <div class="card-header">
+            <span class="card-header-title">LIMPIEZA INSTITUCIONAL</span>
+          </div>
+          <div style="padding:var(--space-6);text-align:center;">
+            <span style="font-size:3rem;">🗄️</span>
+            <h2 style="margin:var(--space-4) 0 var(--space-2);">Archivar vínculos expirados</h2>
+            <p style="color:var(--color-text-muted);max-width:480px;margin:0 auto var(--space-5);">
+              Ejecuta <code>proc_archivar_expirados()</code>: elimina permanentemente acompañantes
+              y beneficiarios cuyos vínculos expiraron hace más de un año.
+            </p>
+            <button class="btn btn-primary" style="background:var(--color-danger);" onclick="ejecutarArchivarExpirados()">
+              Ejecutar limpieza
+            </button>
+            <div id="archivar-resultado" style="margin-top:var(--space-4);"></div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <span class="card-header-title">TRANSICIÓN DE MAYORÍA DE EDAD</span>
+          </div>
+          <div style="padding:var(--space-6);text-align:center;">
+            <span style="font-size:3rem;">🎂</span>
+            <h2 style="margin:var(--space-4) 0 var(--space-2);">Ejecutar transición de beneficiarios</h2>
+            <p style="color:var(--color-text-muted);max-width:480px;margin:0 auto var(--space-5);">
+              Ejecuta <code>proc_transicion_mayoria_edad()</code>: pasa de Carga Menor a Carga Mayor
+              a quienes cumplieron 18 años, y rompe el vínculo (preservando el historial) de quienes
+              superaron la edad límite sin entregar constancia de estudios.
+            </p>
+            <button class="btn btn-primary" onclick="ejecutarTransicionMayoriaEdad()">
+              Ejecutar transición
+            </button>
+            <div id="transicion-resultado" style="margin-top:var(--space-4);"></div>
           </div>
         </div>
       </section>
@@ -412,6 +490,22 @@
   </div>
 </div>
 
+<!-- Modal: Postulantes de una vacante -->
+<div class="modal-overlay" id="modal-postulantes">
+  <div class="modal" style="max-width:640px;">
+    <div class="modal-header">
+      <h3 class="modal-title" id="postulantes-titulo">Postulantes</h3>
+      <button type="button" class="modal-close" onclick="closeModal('modal-postulantes')">×</button>
+    </div>
+    <div class="modal-body" id="postulantes-body">
+      <p style="color:var(--color-text-muted);padding:var(--space-4);">Cargando…</p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('modal-postulantes')">Cerrar</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modal: Registrar tasa -->
 <div class="modal-overlay" id="modal-tasa">
   <div class="modal" style="max-width:400px;">
@@ -466,6 +560,7 @@
 <script src="../js/auth-guard.js"></script>
 <script src="../js/utils.js"></script>
 <script src="../js/nav.js"></script>
+<script src="../js/tables.js"></script>
 <script src="../js/pages/admin.js"></script>
 </body>
 </html>

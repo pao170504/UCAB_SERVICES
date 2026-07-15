@@ -29,6 +29,8 @@ router.get('/', async (req, res) => {
         p.fecha_nacimiento,
         p.sexo,
         b.parentesco,
+        b.fecha_inicio_cobertura,
+        b.fecha_fin_cobertura,
         cm.centro_educacion_inicial
       FROM   Beneficiario b
       JOIN   Persona     p  ON p.cedula  = b.cedula
@@ -191,6 +193,33 @@ router.put('/:cedula', async (req, res) => {
   }
 });
 
+/* PATCH /api/beneficiarios/:cedula/romper-vinculo — inhabilita los beneficios
+   (salud/recreación) SIN borrar el registro, preservando el historial de
+   fechas en que la cobertura estuvo vigente (aplica a Carga_Menor y Mayor). */
+router.patch('/:cedula/romper-vinculo', async (req, res) => {
+  try {
+    const elegible = await verificarElegible(req.cedula);
+    if (!elegible) return res.status(403).json({ error: 'Sin permisos' });
+
+    const { rows: ben } = await pool.query(
+      'SELECT fecha_fin_cobertura FROM Beneficiario WHERE cedula = $1 AND cedula_miembro = $2',
+      [req.params.cedula, req.cedula]
+    );
+    if (!ben.length) return res.status(404).json({ error: 'Beneficiario no encontrado' });
+    if (ben[0].fecha_fin_cobertura)
+      return res.status(400).json({ error: 'El vínculo ya estaba roto desde ' + ben[0].fecha_fin_cobertura.toISOString().slice(0, 10) });
+
+    await pool.query(
+      'UPDATE Beneficiario SET fecha_fin_cobertura = CURRENT_DATE WHERE cedula = $1',
+      [req.params.cedula]
+    );
+    res.json({ message: 'Vínculo familiar roto. Los beneficios quedaron inhabilitados, el historial se conserva.' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
 /* DELETE /api/beneficiarios/:cedula */
 router.delete('/:cedula', async (req, res) => {
   try {
@@ -229,6 +258,7 @@ router.get('/carga-mayor', async (req, res) => {
         b.cedula,
         p.primer_nombre, p.segundo_nombre, p.primer_apellido, p.segundo_apellido,
         p.fecha_nacimiento, p.sexo, b.parentesco,
+        b.fecha_inicio_cobertura, b.fecha_fin_cobertura,
         cm.constancia_estudio_universitario, cm.soltero
       FROM   Beneficiario b
       JOIN   Persona     p  ON p.cedula  = b.cedula

@@ -2,7 +2,7 @@
    components.css — Badges, buttons, cards, tables, forms, modals
    ============================================================= */
 
-/* Section: Badges */
+/* Sección: Insignias */
 .badge {
   display: inline-flex;
   align-items: center;
@@ -27,7 +27,7 @@
 .badge-purple  { background-color: rgba(139,92,246,0.15); color: #7c3aed; }
 .badge-amber   { background-color: rgba(245,158,11,0.15); color: #92400e; }
 
-/* Section: Buttons */
+/* Sección: Botones */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -97,7 +97,7 @@
 }
 .btn-icon:hover { border-color: var(--color-blue); color: var(--color-blue); }
 
-/* Section: Cards */
+/* Sección: Tarjetas */
 .card {
   background-color: var(--color-surface);
   border-radius: var(--radius-md);
@@ -132,7 +132,7 @@
   background-color: rgba(244,246,250,0.5);
 }
 
-/* Section: Stat cards */
+/* Sección: Tarjetas de estadísticas */
 .stat-card {
   background-color: var(--color-surface);
   border-radius: var(--radius-md);
@@ -190,7 +190,7 @@
 .stat-trend.up   { color: #16a34a; background-color: rgba(34,197,94,0.12); }
 .stat-trend.down { color: #dc2626; background-color: rgba(239,68,68,0.12); }
 
-/* Section: Progress bar */
+/* Sección: Barra de progreso */
 .progress-bar-wrap {
   height: 6px;
   background-color: var(--color-border);
@@ -210,7 +210,7 @@
 .progress-bar-fill.warning { background-color: var(--color-warning); }
 .progress-bar-fill.danger  { background-color: var(--color-danger); }
 
-/* Section: Tables */
+/* Sección: Tablas */
 .table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -275,7 +275,7 @@
   font-family: var(--font-mono);
 }
 
-/* Section: Forms */
+/* Sección: Formularios */
 .form-group {
   display: flex;
   flex-direction: column;
@@ -350,7 +350,7 @@
 }
 .input-suffix-btn:hover { color: var(--color-blue); }
 
-/* Section: Tabs */
+/* Sección: Pestañas */
 .tab-group {
   display: flex;
   gap: 0;
@@ -397,7 +397,7 @@
 .tab-pill:hover { border-color: var(--color-blue); color: var(--color-blue); }
 .tab-pill.active { background-color: var(--color-blue); border-color: var(--color-blue); color: white; }
 
-/* Section: Pagination */
+/* Sección: Paginación */
 .pagination {
   display: flex;
   align-items: center;
@@ -439,7 +439,7 @@
 .page-btn.active { background-color: var(--color-blue); border-color: var(--color-blue); color: white; }
 .page-btn:disabled { opacity: 0.4; cursor: not-allowed; pointer-events: none; }
 
-/* Section: Alerts */
+/* Sección: Alertas */
 .alert {
   display: flex;
   align-items: flex-start;
@@ -455,7 +455,7 @@
 .alert-info    { background-color: rgba(59,130,246,0.1); border-left-color: var(--color-info);    color: #1e40af; }
 .alert-success { background-color: rgba(34,197,94,0.1);  border-left-color: var(--color-success); color: #14532d; }
 
-/* Section: Search bar */
+/* Sección: Barra de búsqueda */
 .search-bar {
   display: flex;
   align-items: center;
@@ -490,7 +490,7 @@
   flex-shrink: 0;
 }
 
-/* Section: Filter bar */
+/* Sección: Barra de filtros */
 .filter-bar {
   display: flex;
   align-items: center;
@@ -499,7 +499,7 @@
   margin-bottom: var(--space-5);
 }
 
-/* Section: Section header row */
+/* Sección: Fila de encabezado */
 .section-header {
   display: flex;
   align-items: center;
@@ -517,7 +517,7 @@
   color: var(--color-text-primary);
 }
 
-/* Section: Avatar placeholder */
+/* Sección: Placeholder de avatar */
 .avatar-placeholder {
   border-radius: var(--radius-sm);
   background: linear-gradient(135deg, var(--color-blue-light) 0%, #c7d7fc 100%);
@@ -531,7 +531,7 @@
   flex-shrink: 0;
 }
 
-/* Section: Image placeholder */
+/* Sección: Placeholder de imagen */
 .img-placeholder {
   background: linear-gradient(150deg, #dde8ff 0%, #c5d8f7 100%);
   border-radius: var(--radius-md) var(--radius-md) 0 0;
@@ -543,7 +543,7 @@
   width: 100%;
 }
 
-/* Section: Tag chips */
+/* Sección: Chips de etiquetas */
 .tag {
   display: inline-flex;
   align-items: center;
@@ -557,7 +557,7 @@
   white-space: nowrap;
 }
 
-/* Section: Dot indicator */
+/* Sección: Indicador de punto */
 .dot {
   display: inline-block;
   width: 8px;
@@ -572,7 +572,7 @@
 .dot-blue    { background-color: var(--color-blue);    }
 .dot-gray    { background-color: var(--color-text-muted); }
 
-/* Section: Modal */
+/* Sección: Modal */
 .modal-overlay {
   position: fixed;
   inset: 0;
@@ -640,7 +640,7 @@
 .modal-body { }
 .modal-footer { display: flex; justify-content: flex-end; gap: var(--space-3); padding-top: var(--space-4); border-top: 1px solid var(--color-border); margin-top: var(--space-5); }
 
-/* Section: Wallet / TAI bar */
+/* Sección: Barra de billetera / TAI */
 .wallet-bar {
   display: flex;
   align-items: center;
@@ -667,14 +667,14 @@
   line-height: 1;
 }
 
-/* Section: Separator */
+/* Sección: Separador */
 .divider {
   border: none;
   border-top: 1px solid var(--color-border);
   margin: var(--space-4) 0;
 }
 
-/* Section: Toast notifications */
+/* Sección: Notificaciones toast */
 .toast-container {
   position: fixed;
   bottom: var(--space-5);
@@ -714,7 +714,7 @@
 @keyframes toast-in  { from { opacity:0; transform:translateX(20px); } to { opacity:1; transform:translateX(0); } }
 @keyframes toast-out { from { opacity:1; transform:translateX(0); max-height:100px; } to { opacity:0; transform:translateX(20px); max-height:0; padding:0; margin:0; } }
 
-/* Section: Step indicator */
+/* Sección: Indicador de pasos */
 .step-indicator {
   display: flex;
   align-items: flex-start;
@@ -769,7 +769,7 @@
 }
 .step-line.completed { background: var(--color-success); }
 
-/* Section: Payment method cards */
+/* Sección: Tarjetas de método de pago */
 .payment-methods-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -795,7 +795,7 @@
 .payment-method-name { font-size: 0.875rem; font-weight: 700; margin-bottom: 2px; }
 .payment-method-desc { font-size: 0.75rem; color: var(--color-text-secondary); line-height: 1.4; }
 
-/* Section: Popover */
+/* Sección: Popover */
 .popover-wrap { position: relative; display: inline-block; }
 
 .popover {
@@ -819,7 +819,7 @@
 .popover-row { display: flex; justify-content: space-between; font-size: 0.82rem; margin-bottom: 6px; color: var(--color-text-secondary); }
 .popover-row strong { color: var(--color-text-primary); }
 
-/* Section: NFC animation */
+/* Sección: Animación NFC */
 .nfc-animation {
   display: flex;
   flex-direction: column;
@@ -845,7 +845,7 @@
   50%      { transform:scale(1.1); box-shadow: 0 0 0 16px rgba(27,110,243,0);  }
 }
 
-/* Section: Success checkmark */
+/* Sección: Check de éxito */
 .success-anim {
   display: flex;
   flex-direction: column;
@@ -873,7 +873,7 @@
   to   { transform: scale(1); opacity: 1; }
 }
 
-/* Section: Receipt card */
+/* Sección: Tarjeta de recibo */
 .receipt-card {
   border: 1.5px dashed var(--color-border);
   border-radius: var(--radius-md);
@@ -905,7 +905,7 @@
 .receipt-label { color: var(--color-text-secondary); }
 .receipt-value { font-weight: 600; color: var(--color-text-primary); text-align: right; }
 
-/* Section: Info box */
+/* Sección: Caja de información */
 .info-box {
   background: var(--color-blue-light);
   border: 1px solid rgba(27,110,243,0.2);
@@ -918,17 +918,17 @@
   gap: var(--space-2);
 }
 
-/* Section: Denomination table (cash payment) */
+/* Sección: Tabla de denominaciones (pago en efectivo) */
 .denomination-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
 .denomination-table th { text-align: left; padding: var(--space-2) var(--space-3); color: var(--color-text-muted); font-size: 0.72rem; text-transform: uppercase; border-bottom: 1px solid var(--color-border); }
 .denomination-table td { padding: var(--space-2) var(--space-3); border-bottom: 1px solid var(--color-border); }
 .denomination-table tr:last-child td { border-bottom: none; font-weight: 700; }
 .denomination-table input[type=number] { width: 60px; padding: 4px 6px; border: 1px solid var(--color-border); border-radius: var(--radius-sm); text-align: center; font-size: 0.82rem; }
 
-/* Section: Role-based visibility helpers */
+/* Sección: Visibilidad según rol */
 [data-role] { display: none; }
 
-/* Section: Companion row (Servicios reservation) */
+/* Sección: Fila de acompañante (reserva de Servicios) */
 .companion-row {
   display: flex;
   gap: var(--space-3);
@@ -941,7 +941,7 @@
 .companion-remove { color: var(--color-danger); background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px; border-radius: var(--radius-sm); transition: background .15s; }
 .companion-remove:hover { background: rgba(239,68,68,0.1); }
 
-/* Section: Locked access state */
+/* Sección: Estado de acceso bloqueado */
 .locked-state {
   display: flex;
   flex-direction: column;
@@ -970,7 +970,7 @@
   line-height: 1.7;
 }
 
-/* Section: Empty / restricted state (FIX 6) */
+/* Sección: Estado vacío / restringido */
 .empty-state {
   display: flex;
   flex-direction: column;

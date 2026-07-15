@@ -17,10 +17,14 @@
     <a href="dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
     <div class="navbar-tabs">
       <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
       <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="navbar-avatar">MP</div>
@@ -44,7 +48,6 @@
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
         <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
         <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -54,7 +57,7 @@
 
     <main class="main-content">
 
-      <!-- Top bar: title + category tabs -->
+      <!-- Barra superior: título + pestañas de categoría -->
       <div class="servicios-topbar">
         <div class="page-header" style="margin-bottom:0">
           <h1 class="page-header-title">Catálogo de Servicios</h1>
@@ -65,7 +68,7 @@
         </div>
       </div>
 
-      <!-- Search bar + admin button -->
+      <!-- Barra de búsqueda + botón admin -->
       <div class="filter-bar" style="margin-bottom:var(--space-5);">
         <div class="search-bar">
           <span class="search-icon">🔍</span>
@@ -76,7 +79,7 @@
         </button>
       </div>
 
-      <!-- Service cards grid (rendered by JS) -->
+      <!-- Grid de tarjetas de servicio (generado por JS) -->
       <div id="cards-loading" class="servicios-placeholder">Cargando servicios...</div>
       <div class="service-cards-grid" id="service-cards" style="display:none"></div>
       <div id="cards-empty" class="servicios-placeholder" style="display:none">
@@ -84,7 +87,7 @@
         No hay servicios disponibles para los filtros seleccionados.
       </div>
 
-      <!-- Solicitudes (user + admin tabs) -->
+      <!-- Solicitudes (pestañas de usuario y admin) -->
       <div class="card">
         <div class="card-header">
           <span class="card-header-title">Solicitudes</span>
@@ -101,7 +104,7 @@
           </div>
         </div>
 
-        <!-- User's own solicitudes -->
+        <!-- Solicitudes del propio usuario -->
         <div id="mis-solicitudes-panel">
           <div class="table-wrap" style="border:none;border-radius:0;">
             <table class="table" id="solicitudes-table">
@@ -123,7 +126,7 @@
           </div>
         </div>
 
-        <!-- Admin gestión panel (hidden by default) -->
+        <!-- Panel de gestión admin (oculto por defecto) -->
         <div id="admin-tramites-container" style="display:none"></div>
       </div>
 
@@ -131,7 +134,7 @@
   </div>
 </div>
 
-<!-- Modal: Service Request (3 steps) -->
+<!-- Modal: Solicitud de Servicio (3 pasos) -->
 <div class="modal-overlay" id="solicitud-modal">
   <div class="modal">
     <div class="modal-header">
@@ -143,9 +146,9 @@
   </div>
 </div>
 
-<!-- Modal: Admin Create/Edit Service -->
+<!-- Modal: Crear/Editar Servicio (admin) -->
 <div class="modal-overlay" id="admin-servicio-modal">
-  <div class="modal">
+  <div class="modal modal-lg">
     <div class="modal-header">
       <h3 class="modal-title" id="admin-modal-title">Nuevo Servicio</h3>
       <button class="modal-close" onclick="closeModal('admin-servicio-modal')">×</button>
@@ -154,7 +157,7 @@
   </div>
 </div>
 
-<!-- Modal: Solicitud detail -->
+<!-- Modal: Detalle de Solicitud -->
 <div class="modal-overlay" id="detalle-modal">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -165,7 +168,7 @@
   </div>
 </div>
 
-<!-- Modal: Admin paso detail -->
+<!-- Modal: Detalle de Paso (admin) -->
 <div class="modal-overlay" id="modal-admin-pasos">
   <div class="modal" style="width:min(500px,95vw)">
     <div class="modal-header">
@@ -180,7 +183,7 @@
   </div>
 </div>
 
-<!-- Modal: Requisitos del trámite (admin) -->
+<!-- Modal: Requisitos del Trámite (admin) -->
 <div class="modal-overlay" id="modal-admin-requisitos">
   <div class="modal" style="width:min(560px,95vw)">
     <div class="modal-header">

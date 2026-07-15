@@ -124,10 +124,7 @@ router.patch('/puestos/:idZona/:numero', async (req, res) => {
   }
 });
 
-// POST /api/estacionamiento/entrada
-// Toda la secuencia (solicitud, paso, folio, item, acceso, puesto) va dentro de
-// una transacción: si cualquier paso falla, se hace ROLLBACK y no quedan filas
-// huérfanas (antes cada INSERT se ejecutaba suelto y un fallo dejaba basura).
+// POST /api/estacionamiento/entrada — toda la secuencia va en una transacción
 router.post('/entrada', async (req, res) => {
   const { idZona, numeroPuesto, placa } = req.body;
 
@@ -167,8 +164,8 @@ router.post('/entrada', async (req, res) => {
     const idPaso = `PASO-EST-${ts}`;
     await client.query(`
       INSERT INTO Paso_Actividad
-        (id_paso, fecha_inicio, responsable, fecha_completada, estado_paso, id_solicitud)
-      VALUES ($1, CURRENT_TIMESTAMP, 'Sistema de Estacionamiento', NULL, 'En proceso', $2)
+        (id_paso, fecha_inicio, responsable, fecha_completada, estado_paso, id_solicitud, orden)
+      VALUES ($1, CURRENT_TIMESTAMP, 'Sistema de Estacionamiento', NULL, 'En proceso', $2, 1)
     `, [idPaso, idSolicitud]);
 
     const idFolio = `FOL-EST-${ts}`;

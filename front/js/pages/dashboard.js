@@ -247,8 +247,7 @@ function renderAdministrativo(data, view) {
       qa.style.cssText = 'display:flex;gap:var(--space-3);margin-bottom:var(--space-5);flex-wrap:wrap;';
       qa.innerHTML =
         '<a href="servicios.html" class="btn btn-secondary">📋 Nuevo Trámite</a>' +
-        '<a href="infraestructura.html" class="btn btn-secondary">📅 Gestionar Espacios</a>' +
-        '<a href="reportes/index.html" class="btn btn-secondary">📊 Ver Reportes</a>';
+        '<a href="infraestructura.html" class="btn btn-secondary">📅 Gestionar Espacios</a>';
       newRow.insertAdjacentElement('afterend', qa);
     }
   }
@@ -330,8 +329,12 @@ window.aprobarPasoDesdePanel = async function (idSolicitud, idPaso) {
 
 /* ---- Trámites recientes desde BD ---- */
 async function cargarTramitesRecientes() {
-  var cont = document.getElementById('tramites-recientes-container');
-  if (!cont) return;
+  /* El dashboard tiene una tarjeta "Trámites recientes" por cada vista de rol
+     (estudiante, administrativo...), todas con la misma clase — se usa
+     querySelectorAll (no getElementById) para que TODAS se actualicen, no
+     solo la primera que aparece en el HTML. */
+  var conts = document.querySelectorAll('.tramites-recientes-container');
+  if (!conts.length) return;
 
   var sid = sessionStorage.getItem('sessionID');
   try {
@@ -343,7 +346,9 @@ async function cargarTramitesRecientes() {
 
     var tramites = data.tramites || [];
     if (!tramites.length) {
-      cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">No tienes trámites registrados.</p>';
+      conts.forEach(function (cont) {
+        cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">No tienes trámites registrados.</p>';
+      });
       return;
     }
 
@@ -369,15 +374,18 @@ async function cargarTramitesRecientes() {
         '</tr>';
     }).join('');
 
-    cont.innerHTML =
+    var html =
       '<div class="table-wrap" style="border:none;border-radius:0;">' +
         '<table class="table">' +
           '<thead><tr><th>N° SOLICITUD</th><th>TRÁMITE</th><th>FECHA</th><th>ESTADO</th><th></th></tr></thead>' +
           '<tbody>' + filas + '</tbody>' +
         '</table>' +
       '</div>';
+    conts.forEach(function (cont) { cont.innerHTML = html; });
   } catch (err) {
-    cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">No se pudieron cargar los trámites.</p>';
+    conts.forEach(function (cont) {
+      cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">No se pudieron cargar los trámites.</p>';
+    });
   }
 }
 
@@ -408,6 +416,50 @@ function renderPanel() {
 
   cargarSesiones();
   cargarTramitesRecientes();
+  if (rol === 'estudiante' || rol === 'egresado') cargarIndiceRecurrencia();
+}
+
+/* ---- Índice de recurrencia (fn_indice_recurrencia) ---- */
+async function cargarIndiceRecurrencia() {
+  var cont = document.getElementById('recurrencia-container');
+  if (!cont) return;
+
+  var sid = sessionStorage.getItem('sessionID');
+  try {
+    var r    = await fetch('/api/perfil/recurrencia', { headers: { 'Authorization': 'Bearer ' + sid } });
+    var data = await r.json();
+    if (!r.ok) throw new Error(data.error || 'Error');
+
+    var rec = data.recurrencia;
+    if (!rec) {
+      cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">Aún no tienes historial suficiente para calcular tu recurrencia.</p>';
+      return;
+    }
+
+    var BADGE = { 'Preferencial': 'badge-success', 'Frecuente': 'badge-info', 'Regular': 'badge-warning', 'Nuevo': 'badge-gray' };
+    var badgeCls = BADGE[rec.clasificacion] || 'badge-info';
+    var beneficio = rec.clasificacion === 'Preferencial'
+      ? 'Prioridad en reservaciones de alta demanda y descuentos automáticos por fidelidad.'
+      : rec.clasificacion === 'Frecuente'
+      ? 'Descuento automático por fidelidad en tus próximas solicitudes.'
+      : 'Sigue usando la plataforma para desbloquear beneficios por fidelidad.';
+
+    cont.innerHTML =
+      '<div style="padding:var(--space-4);display:flex;align-items:center;gap:var(--space-4);flex-wrap:wrap;">' +
+        '<div>' +
+          '<span class="badge ' + badgeCls + '" style="font-size:.9rem;padding:6px 14px;">' + rec.clasificacion + '</span>' +
+        '</div>' +
+        '<div style="flex:1;min-width:200px;">' +
+          '<p style="margin:0;font-size:.82rem;color:var(--color-text-secondary);">' + beneficio + '</p>' +
+        '</div>' +
+        '<div style="text-align:right;">' +
+          '<div style="font-size:1.4rem;font-weight:700;">' + rec.score + '</div>' +
+          '<div style="font-size:.7rem;color:var(--color-text-muted);text-transform:uppercase;">Puntaje</div>' +
+        '</div>' +
+      '</div>';
+  } catch (err) {
+    cont.innerHTML = '<p style="padding:var(--space-4);color:var(--color-text-muted);">No se pudo calcular tu índice de recurrencia.</p>';
+  }
 }
 
 /* ---- Session history ---- */

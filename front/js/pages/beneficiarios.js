@@ -57,17 +57,23 @@ function cargarBeneficiarios() {
         var ced = b.cedula;
         var nomEsc = nombre.replace(/'/g, "\\'");
         var centEsc = (b.centro_educacion_inicial || '').replace(/'/g, "\\'");
+        var cobertura = _coberturaBadge(b);
+        var romperBtn = b.fecha_fin_cobertura ? '' :
+          '<button class="btn btn-outline btn-sm" style="margin-right:4px;color:var(--color-danger);border-color:var(--color-danger);" ' +
+            'onclick="romperVinculo(\'' + ced + '\',\'' + nomEsc + '\')">Romper vínculo</button>';
         return '<tr>' +
           '<td class="font-mono text-sm">' + ced + '</td>' +
           '<td><strong>' + nombre + '</strong></td>' +
           '<td>' + fechaNac + ' <span class="badge badge-info">' + edad + ' años</span></td>' +
           '<td>' + b.parentesco + '</td>' +
           '<td>' + centro + '</td>' +
+          '<td>' + cobertura + '</td>' +
           '<td style="white-space:nowrap;">' +
             '<button class="btn btn-outline btn-sm" style="margin-right:4px;" ' +
               'onclick="verVacunas(\'' + ced + '\',\'' + nomEsc + '\')">Vacunas</button>' +
             '<button class="btn btn-outline btn-sm" style="margin-right:4px;" ' +
               'onclick="abrirModalEditarMenor(\'' + ced + '\',\'' + centEsc + '\')">Editar</button>' +
+            romperBtn +
             '<button class="btn btn-sm" style="background:var(--color-danger);color:#fff;" ' +
               'onclick="eliminarMenor(\'' + ced + '\',\'' + nomEsc + '\')">Eliminar</button>' +
           '</td></tr>';
@@ -77,7 +83,7 @@ function cargarBeneficiarios() {
         '<div class="table-wrap" style="border:none;border-radius:0;">' +
         '<table class="table"><thead><tr>' +
           '<th>CÉDULA</th><th>NOMBRE</th><th>FECHA NAC.</th>' +
-          '<th>PARENTESCO</th><th>CENTRO EDUCATIVO</th><th></th>' +
+          '<th>PARENTESCO</th><th>CENTRO EDUCATIVO</th><th>COBERTURA</th><th></th>' +
         '</tr></thead><tbody>' + filas + '</tbody></table></div>';
     })
     .catch(function (err) {
@@ -86,6 +92,29 @@ function cargarBeneficiarios() {
           '<p>Solo profesores y personal administrativo pueden gestionar beneficiarios.</p></div>'
         : '<p style="padding:var(--space-4);color:var(--color-danger);">No se pudieron cargar los beneficiarios.</p>';
     });
+}
+
+function _coberturaBadge(b) {
+  if (!b.fecha_fin_cobertura) return '<span class="badge badge-success">Activa</span>';
+  var fecha = new Date(b.fecha_fin_cobertura).toLocaleDateString('es-VE');
+  return '<span class="badge badge-danger" title="Vínculo roto">Inactiva desde ' + fecha + '</span>';
+}
+
+function romperVinculo(cedula, nombre) {
+  if (!confirm('¿Romper el vínculo familiar de ' + nombre + '? Se inhabilitarán sus beneficios de salud y recreación. El historial de cobertura se conserva (no se elimina el registro).')) return;
+
+  fetch('/api/beneficiarios/' + encodeURIComponent(cedula) + '/romper-vinculo', {
+    method: 'PATCH',
+    headers: _headers()
+  })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+    .then(function (res) {
+      if (!res.ok) throw new Error(res.data.error || 'Error al romper el vínculo');
+      showToast('Vínculo roto. Beneficios inhabilitados.', 'success');
+      cargarBeneficiarios();
+      cargarCargaMayor();
+    })
+    .catch(function (err) { showToast(err.message, 'error'); });
 }
 
 function calcularEdad(fechaNac) {
@@ -285,6 +314,10 @@ function cargarCargaMayor() {
         var nomEsc = nombre.replace(/'/g, "\\'");
         var constEsc = (b.constancia_estudio_universitario || '').replace(/'/g, "\\'");
         var solEsc = b.soltero || '';
+        var cobertura = _coberturaBadge(b);
+        var romperBtn = b.fecha_fin_cobertura ? '' :
+          '<button class="btn btn-outline btn-sm" style="margin-right:4px;color:var(--color-danger);border-color:var(--color-danger);" ' +
+            'onclick="romperVinculo(\'' + ced + '\',\'' + nomEsc + '\')">Romper vínculo</button>';
         return '<tr>' +
           '<td class="font-mono text-sm">' + ced + '</td>' +
           '<td><strong>' + nombre + '</strong></td>' +
@@ -293,9 +326,11 @@ function cargarCargaMayor() {
           '<td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;" title="' + constEsc + '">' +
             b.constancia_estudio_universitario + '</td>' +
           '<td>' + solteroLabel + '</td>' +
+          '<td>' + cobertura + '</td>' +
           '<td style="white-space:nowrap;">' +
             '<button class="btn btn-outline btn-sm" style="margin-right:4px;" ' +
               'onclick="abrirModalEditarMayor(\'' + ced + '\',\'' + constEsc + '\',\'' + solEsc + '\')">Editar</button>' +
+            romperBtn +
             '<button class="btn btn-sm" style="background:var(--color-danger);color:#fff;" ' +
               'onclick="eliminarMayor(\'' + ced + '\',\'' + nomEsc + '\')">Eliminar</button>' +
           '</td></tr>';
@@ -305,7 +340,7 @@ function cargarCargaMayor() {
         '<div class="table-wrap" style="border:none;border-radius:0;">' +
         '<table class="table"><thead><tr>' +
           '<th>CÉDULA</th><th>NOMBRE</th><th>EDAD</th>' +
-          '<th>PARENTESCO</th><th>CONSTANCIA</th><th>SOLTERO</th><th></th>' +
+          '<th>PARENTESCO</th><th>CONSTANCIA</th><th>SOLTERO</th><th>COBERTURA</th><th></th>' +
         '</tr></thead><tbody>' + filas + '</tbody></table></div>';
     })
     .catch(function (err) {

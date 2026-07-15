@@ -15,6 +15,58 @@ async function esAdmin(cedula) {
   return rows.length > 0;
 }
 
+/* ── Plantilla de pasos: oficinas responsables válidas (debe calzar con el
+   CHECK de Plantilla_Paso.Responsable en create.sql) ─────────────────────── */
+const DEPARTAMENTOS_VALIDOS = [
+  'Unidad de Caja', 'Secretaría Académica', 'Rectorado',
+  'Control de Estudios', 'Dir. Planta Física'
+];
+
+function validarPasos(pasos) {
+  if (pasos === undefined) return null;
+  if (!Array.isArray(pasos) || pasos.length === 0)
+    return 'La plantilla de pasos debe tener al menos un paso';
+  for (const p of pasos) {
+    if (!p || !String(p.descripcion || '').trim())
+      return 'Todos los pasos deben tener una descripción';
+    if (!DEPARTAMENTOS_VALIDOS.includes(p.responsable))
+      return `Departamento responsable no válido: ${p.responsable}`;
+  }
+  return null;
+}
+
+async function guardarPlantilla(client, idServicio, pasos) {
+  const lista = pasos && pasos.length
+    ? pasos
+    : [{ descripcion: 'Procesamiento de solicitud', responsable: 'Unidad de Caja' }];
+  for (let i = 0; i < lista.length; i++) {
+    await client.query(`
+      INSERT INTO Plantilla_Paso (id_servicio, orden, descripcion, responsable)
+      VALUES ($1, $2, $3, $4)
+    `, [idServicio, i + 1, lista[i].descripcion.trim(), lista[i].responsable]);
+  }
+}
+
+/* ── Acreditaciones exigidas (Requiere) y requisitos de acceso en texto libre
+   (Requisitos_Acceso) — configurables al crear/editar un servicio ────────── */
+async function guardarRequisitos(client, idServicio, acreditaciones, requisitos) {
+  const acredList = Array.isArray(acreditaciones) ? acreditaciones.filter(Boolean) : [];
+  for (const idAcred of acredList) {
+    await client.query(`
+      INSERT INTO Requiere (id_acreditacion, id_servicio) VALUES ($1, $2)
+    `, [idAcred, idServicio]);
+  }
+
+  const reqList = Array.isArray(requisitos)
+    ? requisitos.map(r => (r || '').trim()).filter(Boolean)
+    : [];
+  for (const requisito of reqList) {
+    await client.query(`
+      INSERT INTO Requisitos_Acceso (id_servicio, requisito) VALUES ($1, $2)
+    `, [idServicio, requisito]);
+  }
+}
+
 /* ── GET /api/servicios/categorias ─────────────────────────────────────────── */
 router.get('/categorias', async (req, res) => {
   try {
@@ -71,10 +123,7 @@ router.get('/acreditaciones', async (req, res) => {
   }
 });
 
-/* ── GET /api/servicios/admin/solicitudes ─────────────────────────────────── */
-// GET /api/servicios/requisitos/:idServicio
-// Requisitos del servicio (acreditaciones exigidas + requisitos de acceso) junto con
-// si el USUARIO ACTUAL ya cumple cada acreditación. Sirve para mostrarlos al reservar.
+// GET /api/servicios/requisitos/:idServicio — requisitos y si el usuario ya los cumple
 router.get('/requisitos/:idServicio', async (req, res) => {
   const { idServicio } = req.params;
   try {
@@ -133,12 +182,12 @@ router.get('/admin/solicitudes', async (req, res) => {
         (SELECT pa2.id_paso FROM Paso_Actividad pa2
          WHERE  pa2.id_solicitud = ss.id_solicitud
            AND  pa2.estado_paso IN ('Pendiente','En proceso')
-         ORDER  BY pa2.fecha_inicio ASC LIMIT 1)
+         ORDER  BY pa2.orden ASC LIMIT 1)
                                     AS paso_pendiente_id,
         (SELECT pa2.responsable FROM Paso_Actividad pa2
          WHERE  pa2.id_solicitud = ss.id_solicitud
            AND  pa2.estado_paso IN ('Pendiente','En proceso')
-         ORDER  BY pa2.fecha_inicio ASC LIMIT 1)
+         ORDER  BY pa2.orden ASC LIMIT 1)
                                     AS paso_pendiente_responsable
       FROM   Solicitud_Servicio  ss
       JOIN   Servicio            sv ON sv.id_servicio  = ss.id_servicio
@@ -228,19 +277,21 @@ router.post('/solicitudes', async (req, res) => {
         });
     }
 
-    /* Tarifa segun el perfil del solicitante (igual que el catalogo):
-       miembro activo = costo_min, egresado = x1.20, externo = x1.60.
-       Se usa el costo_min de Regula para la categoria/sede del miembro. */
+    /* Tarifa segun el perfil del solicitante, tomada del historial de
+       Tarifa vigente para este servicio (si no tiene ninguna registrada
+       todavia, se cae al costo_min de Regula como referencia). */
     const { rows: sedeRows } = await pool.query(
       `SELECT id_sede FROM Miembro_Comunidad WHERE cedula = $1`, [req.cedula]
     );
     const idSede = sedeRows[0]?.id_sede || 1;
 
-    const { rows: regRows } = await pool.query(
-      `SELECT costo_min FROM Regula WHERE id_sede = $1 AND id_categoria = $2`,
-      [idSede, svcRows[0].id_categoria]
-    );
-    const costoMin = regRows.length ? parseFloat(regRows[0].costo_min) : 0;
+    const { rows: tarRows } = await pool.query(`
+      SELECT tarifa_miembro, tarifa_egresado, tarifa_externo
+      FROM   Tarifa
+      WHERE  id_servicio = $1 AND fecha_vigencia <= CURRENT_DATE
+      ORDER  BY fecha_vigencia DESC
+      LIMIT  1
+    `, [id_servicio]);
 
     const { rows: perfilRows } = await pool.query(`
       SELECT
@@ -249,10 +300,26 @@ router.post('/solicitudes', async (req, res) => {
                 WHERE pv.cedula=$1 AND pv.fecha_fin IS NULL AND e.cedula IS NULL) AS es_miembro,
         EXISTS (SELECT 1 FROM Egresado WHERE cedula=$1) AS es_egresado
     `, [req.cedula]);
-    let factor = 1.60;                                   // externo por defecto
-    if (perfilRows[0]?.es_miembro)       factor = 1.00;  // miembro activo
-    else if (perfilRows[0]?.es_egresado) factor = 1.20;  // egresado
-    const precioBase = parseFloat((costoMin * factor).toFixed(2));
+
+    let precioBase;
+    if (tarRows.length) {
+      const t = tarRows[0];
+      if      (perfilRows[0]?.es_miembro)  precioBase = parseFloat(t.tarifa_miembro);
+      else if (perfilRows[0]?.es_egresado) precioBase = parseFloat(t.tarifa_egresado);
+      else                                 precioBase = parseFloat(t.tarifa_externo);
+    } else {
+      // Fallback si el servicio aún no tiene tarifa registrada: usar Regula
+      const { rows: regRows } = await pool.query(
+        `SELECT costo_min FROM Regula WHERE id_sede = $1 AND id_categoria = $2`,
+        [idSede, svcRows[0].id_categoria]
+      );
+      const costoMin = regRows.length ? parseFloat(regRows[0].costo_min) : 0;
+      let factor = 1.60;
+      if (perfilRows[0]?.es_miembro)       factor = 1.00;
+      else if (perfilRows[0]?.es_egresado) factor = 1.20;
+      precioBase = costoMin * factor;
+    }
+    precioBase = parseFloat(precioBase.toFixed(2));
     const IVA = 0.16;
 
     const idSolicitud = `SOL-${Date.now()}`;
@@ -266,43 +333,24 @@ router.post('/solicitudes', async (req, res) => {
         VALUES ($1, NULL, 'Pendiente', CURRENT_DATE, $2, $3)
       `, [idSolicitud, req.cedula, id_servicio]);
 
-      const PASOS_POR_SERVICIO = {
-        'SVC-TITULO': [
-          { responsable: 'Unidad de Caja',       desc: 'Verificacion de solvencia y pago de aranceles' },
-          { responsable: 'Secretaria Academica', desc: 'Validacion de creditos y requisitos de graduacion' },
-          { responsable: 'Rectorado',            desc: 'Emision y firma del documento oficial' }
-        ],
-        'SVC-CONSTANCIA-EST': [
-          { responsable: 'Secretaria Academica', desc: 'Emision de constancia de estudios' }
-        ],
-        'SVC-RECORD-NOTAS': [
-          { responsable: 'Unidad de Caja',       desc: 'Verificacion de solvencia' },
-          { responsable: 'Secretaria Academica', desc: 'Generacion y certificacion del record' }
-        ],
-        'SVC-INSCRIPCION': [
-          { responsable: 'Unidad de Caja',      desc: 'Pago de arancel de inscripcion' },
-          { responsable: 'Control de Estudios', desc: 'Procesamiento de inscripcion semestral' }
-        ],
-        'SVC-RETIRO-MATERIA': [
-          { responsable: 'Control de Estudios', desc: 'Procesamiento del retiro de materia' }
-        ],
-        'SVC-RETIRO-SEMESTRE': [
-          { responsable: 'Control de Estudios',  desc: 'Aprobacion del retiro de semestre' },
-          { responsable: 'Secretaria Academica', desc: 'Registro oficial del retiro' }
-        ]
-      };
+      const { rows: plantilla } = await client.query(`
+        SELECT orden, descripcion, responsable
+        FROM   Plantilla_Paso
+        WHERE  id_servicio = $1
+        ORDER  BY orden
+      `, [id_servicio]);
 
-      const pasos = PASOS_POR_SERVICIO[id_servicio] || [
-        { responsable: 'Oficina Responsable', desc: 'Procesamiento de solicitud' }
-      ];
+      const pasos = plantilla.length
+        ? plantilla.map(p => ({ responsable: p.responsable, desc: p.descripcion }))
+        : [{ responsable: 'Unidad de Caja', desc: 'Procesamiento de solicitud' }];
 
       for (let i = 0; i < pasos.length; i++) {
         const idPaso = `PASO-${idSolicitud}-${i + 1}`;
         await client.query(`
           INSERT INTO Paso_Actividad
-            (id_paso, fecha_inicio, responsable, fecha_completada, estado_paso, id_solicitud)
-          VALUES ($1, CURRENT_TIMESTAMP, $2, NULL, 'Pendiente', $3)
-        `, [idPaso, pasos[i].responsable, idSolicitud]);
+            (id_paso, fecha_inicio, responsable, fecha_completada, estado_paso, id_solicitud, orden)
+          VALUES ($1, CURRENT_TIMESTAMP, $2, NULL, 'Pendiente', $3, $4)
+        `, [idPaso, pasos[i].responsable, idSolicitud, i + 1]);
       }
 
       const SERVICIOS_CON_ACOMPANANTES = ['SVC-CUL-001', 'SVC-CUL-002', 'SVC-DEP-001', 'SVC-DEP-002'];
@@ -385,7 +433,7 @@ router.get('/solicitudes/:id', async (req, res) => {
       SELECT id_paso, fecha_inicio, responsable, fecha_completada, estado_paso
       FROM   Paso_Actividad
       WHERE  id_solicitud = $1
-      ORDER  BY fecha_inicio
+      ORDER  BY orden
     `, [id]);
 
     const { rows: acompanantes } = await pool.query(`
@@ -475,7 +523,7 @@ router.get('/solicitudes/:idSolicitud/pasos', async (req, res) => {
              fecha_completada, estado_paso
       FROM   Paso_Actividad
       WHERE  id_solicitud = $1
-      ORDER  BY fecha_inicio ASC
+      ORDER  BY orden ASC
     `, [idSolicitud]);
 
     const { rows: acomp } = await pool.query(`
@@ -511,19 +559,19 @@ router.delete('/solicitudes/:id', async (req, res) => {
   }
 });
 
-/* ── GET /api/servicios — catalog ────────────────────────────────────────────── */
+/* ── GET /api/servicios — catálogo ───────────────────────────────────────────── */
 router.get('/', async (req, res) => {
   const { categoria, buscar } = req.query;
 
   try {
-    // Get user's sede
+    // Sede del usuario
     const { rows: sedeRows } = await pool.query(
       `SELECT id_sede FROM Miembro_Comunidad WHERE cedula = $1`,
       [req.cedula]
     );
     const idSede = sedeRows[0]?.id_sede || 1;
 
-    // Get all services with their category, price limits and entidad
+    // Todos los servicios con su categoría, límites de precio y entidad
     let query = `
       SELECT
         sv.id_servicio,
@@ -534,17 +582,17 @@ router.get('/', async (req, res) => {
         cs.nombre                           AS nombre_categoria,
         r.costo_min,
         r.costo_max,
-        -- Three differentiated tariffs
-        r.costo_min                         AS tarifa_miembro,
-        ROUND((r.costo_min * 1.20)::NUMERIC, 2) AS tarifa_egresado,
-        ROUND((r.costo_min * 1.60)::NUMERIC, 2) AS tarifa_externo,
-        -- Check if it's internal or external entity
+        -- Tarifa vigente; si el servicio aún no tiene ninguna, usa costo_min de Regula
+        COALESCE(tar.tarifa_miembro,  r.costo_min)                       AS tarifa_miembro,
+        COALESCE(tar.tarifa_egresado, ROUND((r.costo_min * 1.20)::NUMERIC, 2)) AS tarifa_egresado,
+        COALESCE(tar.tarifa_externo,  ROUND((r.costo_min * 1.60)::NUMERIC, 2)) AS tarifa_externo,
+        -- Entidad interna o externa
         CASE WHEN ei.nombre_entidad IS NOT NULL THEN 'interna'
              ELSE 'externa' END             AS tipo_entidad,
-        -- Access requirements list
+        -- Lista de requisitos de acceso
         ARRAY_AGG(DISTINCT ra.requisito)
           FILTER (WHERE ra.requisito IS NOT NULL) AS requisitos,
-        -- Required acreditaciones IDs
+        -- IDs de acreditaciones requeridas
         ARRAY_AGG(DISTINCT req.id_acreditacion)
           FILTER (WHERE req.id_acreditacion IS NOT NULL) AS acreditaciones_requeridas
       FROM   Servicio           sv
@@ -554,11 +602,18 @@ router.get('/', async (req, res) => {
       LEFT   JOIN Entidad_Interna  ei  ON ei.nombre_entidad  = sv.nombre_entidad
       LEFT   JOIN Requisitos_Acceso ra ON ra.id_servicio     = sv.id_servicio
       LEFT   JOIN Requiere          req ON req.id_servicio   = sv.id_servicio
+      LEFT   JOIN LATERAL (
+        SELECT t.tarifa_miembro, t.tarifa_egresado, t.tarifa_externo
+        FROM   Tarifa t
+        WHERE  t.id_servicio = sv.id_servicio AND t.fecha_vigencia <= CURRENT_DATE
+        ORDER  BY t.fecha_vigencia DESC
+        LIMIT  1
+      ) tar ON true
     `;
 
     const params = [idSede];
 
-    // Always exclude infraestructura and estacionamiento services
+    // Siempre excluir servicios de infraestructura y estacionamiento
     query += `
       WHERE sv.nombre_entidad NOT IN ('UCAB - Infraestructura', 'UCAB - Estacionamiento')
         AND sv.id_servicio NOT LIKE 'SERV-ESTAC%'
@@ -582,16 +637,17 @@ router.get('/', async (req, res) => {
     query += `
       GROUP BY sv.id_servicio, sv.descripcion, sv.nombre_entidad,
                cs.id_categoria, cs.categoria, cs.nombre,
-               r.costo_min, r.costo_max, ei.nombre_entidad
+               r.costo_min, r.costo_max, ei.nombre_entidad,
+               tar.tarifa_miembro, tar.tarifa_egresado, tar.tarifa_externo
       ORDER BY cs.categoria, sv.descripcion
     `;
 
     const { rows: servicios } = await pool.query(query, params);
 
-    // For each service check which acreditaciones the user has
+    // Qué acreditaciones tiene el usuario, para cada servicio
     const { rows: cumpleRows } = await pool.query(`
       SELECT id_acreditacion, estado,
-             fecha_vencimiento > CURRENT_DATE AS vigente
+             (fecha_vencimiento IS NULL OR fecha_vencimiento > CURRENT_DATE) AS vigente
       FROM   Cumple WHERE cedula = $1
     `, [req.cedula]);
 
@@ -603,12 +659,12 @@ router.get('/', async (req, res) => {
       estadoMap[c.id_acreditacion] = valida ? 'Vigente' : (c.estado || 'Vencida');
     }
 
-    // Names (tipo) of every acreditacion, to label them on the catalog cards
+    // Nombre (tipo) de cada acreditacion, para mostrarlo en las tarjetas
     const { rows: acredCat } = await pool.query(`SELECT id_acreditacion, tipo FROM Acreditacion`);
     const tipoMap = {};
     for (const a of acredCat) tipoMap[a.id_acreditacion] = a.tipo;
 
-    // Attach cumple status to each service
+    // Adjunta el estado de cumplimiento a cada servicio
     const result = servicios.map(s => {
       const reqs = s.acreditaciones_requeridas || [];
       const cumpleTodas = reqs.every(id => cumpleMap[id] === true);
@@ -616,7 +672,7 @@ router.get('/', async (req, res) => {
         ...s,
         puede_solicitar: cumpleTodas,
         acreditaciones_faltantes: reqs.filter(id => !cumpleMap[id]),
-        // Full objects (name + user status) so the catalog card can list them
+        // Objetos completos para que la tarjeta del catálogo las liste
         acreditaciones: reqs.map(id => ({
           id_acreditacion: id,
           tipo: tipoMap[id] || id,
@@ -637,21 +693,50 @@ router.post('/', async (req, res) => {
   if (!(await esAdmin(req.cedula)))
     return res.status(403).json({ error: 'Solo el personal administrativo puede crear servicios' });
 
-  const { id_servicio, descripcion, nombre_entidad, id_categoria } = req.body;
+  const {
+    id_servicio, descripcion, nombre_entidad, id_categoria, pasos, acreditaciones, requisitos,
+    tarifa_miembro, tarifa_egresado, tarifa_externo
+  } = req.body;
   if (!id_servicio || !descripcion || !nombre_entidad || !id_categoria)
     return res.status(400).json({ error: 'Faltan campos requeridos' });
 
+  const pasosErr = validarPasos(pasos);
+  if (pasosErr) return res.status(400).json({ error: pasosErr });
+
+  const tMiembro  = parseFloat(tarifa_miembro);
+  const tEgresado = parseFloat(tarifa_egresado);
+  const tExterno  = parseFloat(tarifa_externo);
+  if (isNaN(tMiembro) || isNaN(tEgresado) || isNaN(tExterno))
+    return res.status(400).json({ error: 'Debe indicar las 3 tarifas iniciales (miembro, egresado, externo)' });
+
+  const client = await pool.connect();
   try {
-    await pool.query(`
+    await client.query('BEGIN');
+    await client.query(`
       INSERT INTO Servicio (id_servicio, descripcion, nombre_entidad, id_categoria)
       VALUES ($1, $2, $3, $4)
     `, [id_servicio, descripcion, nombre_entidad, id_categoria]);
+
+    await guardarPlantilla(client, id_servicio, pasos);
+    await guardarRequisitos(client, id_servicio, acreditaciones, requisitos);
+
+    await client.query(`
+      INSERT INTO Tarifa (id_servicio, fecha_vigencia, tarifa_miembro, tarifa_egresado, tarifa_externo)
+      VALUES ($1, CURRENT_DATE, $2, $3, $4)
+    `, [id_servicio, tMiembro, tEgresado, tExterno]);
+
+    await client.query('COMMIT');
     res.status(201).json({ message: 'Servicio creado exitosamente', id_servicio });
   } catch (err) {
+    await client.query('ROLLBACK');
     if (err.code === '23505') return res.status(400).json({ error: 'El ID de servicio ya existe' });
-    if (err.code === '23503') return res.status(400).json({ error: 'Entidad o categoría no válida' });
+    if (err.code === '23503') return res.status(400).json({ error: 'Entidad, categoría o acreditación no válida' });
+    if (err.message?.includes('rango permitido'))
+      return res.status(400).json({ error: err.message.split('\n')[0] });
     console.error(err);
     res.status(500).json({ error: 'Error interno' });
+  } finally {
+    client.release();
   }
 });
 
@@ -661,21 +746,109 @@ router.put('/:id', async (req, res) => {
     return res.status(403).json({ error: 'Solo el personal administrativo puede modificar servicios' });
 
   const { id } = req.params;
-  const { descripcion, nombre_entidad, id_categoria } = req.body;
+  const { descripcion, nombre_entidad, id_categoria, pasos, acreditaciones, requisitos } = req.body;
   if (!descripcion || !nombre_entidad || !id_categoria)
     return res.status(400).json({ error: 'Faltan campos requeridos' });
 
+  const pasosErr = validarPasos(pasos);
+  if (pasosErr) return res.status(400).json({ error: pasosErr });
+
+  const client = await pool.connect();
   try {
-    const { rowCount } = await pool.query(`
+    await client.query('BEGIN');
+    const { rowCount } = await client.query(`
       UPDATE Servicio
       SET    descripcion = $1, nombre_entidad = $2, id_categoria = $3
       WHERE  id_servicio = $4
     `, [descripcion, nombre_entidad, id_categoria, id]);
-    if (rowCount === 0)
+    if (rowCount === 0) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Servicio no encontrado' });
+    }
+
+    if (pasos !== undefined) {
+      await client.query(`DELETE FROM Plantilla_Paso WHERE id_servicio = $1`, [id]);
+      await guardarPlantilla(client, id, pasos);
+    }
+
+    if (acreditaciones !== undefined) {
+      await client.query(`DELETE FROM Requiere WHERE id_servicio = $1`, [id]);
+    }
+    if (requisitos !== undefined) {
+      await client.query(`DELETE FROM Requisitos_Acceso WHERE id_servicio = $1`, [id]);
+    }
+    if (acreditaciones !== undefined || requisitos !== undefined) {
+      await guardarRequisitos(client, id, acreditaciones, requisitos);
+    }
+
+    await client.query('COMMIT');
     res.json({ message: 'Servicio actualizado exitosamente' });
   } catch (err) {
-    if (err.code === '23503') return res.status(400).json({ error: 'Entidad o categoría no válida' });
+    await client.query('ROLLBACK');
+    if (err.code === '23503') return res.status(400).json({ error: 'Entidad, categoría o acreditación no válida' });
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  } finally {
+    client.release();
+  }
+});
+
+/* ── GET /api/servicios/:id/plantilla-pasos — read step template (admin form) ── */
+router.get('/:id/plantilla-pasos', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT orden, descripcion, responsable
+      FROM   Plantilla_Paso
+      WHERE  id_servicio = $1
+      ORDER  BY orden
+    `, [req.params.id]);
+    res.json({ pasos: rows, departamentos: DEPARTAMENTOS_VALIDOS });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/* ── GET /api/servicios/:id/tarifas — historial de tarifas de un servicio ───── */
+router.get('/:id/tarifas', async (req, res) => {
+  try {
+    const { rows } = await pool.query(`
+      SELECT fecha_vigencia, tarifa_miembro, tarifa_egresado, tarifa_externo
+      FROM   Tarifa
+      WHERE  id_servicio = $1
+      ORDER  BY fecha_vigencia DESC
+    `, [req.params.id]);
+    res.json({ tarifas: rows });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error interno' });
+  }
+});
+
+/* ── POST /api/servicios/:id/tarifas — registrar nueva tarifa (admin) ───────── */
+router.post('/:id/tarifas', async (req, res) => {
+  if (!(await esAdmin(req.cedula)))
+    return res.status(403).json({ error: 'Solo el personal administrativo puede registrar tarifas' });
+
+  const { fecha_vigencia, tarifa_miembro, tarifa_egresado, tarifa_externo } = req.body;
+  const miembro  = parseFloat(tarifa_miembro);
+  const egresado = parseFloat(tarifa_egresado);
+  const externo  = parseFloat(tarifa_externo);
+
+  if (!fecha_vigencia || isNaN(miembro) || isNaN(egresado) || isNaN(externo))
+    return res.status(400).json({ error: 'Faltan campos o los montos no son válidos' });
+
+  try {
+    await pool.query(`
+      INSERT INTO Tarifa (id_servicio, fecha_vigencia, tarifa_miembro, tarifa_egresado, tarifa_externo)
+      VALUES ($1, $2, $3, $4, $5)
+    `, [req.params.id, fecha_vigencia, miembro, egresado, externo]);
+    res.status(201).json({ message: 'Tarifa registrada exitosamente' });
+  } catch (err) {
+    if (err.code === '23505')
+      return res.status(400).json({ error: 'Ya existe una tarifa con esa fecha de vigencia para este servicio' });
+    if (err.code === '23514' || err.message?.includes('rango permitido'))
+      return res.status(400).json({ error: err.message.split('\n')[0] });
     console.error(err);
     res.status(500).json({ error: 'Error interno' });
   }

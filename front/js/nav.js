@@ -4,8 +4,8 @@
 window.NAV_PERMISOS = {
   estudiante:     ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'acreditaciones'],
   egresado:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'carrera', 'acreditaciones'],
-  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes', 'beneficiarios', 'acreditaciones'],
-  administrativo: ['dashboard', 'usuarios', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'reportes', 'admin', 'beneficiarios', 'acreditaciones']
+  profesor:       ['dashboard', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'beneficiarios', 'acreditaciones'],
+  administrativo: ['dashboard', 'usuarios', 'servicios', 'pagos', 'infraestructura', 'estacionamiento', 'admin', 'beneficiarios', 'acreditaciones']
 };
 
 var _usuario = null;
@@ -45,8 +45,7 @@ document.addEventListener('DOMContentLoaded', function () {
     'estacionamiento.html': 'estacionamiento',
     'carrera.html':         'carrera',
     'beneficiarios.html':   'beneficiarios',
-    'acreditaciones.html':  'acreditaciones',
-    'index.html':           'reportes'
+    'acreditaciones.html':  'acreditaciones'
   };
   var currentPage = PAGE_MAP[filename] || filename.replace('.html', '');
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function (el) {
@@ -82,17 +81,22 @@ function activarRol(rol) {
   var subEl = document.getElementById('sidebar-subtitulo');
   if (subEl) subEl.textContent = subtitulo;
 
-  /* Show/hide sidebar items based on permissions.
+  /* Show/hide sidebar items AND navbar tabs based on permissions (el navbar
+     debe reflejar exactamente las mismas páginas que el sidebar).
      Las páginas de administrador del sistema (usuarios/admin) además exigen
-     esAdminSistema(): un administrativo común NO debe verlas en el sidebar. */
+     esAdminSistema(): un administrativo común NO debe verlas en ninguno de los dos. */
   var permisos = (window.NAV_PERMISOS || {})[rol] || [];
   var ADMIN_ONLY  = ['usuarios', 'admin'];
   var _esAdminSys = (typeof esAdminSistema === 'function') && esAdminSistema();
+  function _visible(page) {
+    return permisos.indexOf(page) !== -1 &&
+           (ADMIN_ONLY.indexOf(page) === -1 || _esAdminSys);
+  }
   document.querySelectorAll('.sidebar-item[data-page]').forEach(function (item) {
-    var page = item.getAttribute('data-page');
-    var visible = permisos.indexOf(page) !== -1 &&
-                  (ADMIN_ONLY.indexOf(page) === -1 || _esAdminSys);
-    item.style.display = visible ? '' : 'none';
+    item.style.display = _visible(item.getAttribute('data-page')) ? '' : 'none';
+  });
+  document.querySelectorAll('.navbar-tab[data-nav]').forEach(function (item) {
+    item.style.display = _visible(item.getAttribute('data-nav')) ? '' : 'none';
   });
 
   /* Call page-specific renderer (backward compat) */

@@ -44,14 +44,15 @@ router.post('/pre-login', async (req, res) => {
 
   try {
     const { rows } = await pool.query(`
-      SELECT mc.cedula, mc.correo_institucional, mc.contrasena,
+      SELECT mc.cedula, mc.correo_institucional,
+             fn_verificar_contrasena($3, mc.contrasena) AS password_ok,
              mc.estado_de_cuenta, s.nombre AS nombre_sede,
              p.primer_nombre, p.primer_apellido
       FROM   Miembro_Comunidad mc
       JOIN   Persona p ON p.cedula  = mc.cedula
       JOIN   Sede    s ON s.id_sede = mc.id_sede
       WHERE  mc.cedula = $1 AND mc.correo_institucional = $2
-    `, [numeroCedula(cedula), email.trim()]);
+    `, [numeroCedula(cedula), email.trim(), password]);
 
     if (!rows.length)
       return res.status(401).json({ error: 'Credenciales incorrectas' });
@@ -61,7 +62,7 @@ router.post('/pre-login', async (req, res) => {
       return res.status(403).json({ error: 'Cuenta bloqueada. Contacte a soporte.' });
     if (user.nombre_sede.trim() !== sede.trim())
       return res.status(401).json({ error: 'La sede no corresponde con su registro' });
-    if (user.contrasena !== password)
+    if (!user.password_ok)
       return res.status(401).json({ error: 'Contraseña incorrecta' });
 
     limpiarExpirados();

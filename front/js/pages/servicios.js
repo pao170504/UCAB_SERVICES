@@ -72,19 +72,25 @@ document.addEventListener('DOMContentLoaded', function () {
     _adminMode = esAdminSistema();
     var btn = document.getElementById('btn-nuevo-servicio');
     if (btn) btn.style.display = _adminMode ? '' : 'none';
+
+    var _puedeTramites = _adminMode || tieneRol('administrativo');
+    var tabGestion = document.getElementById('tab-gestion-tramites');
+    if (tabGestion) tabGestion.style.display = _puedeTramites ? '' : 'none';
+    if (_puedeTramites) cargarSolicitudesAdmin();
+
     _renderCards();
   });
 
   cargarCatalogo();
   cargarSolicitudes();
 
-  // Eager role check — don't wait for auth-guard to fire renderForRole
+  // Verifica el rol ya, sin esperar a que auth-guard dispare renderForRole
   var _u = typeof getUsuario === 'function' ? getUsuario() : null;
   if (_u) {
-    var _esAdmin = esAdminSistema();
+    var _puedeTramites = esAdminSistema() || tieneRol('administrativo');
     var _tabAdmin = document.getElementById('tab-gestion-tramites');
-    if (_tabAdmin) _tabAdmin.style.display = _esAdmin ? '' : 'none';
-    if (_esAdmin) cargarSolicitudesAdmin();
+    if (_tabAdmin) _tabAdmin.style.display = _puedeTramites ? '' : 'none';
+    if (_puedeTramites) cargarSolicitudesAdmin();
   }
 });
 
@@ -93,10 +99,12 @@ window.renderForRole = function (rol) {
   var btn = document.getElementById('btn-nuevo-servicio');
   if (btn) btn.style.display = _adminMode ? '' : 'none';
 
+  // Visible para cualquier oficina, no solo el superadmin (filtrado en backend)
+  var _puedeTramites = _adminMode || tieneRol('administrativo');
   var tabGestion = document.getElementById('tab-gestion-tramites');
-  if (tabGestion) tabGestion.style.display = _adminMode ? '' : 'none';
+  if (tabGestion) tabGestion.style.display = _puedeTramites ? '' : 'none';
 
-  if (_adminMode) cargarSolicitudesAdmin();
+  if (_puedeTramites) cargarSolicitudesAdmin();
 
   _renderCards();
 };
@@ -158,7 +166,7 @@ function _renderCards() {
   if (!grid) return;
 
   var visible = _catalog.filter(function (s) {
-    // Client-side safety filter — never show infra/estacionamiento
+    // Filtro de seguridad: nunca mostrar infra/estacionamiento
     if (_EXCLUDED_IDS.indexOf(s.id_servicio) !== -1 ||
         _EXCLUDED_ENTS.indexOf(s.nombre_entidad) !== -1) return false;
     var catMatch = _filtro.categoria === 'all' ||
@@ -183,7 +191,6 @@ function _renderCards() {
 }
 
 function _buildCard(s) {
-  var icon     = _catIcon(s.categoria);
   var badgeCls = _catBadge(s.categoria);
   var tipoBadge = s.tipo_entidad === 'interna'
     ? '<span class="badge badge-navy">UCAB</span>'
@@ -221,7 +228,6 @@ function _buildCard(s) {
     : '';
 
   return '<div class="service-card">' +
-    '<div class="service-card-img">' + icon + '</div>' +
     '<div class="service-card-body">' +
       '<div class="service-card-badges">' + tipoBadge + '<span class="badge ' + badgeCls + '">' + (s.nombre_categoria || s.categoria) + '</span></div>' +
       '<div class="service-card-name">' + _esc(s.descripcion) + '</div>' +
@@ -307,6 +313,15 @@ window.abrirSolicitudModal = function (servicio) {
       if (_solModal.step === 1) _renderSolStep1();
     })
     .catch(function () {});
+  /* Costo final estimado para este usuario (fn_costo_final_servicio: aplica
+     su perfil miembro/egresado/externo + descuento por recurrencia) */
+  fetch('/api/servicios/' + encodeURIComponent(servicio.id_servicio) + '/costo-estimado', { headers: _authHeaders() })
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      _solModal.servicio.costo_estimado = data.costo || null;
+      if (_solModal.step === 1) _renderSolStep1();
+    })
+    .catch(function () {});
 };
 
 function _renderSolModal() {
@@ -322,7 +337,7 @@ function _renderSolSteps() {
   var labels   = conAcomp
     ? ['Servicio', 'Acompañantes', 'Confirmar']
     : ['Servicio', 'Confirmar'];
-  // Map internal step (1/2/3) to display step for 2-step flow
+  // Traduce el paso interno (1/2/3) al paso mostrado en el flujo de 2 pasos
   var displayStep = _solModal.step;
   if (!conAcomp && _solModal.step === 3) displayStep = 2;
 
@@ -355,6 +370,18 @@ function _renderSolStep1() {
   if (s.costo_min !== null && s.costo_min !== undefined) {
     priceBlock = '<p style="margin:0;font-size:.875rem;"><strong>Rango de tarifa:</strong> ' +
       '$' + parseFloat(s.costo_min).toFixed(2) + ' – $' + parseFloat(s.costo_max).toFixed(2) + '</p>';
+  }
+
+  var c = s.costo_estimado;
+  if (c) {
+    var descHtml = parseFloat(c.descuento_pct) > 0
+      ? ' <span class="badge badge-success" style="margin-left:6px;">-' + parseFloat(c.descuento_pct) + '% ' + c.clasificacion + '</span>'
+      : '';
+    priceBlock +=
+      '<p style="margin:6px 0 0;font-size:.9rem;">' +
+        '<strong>Costo estimado para ti (' + _esc(c.perfil) + '):</strong> ' +
+        '$' + parseFloat(c.precio_final).toFixed(2) + descHtml +
+      '</p>';
   }
 
   var acreds = s.acreditaciones || [];
@@ -667,6 +694,11 @@ window.cancelarSolicitud = function (id) {
 };
 
 /* ── Admin: Create/Edit service modal ────────────────────────────────────── */
+var _DEPARTAMENTOS = [
+  'Unidad de Caja', 'Secretaría Académica', 'Rectorado',
+  'Control de Estudios', 'Dir. Planta Física'
+];
+
 window.abrirAdminModal = function (servicio) {
   if (typeof servicio === 'string') {
     try { servicio = JSON.parse(servicio); } catch (e) { servicio = null; }
@@ -674,18 +706,70 @@ window.abrirAdminModal = function (servicio) {
   _adminSvcData = servicio || null;
   document.getElementById('admin-modal-title').textContent = servicio ? 'Editar Servicio' : 'Nuevo Servicio';
 
-  Promise.all([
+  var fetches = [
     fetch('/api/servicios/categorias', { headers: _authHeaders() }).then(function (r) { return r.json(); }),
-    fetch('/api/servicios/entidades',  { headers: _authHeaders() }).then(function (r) { return r.json(); })
-  ])
+    fetch('/api/servicios/entidades',  { headers: _authHeaders() }).then(function (r) { return r.json(); }),
+    fetch('/api/acreditaciones',       { headers: _authHeaders() }).then(function (r) { return r.json(); })
+  ];
+  if (servicio) {
+    fetches.push(
+      fetch('/api/servicios/' + servicio.id_servicio + '/plantilla-pasos', { headers: _authHeaders() })
+        .then(function (r) { return r.json(); }),
+      fetch('/api/servicios/requisitos/' + servicio.id_servicio, { headers: _authHeaders() })
+        .then(function (r) { return r.json(); }),
+      fetch('/api/servicios/' + servicio.id_servicio + '/tarifas', { headers: _authHeaders() })
+        .then(function (r) { return r.json(); })
+    );
+  }
+
+  Promise.all(fetches)
     .then(function (results) {
-      _renderAdminForm(servicio, results[0].categorias || [], results[1].entidades || []);
+      var pasos      = servicio && results[3] ? results[3].pasos : [];
+      var requisitos = servicio && results[4] ? results[4] : { acreditaciones: [], requisitos_acceso: [] };
+      var tarifas    = servicio && results[5] ? results[5].tarifas : [];
+      _renderAdminForm(servicio, results[0].categorias || [], results[1].entidades || [],
+        pasos, results[2].acreditaciones || [], requisitos, tarifas);
       openModal('admin-servicio-modal');
     })
     .catch(function () { showToast('Error al cargar datos del formulario', 'error'); });
 };
 
-function _renderAdminForm(s, categorias, entidades) {
+function _pasoRow(descripcion, responsable) {
+  var opts = _DEPARTAMENTOS.map(function (d) {
+    return '<option value="' + d + '"' + (d === responsable ? ' selected' : '') + '>' + d + '</option>';
+  }).join('');
+  return '<div class="paso-row" style="display:flex;gap:.5rem;margin-bottom:.5rem;align-items:center;">' +
+    '<input class="form-input paso-desc" placeholder="Descripción del paso" value="' + _esc(descripcion || '') + '" style="flex:1;">' +
+    '<select class="form-select paso-resp" style="width:200px;flex-shrink:0;">' + opts + '</select>' +
+    '<button type="button" class="btn-icon" style="color:var(--color-danger);font-size:1.2rem;line-height:1;flex-shrink:0;" onclick="this.closest(\'.paso-row\').remove()">×</button>' +
+    '</div>';
+}
+
+window.adminAddPaso = function () {
+  var list = document.getElementById('pasos-list');
+  if (!list) return;
+  var div = document.createElement('div');
+  div.innerHTML = _pasoRow('', _DEPARTAMENTOS[0]);
+  list.appendChild(div.firstElementChild);
+};
+
+function _requisitoRow(texto) {
+  return '<div class="requisito-row" style="display:flex;gap:.5rem;margin-bottom:.5rem;">' +
+    '<input class="form-input requisito-texto" placeholder="Ej: Haber completado todas las UC del pensum" ' +
+      'value="' + _esc(texto || '') + '" style="flex:1;">' +
+    '<button type="button" class="btn-icon" style="color:var(--color-danger);font-size:1.2rem;line-height:1;flex-shrink:0;" onclick="this.closest(\'.requisito-row\').remove()">×</button>' +
+    '</div>';
+}
+
+window.adminAddRequisito = function () {
+  var list = document.getElementById('requisitos-list');
+  if (!list) return;
+  var div = document.createElement('div');
+  div.innerHTML = _requisitoRow('');
+  list.appendChild(div.firstElementChild);
+};
+
+function _renderAdminForm(s, categorias, entidades, pasos, catalogoAcred, requisitosActuales, tarifas) {
   var catOpts = categorias.map(function (c) {
     return '<option value="' + c.id_categoria + '"' + (s && s.id_categoria === c.id_categoria ? ' selected' : '') + '>' + _esc(c.nombre) + '</option>';
   }).join('');
@@ -702,6 +786,62 @@ function _renderAdminForm(s, categorias, entidades) {
     : '<div class="form-group"><label class="form-label">ID Servicio <small style="color:var(--color-text-muted);">(único, ej: SVC-LAB-001)</small></label>' +
       '<input class="form-input" id="admin-id" placeholder="SVC-XXX-000" value=""></div>';
 
+  var pasosIniciales = (pasos && pasos.length)
+    ? pasos
+    : [{ descripcion: '', responsable: _DEPARTAMENTOS[0] }];
+  var pasosRows = pasosIniciales.map(function (p) {
+    return _pasoRow(p.descripcion, p.responsable);
+  }).join('');
+
+  var acredActualesIds = (requisitosActuales && requisitosActuales.acreditaciones)
+    ? requisitosActuales.acreditaciones.map(function (a) { return a.id_acreditacion; })
+    : [];
+  var acredChecks = (catalogoAcred || []).map(function (a) {
+    var checked = acredActualesIds.indexOf(a.id_acreditacion) !== -1;
+    return '<label style="display:flex;align-items:center;gap:6px;font-size:.85rem;font-weight:400;margin-bottom:6px;">' +
+      '<input type="checkbox" class="acred-check" value="' + a.id_acreditacion + '"' + (checked ? ' checked' : '') + '> ' +
+      _esc(a.tipo) + ' <small style="color:var(--color-text-muted);">(' + _esc(a.descripcion || '') + ')</small>' +
+    '</label>';
+  }).join('');
+
+  var requisitosIniciales = (requisitosActuales && requisitosActuales.requisitos_acceso) || [];
+  var requisitosRows = requisitosIniciales.map(function (r) { return _requisitoRow(r); }).join('');
+
+  var tarifaHtml;
+  if (!s) {
+    // Nuevo servicio: pedir la tarifa inicial (se guarda junto con el servicio)
+    tarifaHtml =
+      '<div class="form-group"><label class="form-label">Tarifa inicial <small style="color:var(--color-text-muted);">(vigente desde hoy)</small></label>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">' +
+        '<div><small style="color:var(--color-text-muted);">Miembro</small>' +
+        '<input class="form-input" type="number" step="0.01" min="0" id="tarifa-miembro-nuevo" placeholder="0.00"></div>' +
+        '<div><small style="color:var(--color-text-muted);">Egresado</small>' +
+        '<input class="form-input" type="number" step="0.01" min="0" id="tarifa-egresado-nuevo" placeholder="0.00"></div>' +
+        '<div><small style="color:var(--color-text-muted);">Externo</small>' +
+        '<input class="form-input" type="number" step="0.01" min="0" id="tarifa-externo-nuevo" placeholder="0.00"></div>' +
+      '</div></div>';
+  } else {
+    // Editar: mostrar historial + formulario para registrar una tarifa nueva
+    var filasTarifa = (tarifas || []).map(function (t) {
+      var fecha = new Date(t.fecha_vigencia).toLocaleDateString('es-VE');
+      return '<tr><td>' + fecha + '</td><td>$' + parseFloat(t.tarifa_miembro).toFixed(2) + '</td>' +
+        '<td>$' + parseFloat(t.tarifa_egresado).toFixed(2) + '</td>' +
+        '<td>$' + parseFloat(t.tarifa_externo).toFixed(2) + '</td></tr>';
+    }).join('');
+    tarifaHtml =
+      '<div id="tarifa-historial">' +
+        (filasTarifa
+          ? '<table class="table" style="font-size:.82rem;"><thead><tr><th>Vigente desde</th><th>Miembro</th><th>Egresado</th><th>Externo</th></tr></thead><tbody>' + filasTarifa + '</tbody></table>'
+          : '<p style="color:var(--color-text-muted);font-size:.85rem;">Este servicio aún no tiene tarifas registradas.</p>') +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(3,1fr) auto;gap:8px;align-items:end;margin-top:var(--space-3);">' +
+        '<div><small style="color:var(--color-text-muted);">Miembro</small><input class="form-input" type="number" step="0.01" min="0" id="tarifa-miembro-add" placeholder="0.00"></div>' +
+        '<div><small style="color:var(--color-text-muted);">Egresado</small><input class="form-input" type="number" step="0.01" min="0" id="tarifa-egresado-add" placeholder="0.00"></div>' +
+        '<div><small style="color:var(--color-text-muted);">Externo</small><input class="form-input" type="number" step="0.01" min="0" id="tarifa-externo-add" placeholder="0.00"></div>' +
+        '<button type="button" class="btn btn-secondary btn-sm" onclick="agregarTarifa(\'' + _esc(s.id_servicio) + '\')">+ Registrar</button>' +
+      '</div>';
+  }
+
   document.getElementById('admin-modal-body').innerHTML =
     '<div style="padding:var(--space-4);">' +
     idField +
@@ -711,6 +851,32 @@ function _renderAdminForm(s, categorias, entidades) {
     '<select class="form-select" id="admin-cat"><option value="">Seleccionar...</option>' + catOpts + '</select></div>' +
     '<div class="form-group"><label class="form-label">Entidad Prestadora</label>' +
     '<select class="form-select" id="admin-ent"><option value="">Seleccionar...</option>' + entOpts + '</select></div>' +
+    '<div style="margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border);">' +
+      '<div class="form-group">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<label class="form-label" style="margin:0;">Plantilla de Pasos <small style="color:var(--color-text-muted);">(oficinas responsables, en orden)</small></label>' +
+          '<button type="button" class="btn btn-primary btn-sm" onclick="adminAddPaso()">+ Agregar paso</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="pasos-list">' + pasosRows + '</div>' +
+    '</div>' +
+    '<div style="margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border);">' +
+      '<label class="form-label">Acreditaciones requeridas <small style="color:var(--color-text-muted);">(el solicitante debe tenerlas vigentes)</small></label>' +
+      '<div id="acred-check-list">' + (acredChecks || '<p style="color:var(--color-text-muted);font-size:.85rem;">No hay acreditaciones en el catálogo.</p>') + '</div>' +
+    '</div>' +
+    '<div style="margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border);">' +
+      '<div class="form-group">' +
+        '<div style="display:flex;justify-content:space-between;align-items:center;">' +
+          '<label class="form-label" style="margin:0;">Requisitos de acceso <small style="color:var(--color-text-muted);">(condiciones en texto libre)</small></label>' +
+          '<button type="button" class="btn btn-secondary btn-sm" onclick="adminAddRequisito()">+ Agregar requisito</button>' +
+        '</div>' +
+      '</div>' +
+      '<div id="requisitos-list">' + requisitosRows + '</div>' +
+    '</div>' +
+    '<div style="margin-top:var(--space-5);padding-top:var(--space-4);border-top:1px solid var(--color-border);">' +
+      '<label class="form-label">Historial de Tarifas</label>' +
+      tarifaHtml +
+    '</div>' +
     '<div class="modal-footer">' +
       '<button class="btn btn-secondary" onclick="closeModal(\'admin-servicio-modal\')">Cancelar</button>' +
       '<button class="btn btn-primary" id="btn-guardar-svc" onclick="guardarServicio()">Guardar</button>' +
@@ -729,12 +895,49 @@ window.guardarServicio = function () {
     showToast('Por favor complete todos los campos', 'warning'); return;
   }
 
+  var pasos = [];
+  document.querySelectorAll('#pasos-list .paso-row').forEach(function (row) {
+    var d = row.querySelector('.paso-desc').value.trim();
+    var r = row.querySelector('.paso-resp').value;
+    if (d) pasos.push({ descripcion: d, responsable: r });
+  });
+  if (pasos.length === 0) {
+    showToast('Agrega al menos un paso a la plantilla', 'warning'); return;
+  }
+
+  var acreditaciones = [];
+  document.querySelectorAll('#acred-check-list .acred-check:checked').forEach(function (chk) {
+    acreditaciones.push(chk.value);
+  });
+
+  var requisitos = [];
+  document.querySelectorAll('#requisitos-list .requisito-texto').forEach(function (input) {
+    var v = input.value.trim();
+    if (v) requisitos.push(v);
+  });
+
+  var body = {
+    descripcion: desc, nombre_entidad: ent, id_categoria: cat,
+    pasos: pasos, acreditaciones: acreditaciones, requisitos: requisitos
+  };
+
+  if (!_adminSvcData) {
+    var tMiembro  = (document.getElementById('tarifa-miembro-nuevo')  || {}).value;
+    var tEgresado = (document.getElementById('tarifa-egresado-nuevo') || {}).value;
+    var tExterno  = (document.getElementById('tarifa-externo-nuevo')  || {}).value;
+    if (tMiembro === '' || tEgresado === '' || tExterno === '') {
+      showToast('Indica la tarifa inicial (miembro, egresado, externo)', 'warning'); return;
+    }
+    body.tarifa_miembro  = tMiembro;
+    body.tarifa_egresado = tEgresado;
+    body.tarifa_externo  = tExterno;
+  }
+
   var btn = document.getElementById('btn-guardar-svc');
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
 
   var url    = _adminSvcData ? '/api/servicios/' + _adminSvcData.id_servicio : '/api/servicios';
   var method = _adminSvcData ? 'PUT' : 'POST';
-  var body   = { descripcion: desc, nombre_entidad: ent, id_categoria: cat };
   if (!_adminSvcData) body.id_servicio = id;
 
   fetch(url, {
@@ -757,6 +960,34 @@ window.guardarServicio = function () {
       showToast('Error al guardar el servicio', 'error');
       if (btn) { btn.disabled = false; btn.textContent = 'Guardar'; }
     });
+};
+
+/* ── Registrar una nueva tarifa para un servicio existente (historial) ──── */
+window.agregarTarifa = function (idServicio) {
+  var miembro  = (document.getElementById('tarifa-miembro-add')  || {}).value;
+  var egresado = (document.getElementById('tarifa-egresado-add') || {}).value;
+  var externo  = (document.getElementById('tarifa-externo-add')  || {}).value;
+  if (miembro === '' || egresado === '' || externo === '') {
+    showToast('Completa las 3 tarifas', 'warning'); return;
+  }
+
+  fetch('/api/servicios/' + idServicio + '/tarifas', {
+    method:  'POST',
+    headers: _authJsonHeaders(),
+    body:    JSON.stringify({
+      fecha_vigencia:  new Date().toISOString().slice(0, 10),
+      tarifa_miembro:  miembro,
+      tarifa_egresado: egresado,
+      tarifa_externo:  externo
+    })
+  })
+    .then(function (r) { return r.json().then(function (d) { return { ok: r.ok, data: d }; }); })
+    .then(function (res) {
+      if (!res.ok) { showToast(res.data.error || 'Error al registrar la tarifa', 'error'); return; }
+      showToast('Tarifa registrada exitosamente', 'success');
+      abrirAdminModal(_adminSvcData);
+    })
+    .catch(function () { showToast('Error al registrar la tarifa', 'error'); });
 };
 
 window.eliminarServicio = function (id) {

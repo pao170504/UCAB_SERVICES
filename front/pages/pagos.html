@@ -17,10 +17,14 @@
     <a href="dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
     <div class="navbar-tabs">
       <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
       <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="navbar-avatar">MP</div>
@@ -45,7 +49,6 @@
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
         <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
         <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -60,7 +63,7 @@
         <p class="page-header-sub">Consulte facturas, registre pagos y administre el módulo financiero.</p>
       </div>
 
-      <!-- BCV Rate Banner -->
+      <!-- Banner de tasa BCV -->
       <div class="bcv-banner" id="bcv-banner">
         <div class="bcv-banner-left">
           <span class="bcv-label">Tasa BCV vigente</span>
@@ -72,7 +75,7 @@
         </div>
       </div>
 
-      <!-- Module Tabs -->
+      <!-- Pestañas del módulo -->
       <div class="pagos-tabs" id="pagos-tabs">
         <button class="pagos-tab active" data-tab="facturas">💳 Facturas</button>
         <button class="pagos-tab admin-only" data-tab="folios" style="display:none;">📋 Folios</button>
@@ -187,6 +190,12 @@
 
         <div class="card">
           <div class="card-header"><span class="card-header-title">Historial de Tasas</span></div>
+          <div class="filter-bar" style="padding:var(--space-4) var(--space-4) 0;">
+            <div class="search-bar" style="width:280px;max-width:100%;">
+              <span class="search-icon">🔎</span>
+              <input type="text" id="buscar-tasa-pagos" placeholder="Buscar por fecha…">
+            </div>
+          </div>
           <div class="table-wrap" style="border:none;border-radius:0;">
             <table class="table" id="tasas-table">
               <thead>
@@ -220,6 +229,12 @@
           </div>
           <div class="card">
             <div class="card-header"><span class="card-header-title">Terceros Registrados</span></div>
+            <div class="filter-bar" style="padding:var(--space-4) var(--space-4) 0;">
+              <div class="search-bar" style="width:280px;max-width:100%;">
+                <span class="search-icon">🔎</span>
+                <input type="text" id="buscar-tercero" placeholder="Buscar por RIF o razón social…">
+              </div>
+            </div>
             <div class="table-wrap" style="border:none;border-radius:0;">
               <table class="table" id="terceros-table">
                 <thead>
@@ -238,7 +253,7 @@
   </div>
 </div>
 
-<!-- Modal: Invoice Detail -->
+<!-- Modal: Detalle de Factura -->
 <div class="modal-overlay" id="factura-detalle-modal">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -249,7 +264,7 @@
   </div>
 </div>
 
-<!-- Modal: Folio Items Management (admin) -->
+<!-- Modal: Gestión de Ítems del Folio (admin) -->
 <div class="modal-overlay" id="folio-items-modal">
   <div class="modal modal-lg">
     <div class="modal-header">
@@ -260,7 +275,7 @@
   </div>
 </div>
 
-<!-- Modal: Create Folio (admin) -->
+<!-- Modal: Crear Folio (admin) -->
 <div class="modal-overlay" id="crear-folio-modal">
   <div class="modal">
     <div class="modal-header">
@@ -282,7 +297,7 @@
   </div>
 </div>
 
-<!-- Modal: Generate Invoice from Folio (admin) -->
+<!-- Modal: Generar Factura desde Folio (admin) -->
 <div class="modal-overlay" id="generar-factura-modal">
   <div class="modal">
     <div class="modal-header">

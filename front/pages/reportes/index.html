@@ -17,10 +17,14 @@
     <a href="../dashboard.html" class="navbar-brand"><div class="navbar-brand-icon">🎓</div> UCAB Services</a>
     <div class="navbar-tabs">
       <a href="../dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="../admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="../servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="../pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="../infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="../estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
       <a href="../carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="../beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="../acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="navbar-avatar">MP</div>
@@ -36,13 +40,14 @@
       </div>
       <nav class="sidebar-nav">
         <a href="../dashboard.html"       class="sidebar-item" data-page="dashboard"><span class="sidebar-item-icon">⊞</span> Panel</a>
+        <a href="../admin.html"           class="sidebar-item" data-page="usuarios"><span class="sidebar-item-icon">👥</span> Usuarios</a>
         <a href="../servicios.html"       class="sidebar-item" data-page="servicios"><span class="sidebar-item-icon">⚡</span> Servicios</a>
         <a href="../pagos.html"           class="sidebar-item" data-page="pagos"><span class="sidebar-item-icon">💳</span> Pagos</a>
         <a href="../infraestructura.html" class="sidebar-item" data-page="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
         <a href="../estacionamiento.html" class="sidebar-item" data-page="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
         <a href="../carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
         <a href="../beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
-        <a href="index.html"              class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
+        <a href="../acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -52,7 +57,7 @@
 
     <main class="main-content">
 
-      <!-- ===== LOCKED VIEW (Estudiante + Egresado) ===== -->
+      <!-- ===== VISTA BLOQUEADA (Estudiante + Egresado) ===== -->
       <div id="view-locked">
         <div class="page-header">
           <h1 class="page-header-title">Reportes</h1>
@@ -69,7 +74,7 @@
         </div>
       </div>
 
-      <!-- ===== PROFESOR VIEW: simplified ===== -->
+      <!-- ===== VISTA PROFESOR (simplificada) ===== -->
       <div id="view-profesor" style="display:none;">
         <div class="page-header">
           <h1 class="page-header-title">Mis Reportes</h1>
@@ -132,7 +137,7 @@
         </div>
       </div>
 
-      <!-- ===== ADMINISTRATIVO VIEW ===== -->
+      <!-- ===== VISTA ADMINISTRATIVO ===== -->
       <div id="view-administrativo" style="display:none;">
         <div class="page-header">
           <h1 class="page-header-title">Reportes Institucionales</h1>

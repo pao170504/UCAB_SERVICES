@@ -2,7 +2,7 @@
    pagos.css — Payments page
    ============================================================= */
 
-/* Section: BCV Banner */
+/* Sección: Banner BCV */
 .bcv-banner {
   background: linear-gradient(135deg, var(--color-navy) 0%, #1e3a5f 100%);
   border-radius: var(--radius-md);
@@ -41,7 +41,7 @@
   font-family: var(--font-mono);
 }
 
-/* Section: Module Tabs */
+/* Sección: Pestañas del módulo */
 .pagos-tabs {
   display: flex;
   gap: var(--space-2);
@@ -74,7 +74,7 @@
   border-bottom-color: var(--color-blue);
 }
 
-/* Section: Tab panels */
+/* Sección: Paneles de pestaña */
 .tab-panel {
   animation: fadeIn .15s ease;
 }
@@ -84,7 +84,7 @@
   to   { opacity: 1; transform: translateY(0);   }
 }
 
-/* Section: Top bar */
+/* Sección: Barra superior */
 .pagos-topbar {
   display: flex;
   align-items: center;
@@ -93,10 +93,10 @@
   margin-bottom: var(--space-5);
 }
 
-/* Section: Monto cell */
+/* Sección: Celda de monto */
 .mono { font-family: var(--font-mono); font-size: 0.875rem; }
 
-/* Section: Vencimiento alert (legacy, kept for compat) */
+/* Sección: Alerta de vencimiento (legado) */
 .vencimiento-card {
   background-color: var(--color-navy);
   border-radius: var(--radius-md);
@@ -130,7 +130,7 @@
   white-space: nowrap;
 }
 
-/* Section: Wallet bar */
+/* Sección: Barra de billetera */
 .wallet-bar {
   background: linear-gradient(135deg, #1565c0, #0d47a1);
   border-radius: var(--radius-md);
@@ -156,7 +156,7 @@
   font-family: var(--font-mono);
 }
 
-/* Section: Invoice detail labels */
+/* Sección: Etiquetas de detalle de factura */
 .det-label {
   color: var(--color-text-muted);
   padding: .3rem .5rem;
@@ -165,7 +165,7 @@
   vertical-align: top;
 }
 
-/* Section: Payment method grid (shared with payment-modal.js) */
+/* Sección: Grid de método de pago (compartido con payment-modal.js) */
 .payment-methods-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -197,7 +197,7 @@
 .payment-method-name { font-weight: 600; font-size: .9rem; }
 .payment-method-desc { font-size: .78rem; color: var(--color-text-muted); }
 
-/* Section: NFC animation */
+/* Sección: Animación NFC */
 .nfc-animation {
   text-align: center;
   padding: var(--space-4);
@@ -217,7 +217,7 @@
   50%       { transform: scale(1.15); opacity: 0.7;  }
 }
 
-/* Section: Receipt card (shared) */
+/* Sección: Tarjeta de recibo (compartida) */
 .receipt-card {
   border: 1px solid var(--color-border);
   border-radius: var(--radius-md);
@@ -248,7 +248,7 @@
 .receipt-label { color: var(--color-text-muted); }
 .receipt-value { font-weight: 500; text-align: right; }
 
-/* Section: Success animation */
+/* Sección: Animación de éxito */
 .success-anim {
   text-align: center;
   padding: var(--space-4) 0;
@@ -274,7 +274,7 @@
   to   { transform: scale(1);   opacity: 1; }
 }
 
-/* Section: Step indicator (shared) */
+/* Sección: Indicador de pasos (compartido) */
 .step-indicator {
   display: flex;
   align-items: center;
@@ -324,7 +324,7 @@
 
 .step-line.completed { background: var(--color-success); }
 
-/* Section: Info box */
+/* Sección: Caja de información */
 .info-box {
   background: var(--color-blue-light);
   border: 1px solid var(--color-blue-light);

@@ -13,7 +13,7 @@
 
 <div class="app-shell">
 
-  <!-- Section: Navbar -->
+  <!-- Navbar -->
   <nav class="navbar">
     <a href="dashboard.html" class="navbar-brand">
       <div class="navbar-brand-icon">🎓</div>
@@ -21,10 +21,14 @@
     </a>
     <div class="navbar-tabs">
       <a href="dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
       <a href="carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="navbar-avatar">MP</div>
@@ -33,7 +37,7 @@
 
   <div class="app-body">
 
-    <!-- Section: Sidebar -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-profile">
         <div class="sidebar-avatar" id="sidebar-avatar">?</div>
@@ -50,7 +54,6 @@
         <a href="carrera.html"         class="sidebar-item" data-page="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
         <a href="beneficiarios.html"   class="sidebar-item" data-page="beneficiarios"><span class="sidebar-item-icon">👨‍👧</span> Beneficiarios</a>
         <a href="acreditaciones.html"  class="sidebar-item" data-page="acreditaciones"><span class="sidebar-item-icon">🎓</span> Acreditaciones</a>
-        <a href="reportes/index.html"  class="sidebar-item" data-page="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -58,11 +61,11 @@
       </div>
     </aside>
 
-    <!-- Section: Main content -->
+    <!-- Contenido principal -->
     <main class="main-content">
     <div id="dashboard-main-content">
 
-      <!-- ==== ESTUDIANTE VIEW ==== -->
+      <!-- ==== VISTA ESTUDIANTE ==== -->
       <div id="view-estudiante">
 
         <div class="page-header">
@@ -70,7 +73,7 @@
           <p class="page-header-sub">Aquí tienes el resumen académico para el semestre 2026-II.</p>
         </div>
 
-        <!-- KPI row: 4 cards -->
+        <!-- Fila de KPI: 4 tarjetas -->
         <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);">
 
           <!-- Promedio -->
@@ -114,18 +117,28 @@
 
         </div>
 
+        <!-- Índice de recurrencia — cargado desde BD (fn_indice_recurrencia) -->
+        <div class="card" style="margin-bottom:var(--space-5);">
+          <div class="card-header">
+            <span class="card-header-title">MI ÍNDICE DE RECURRENCIA</span>
+          </div>
+          <div id="recurrencia-container">
+            <p style="padding:var(--space-4);color:var(--color-text-muted);">Cargando...</p>
+          </div>
+        </div>
+
         <!-- Trámites recientes — cargado desde BD -->
         <div class="card" style="margin-bottom:var(--space-5);">
           <div class="card-header">
             <span class="card-header-title">TRÁMITES RECIENTES</span>
             <a href="servicios.html" class="btn btn-outline btn-sm">Ver todos →</a>
           </div>
-          <div id="tramites-recientes-container">
+          <div class="tramites-recientes-container">
             <p style="padding:var(--space-4);color:var(--color-text-muted);">Cargando...</p>
           </div>
         </div>
 
-        <!-- Audit table + Map row -->
+        <!-- Tabla de auditoría + fila de mapa -->
         <div class="audit-map-row">
           <div class="card">
             <div class="card-header">
@@ -146,7 +159,7 @@
 
       </div><!-- /view-estudiante -->
 
-      <!-- ==== PROFESOR VIEW ==== -->
+      <!-- ==== VISTA PROFESOR ==== -->
       <div id="view-profesor" style="display:none;">
 
         <div class="page-header">
@@ -154,7 +167,7 @@
           <p class="page-header-sub">Escalafón, carga horaria y estado de tu cuenta.</p>
         </div>
 
-        <!-- Profesor KPI row -->
+        <!-- Fila de KPI del profesor -->
         <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:var(--space-5);">
 
           <div class="kpi-card">
@@ -188,7 +201,7 @@
 
       </div><!-- /view-profesor -->
 
-      <!-- ==== ADMINISTRATIVO VIEW ==== -->
+      <!-- ==== VISTA ADMINISTRATIVO ==== -->
       <div id="view-administrativo" style="display:none;">
 
         <div class="page-header">
@@ -196,7 +209,7 @@
           <p class="page-header-sub">Gestión de trámites, aprobaciones y comunidad UCAB.</p>
         </div>
 
-        <!-- Admin KPI row -->
+        <!-- Fila de KPI del administrativo -->
         <div class="kpi-row" style="grid-template-columns:repeat(4,1fr);margin-bottom:var(--space-5);">
 
           <div class="kpi-card">
@@ -235,7 +248,7 @@
             <span class="card-header-title">MIS TRÁMITES RECIENTES</span>
             <a href="servicios.html" class="btn btn-outline btn-sm">Ver todos →</a>
           </div>
-          <div id="tramites-recientes-container">
+          <div class="tramites-recientes-container">
             <p style="padding:var(--space-4);color:var(--color-text-muted);">Cargando...</p>
           </div>
         </div>
@@ -258,7 +271,7 @@
   </div>
 </div>
 
-<!-- Section: MFA Modal -->
+<!-- Modal de MFA -->
 <div class="modal-overlay" id="mfa-modal">
   <div class="modal">
     <div class="modal-header">

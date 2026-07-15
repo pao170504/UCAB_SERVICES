@@ -16,6 +16,25 @@ async function verificarAdmin(cedula) {
   return rows.length > 0;
 }
 
+// Unidad de adscripción del administrativo activo (null si no aplica)
+async function getUnidadAdscripcion(cedula) {
+  const { rows } = await pool.query(`
+    SELECT pa.unidad_adscripcion
+    FROM   Personal_Administrativo pa
+    JOIN   Periodo_Vinculacion pv
+           ON pv.cedula = pa.cedula AND pv.fecha_inicio = pa.fecha_inicio
+    WHERE  pa.cedula = $1 AND pv.fecha_fin IS NULL
+  `, [cedula]);
+  return rows.length ? rows[0].unidad_adscripcion : null;
+}
+
+// El superadmin aprueba cualquier paso; el resto solo los de su unidad
+async function puedeAprobarPaso(cedula, responsable) {
+  if (await verificarAdmin(cedula)) return true;
+  const unidad = await getUnidadAdscripcion(cedula);
+  return unidad !== null && unidad === responsable;
+}
+
 // ── GET /api/admin/usuarios ──────────────────────────────────────
 router.get('/usuarios', async (req, res) => {
   if (!await verificarAdmin(req.cedula))
@@ -246,10 +265,14 @@ router.put('/tarifas/:idSede/:idCategoria', async (req, res) => {
   }
 });
 
-// ── GET /api/admin/solicitudes/pendientes ────────────────────────
+// GET /api/admin/solicitudes/pendientes — cada oficina ve solo lo de su unidad
 router.get('/solicitudes/pendientes', async (req, res) => {
-  if (!await verificarAdmin(req.cedula))
-    return res.status(403).json({ error: 'Acceso denegado' });
+  const esSuper = await verificarAdmin(req.cedula);
+  let unidad = null;
+  if (!esSuper) {
+    unidad = await getUnidadAdscripcion(req.cedula);
+    if (!unidad) return res.status(403).json({ error: 'Acceso denegado' });
+  }
 
   try {
     const { rows } = await pool.query(`
@@ -273,12 +296,12 @@ router.get('/solicitudes/pendientes', async (req, res) => {
         (SELECT pa2.id_paso FROM Paso_Actividad pa2
          WHERE  pa2.id_solicitud = ss.id_solicitud
            AND  pa2.estado_paso IN ('Pendiente','En proceso')
-         ORDER  BY pa2.fecha_inicio ASC LIMIT 1)
+         ORDER  BY pa2.orden ASC LIMIT 1)
                                     AS paso_pendiente_id,
         (SELECT pa2.responsable FROM Paso_Actividad pa2
          WHERE  pa2.id_solicitud = ss.id_solicitud
            AND  pa2.estado_paso IN ('Pendiente','En proceso')
-         ORDER  BY pa2.fecha_inicio ASC LIMIT 1)
+         ORDER  BY pa2.orden ASC LIMIT 1)
                                     AS paso_pendiente_responsable
       FROM   Solicitud_Servicio  ss
       JOIN   Servicio            sv ON sv.id_servicio  = ss.id_servicio
@@ -290,17 +313,17 @@ router.get('/solicitudes/pendientes', async (req, res) => {
                ('UCAB - Infraestructura','UCAB - Estacionamiento')
       ORDER  BY ss.fecha_apertura ASC
     `);
-    res.json({ solicitudes: rows });
+    const visibles = unidad
+      ? rows.filter(r => r.paso_pendiente_responsable === unidad)
+      : rows;
+    res.json({ solicitudes: visibles });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error interno' });
   }
 });
 
-// ── GET /api/admin/solicitudes/:idSolicitud/requisitos ───────────
-// Reúne los requisitos del trámite para que el admin verifique ANTES de aprobar:
-// datos académicos del solicitante, requisitos de acceso (texto), acreditaciones
-// exigidas (y si las cumple) y solvencia (saldo de facturas del trámite).
+// GET /api/admin/solicitudes/:idSolicitud/requisitos — checklist previo a aprobar
 router.get('/solicitudes/:idSolicitud/requisitos', async (req, res) => {
   if (!await verificarAdmin(req.cedula))
     return res.status(403).json({ error: 'Acceso denegado' });
@@ -365,22 +388,22 @@ router.get('/solicitudes/:idSolicitud/requisitos', async (req, res) => {
   }
 });
 
-// ── PATCH /api/admin/solicitudes/:idSolicitud/paso/:idPaso ───────
+// PATCH /api/admin/solicitudes/:idSolicitud/paso/:idPaso — aprobación por unidad
 router.patch('/solicitudes/:idSolicitud/paso/:idPaso', async (req, res) => {
-  if (!await verificarAdmin(req.cedula))
-    return res.status(403).json({ error: 'Solo el personal administrativo puede aprobar pasos' });
-
   const { idSolicitud, idPaso } = req.params;
 
   try {
     const { rows: pasoRows } = await pool.query(`
-      SELECT id_paso, estado_paso
+      SELECT id_paso, estado_paso, responsable
       FROM   Paso_Actividad
       WHERE  id_paso = $1 AND id_solicitud = $2
     `, [idPaso, idSolicitud]);
 
     if (!pasoRows.length)
       return res.status(404).json({ error: 'Paso no encontrado' });
+
+    if (!(await puedeAprobarPaso(req.cedula, pasoRows[0].responsable)))
+      return res.status(403).json({ error: 'No tienes permiso para aprobar pasos de esta oficina' });
 
     if (pasoRows[0].estado_paso === 'Completado')
       return res.status(400).json({ error: 'Este paso ya fue completado' });
@@ -409,9 +432,7 @@ router.patch('/solicitudes/:idSolicitud/paso/:idPaso', async (req, res) => {
 });
 
 
-// -- POST /api/admin/usuarios/:cedula/vinculaciones  (agregar rol) --
-// Adjunta un nuevo rol al periodo de vinculacion ACTIVO del miembro; si no
-// tiene periodo abierto, crea uno con la fecha indicada (o la de hoy).
+// POST /api/admin/usuarios/:cedula/vinculaciones — agrega un rol al período activo
 router.post('/usuarios/:cedula/vinculaciones', async (req, res) => {
   if (!await verificarAdmin(req.cedula))
     return res.status(403).json({ error: 'Acceso denegado' });
@@ -676,14 +697,17 @@ router.get('/postulaciones', async (req, res) => {
 router.patch('/postulaciones/:cedula/:idVacante', async (req, res) => {
   if (!await verificarAdmin(req.cedula)) return res.status(403).json({ error: 'Acceso denegado' });
   const { estatus } = req.body;
-  const ESTATUSES = ['En Revisión', 'Seleccionado', 'Rechazado'];
+  // Debe calzar EXACTO con el CHECK de Postula.Estatus en create.sql.
+  const ESTATUSES = ['Postulado', 'En Revisión', 'Entrevistado', 'Contratado', 'Rechazado', 'Descartado'];
   if (!ESTATUSES.includes(estatus))
     return res.status(400).json({ error: 'Estatus no válido' });
   try {
-    await pool.query(
-      'UPDATE Postula SET estatus = $1 WHERE cedula = $2 AND id_vacante = $3',
-      [estatus, req.params.cedula, req.params.idVacante]
-    );
+    await pool.query(`
+      UPDATE Postula
+      SET    estatus           = $1::VARCHAR,
+             fecha_contratacion = CASE WHEN $1::VARCHAR = 'Contratado' THEN CURRENT_DATE ELSE fecha_contratacion END
+      WHERE  cedula = $2 AND id_vacante = $3
+    `, [estatus, req.params.cedula, req.params.idVacante]);
     res.json({ message: 'Postulación actualizada' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Error interno' }); }
 });
@@ -722,11 +746,9 @@ router.post('/tasas', async (req, res) => {
   if (isNaN(eurNum) || eurNum <= 0 || isNaN(usdNum) || usdNum <= 0)
     return res.status(400).json({ error: 'Las tasas deben ser números positivos' });
   try {
-    await pool.query(`
-      INSERT INTO Tasa (fecha_tasa, eur, usd)
-      VALUES ($1, $2, $3)
-      ON CONFLICT (fecha_tasa) DO UPDATE SET eur = EXCLUDED.eur, usd = EXCLUDED.usd
-    `, [fecha_tasa, eurNum, usdNum]);
+    // Usa el procedimiento almacenado (proceso masivo de actualización de
+    // tasas) en vez de un INSERT directo.
+    await pool.query('CALL proc_actualizar_tasa($1, $2, $3)', [fecha_tasa, usdNum, eurNum]);
     res.status(201).json({ message: 'Tasa registrada' });
   } catch (err) { console.error(err); res.status(500).json({ error: 'Error interno' }); }
 });
@@ -796,6 +818,33 @@ router.post('/folios/cierre-masivo', async (req, res) => {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Error al ejecutar cierre masivo: ' + err.message });
+  }
+});
+
+// POST /api/admin/limpieza/archivar-expirados — archiva acompañantes y
+// beneficiarios cuyos vínculos expiraron hace más de un año
+router.post('/limpieza/archivar-expirados', async (req, res) => {
+  if (!await verificarAdmin(req.cedula)) return res.status(403).json({ error: 'Acceso denegado' });
+  try {
+    await pool.query('CALL proc_archivar_expirados()');
+    res.json({ message: 'Protocolo de limpieza ejecutado correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error al archivar expirados: ' + err.message });
+  }
+});
+
+// POST /api/admin/beneficiarios/transicion-mayoria-edad — transiciona
+// Carga_Menor -> Carga_Mayor al cumplir 18 años y rompe el vínculo de
+// quienes superaron la edad límite sin entregar constancia de estudios
+router.post('/beneficiarios/transicion-mayoria-edad', async (req, res) => {
+  if (!await verificarAdmin(req.cedula)) return res.status(403).json({ error: 'Acceso denegado' });
+  try {
+    await pool.query('CALL proc_transicion_mayoria_edad()');
+    res.json({ message: 'Transición de mayoría de edad ejecutada correctamente' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Error en la transición de mayoría de edad: ' + err.message });
   }
 });
 

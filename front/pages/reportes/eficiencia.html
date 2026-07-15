@@ -13,7 +13,7 @@
 
 <div class="app-shell">
 
-  <!-- Section: Navbar -->
+  <!-- Navbar -->
   <nav class="navbar">
     <a href="../dashboard.html" class="navbar-brand">
       <div class="navbar-brand-icon">🎓</div>
@@ -21,10 +21,14 @@
     </a>
     <div class="navbar-tabs">
       <a href="../dashboard.html"       class="navbar-tab" data-nav="dashboard">Panel</a>
+      <a href="../admin.html"           class="navbar-tab" data-nav="usuarios">Usuarios</a>
       <a href="../servicios.html"       class="navbar-tab" data-nav="servicios">Servicios</a>
       <a href="../pagos.html"           class="navbar-tab" data-nav="pagos">Pagos</a>
       <a href="../infraestructura.html" class="navbar-tab" data-nav="infraestructura">Infraestructura</a>
+      <a href="../estacionamiento.html" class="navbar-tab" data-nav="estacionamiento">Estacionamiento</a>
       <a href="../carrera.html"         class="navbar-tab" data-nav="carrera">Carrera</a>
+      <a href="../beneficiarios.html"   class="navbar-tab" data-nav="beneficiarios">Beneficiarios</a>
+      <a href="../acreditaciones.html"  class="navbar-tab" data-nav="acreditaciones">Acreditaciones</a>
     </div>
     <div class="navbar-right">
       <div class="role-switcher">
@@ -37,7 +41,7 @@
 
   <div class="app-body">
 
-    <!-- Section: Sidebar -->
+    <!-- Sidebar -->
     <aside class="sidebar">
       <div class="sidebar-profile">
         <div class="sidebar-avatar">MP</div>
@@ -51,7 +55,6 @@
         <a href="../infraestructura.html" class="sidebar-item" data-nav="infraestructura"><span class="sidebar-item-icon">🏛</span> Infraestructura</a>
         <a href="../estacionamiento.html" class="sidebar-item" data-nav="estacionamiento"><span class="sidebar-item-icon">🅿</span> Estacionamiento</a>
         <a href="../carrera.html"         class="sidebar-item" data-nav="carrera"><span class="sidebar-item-icon">👤</span> Carrera</a>
-        <a href="index.html"             class="sidebar-item" data-nav="reportes"><span class="sidebar-item-icon">📊</span> Reportes</a>
       </nav>
       <div class="sidebar-footer">
         <a href="#" class="sidebar-footer-item"><span>⚙</span> Configuración</a>
@@ -59,7 +62,7 @@
       </div>
     </aside>
 
-    <!-- Section: Main content -->
+    <!-- Contenido principal -->
     <main class="main-content">
 
       <div class="page-header">
@@ -67,7 +70,7 @@
         <p class="page-header-sub">Tiempos de respuesta de trámites y registro de actividad de seguridad.</p>
       </div>
 
-      <!-- Section: Top metrics -->
+      <!-- Métricas superiores -->
       <div class="eficiencia-metrics-row">
 
         <div class="eficiencia-metric-card dark">
@@ -100,7 +103,7 @@
 
       </div>
 
-      <!-- Filter bar -->
+      <!-- Barra de filtros -->
       <div class="filter-bar">
         <div class="form-group" style="flex-direction:row;align-items:center;gap:var(--space-2);">
           <label class="form-label" style="white-space:nowrap;">Desde</label>
@@ -115,7 +118,7 @@
         <button class="btn btn-primary btn-sm">Aplicar Filtros</button>
       </div>
 
-      <!-- Section: Tabs -->
+      <!-- Pestañas -->
       <div class="tab-section">
         <div class="tab-group">
           <button class="tab-item active" data-tab="tab-respuesta">Tiempos de Respuesta</button>
@@ -123,7 +126,7 @@
         </div>
         <div class="tab-panels">
 
-          <!-- Tab 1: Tiempos de Respuesta -->
+          <!-- Pestaña 1: Tiempos de Respuesta -->
           <div class="tab-panel" id="tab-respuesta">
             <div class="section-header">
               <span class="section-title">Solicitudes en Curso</span>
@@ -182,7 +185,7 @@
             </div>
           </div>
 
-          <!-- Tab 2: Auditoría de Seguridad -->
+          <!-- Pestaña 2: Auditoría de Seguridad -->
           <div class="tab-panel" id="tab-auditoria" style="display:none;">
             <div class="section-header">
               <span class="section-title">Registro de Auditoría</span>

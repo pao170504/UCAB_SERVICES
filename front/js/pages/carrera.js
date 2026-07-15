@@ -182,9 +182,12 @@ async function cargarPostulaciones() {
 
     var tbody = rows.map(function (p) {
       var badge = {
+        'Postulado':    '<span class="badge badge-info">Postulado</span>',
         'En Revisión':  '<span class="badge badge-warning">En revisión</span>',
-        'Seleccionado': '<span class="badge badge-success">Seleccionado</span>',
-        'Rechazado':    '<span class="badge badge-danger">Rechazado</span>'
+        'Entrevistado': '<span class="badge badge-info">Entrevistado</span>',
+        'Contratado':   '<span class="badge badge-success">¡Contratado!</span>',
+        'Rechazado':    '<span class="badge badge-danger">Rechazado</span>',
+        'Descartado':   '<span class="badge badge-danger">Descartado</span>'
       }[p.estatus_postulacion] || '<span class="badge badge-info">' + p.estatus_postulacion + '</span>';
 
       var fecha = p.fecha_postulacion ? new Date(p.fecha_postulacion).toLocaleDateString('es-VE') : '';
@@ -361,10 +364,45 @@ function verDetalleVacante(idVacante) {
 }
 window.verDetalleVacante = verDetalleVacante;
 
+/* ---- Render one "Trayectoria Institucional" timeline entry (one Periodo_Vinculacion,
+   con una badge por cada rol que tuvo activo durante ese periodo) ---- */
+function _periodoTimelineItem(per) {
+  var MESES = { year: 'numeric', month: 'short' };
+  var ini = per.fecha_inicio ? new Date(per.fecha_inicio).toLocaleDateString('es-VE', MESES) : '—';
+  var fin = per.fecha_fin ? new Date(per.fecha_fin).toLocaleDateString('es-VE', MESES) : 'Actual';
+
+  var badges = (per.roles || []).map(function (r) {
+    if (r.rol === 'estudiante') {
+      var extra = '';
+      if (r.beca) extra += ' <span class="badge badge-warning">Beca ' + r.beca.tipo + ' — ' + r.beca.estatus + '</span>';
+      if (r.preparador) extra += ' <span class="badge badge-navy">Preparador: ' + r.preparador.asignatura + '</span>';
+      return '<span class="badge badge-info">Estudiante · ' + (r.escuela || '') +
+        ' · GPA ' + (parseFloat(r.promedio || 0)).toFixed(2) + ' · ' + (r.ucAprobadas || 0) + ' UC</span>' + extra;
+    }
+    if (r.rol === 'profesor') {
+      return '<span class="badge badge-info">Profesor · ' + (r.escalafon || '') + '</span>' +
+        (r.codigoInvestigador ? ' <span class="badge badge-navy">Investigador</span>' : '');
+    }
+    if (r.rol === 'administrativo') {
+      return '<span class="badge badge-info">Personal Administrativo · ' + (r.cargo || '') +
+        ' (' + (r.unidadAdscripcion || '') + ')</span>';
+    }
+    if (r.rol === 'egresado') {
+      return '<span class="badge badge-success">Egresado · ' + (r.titulo || '') +
+        ' (' + (r.anoGraduacion || '') + ') · Índice ' + (parseFloat(r.indiceAcademico || 0)).toFixed(2) + '</span>';
+    }
+    return '';
+  }).join(' ');
+
+  return '<div class="cv-timeline-item">' +
+    '<span class="cv-timeline-date">' + ini + ' — ' + fin + '</span>' +
+    '<div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px;">' + badges + '</div>' +
+  '</div>';
+}
+
 /* ---- Modal: Ver perfil completo ---- */
 async function verPerfilCompleto() {
   var usuario    = getUsuario();
-  var egresado   = getRolData('egresado');
   var estudiante = getRolData('estudiante');
 
   var telefonos = [];
@@ -400,46 +438,21 @@ async function verPerfilCompleto() {
   if (semestreRow) semestreRow.style.display = estudiante ? '' : 'none';
   if (estudiante) setModalField('cv-modal-semestre', (estudiante.semestre || '') + 'vo Semestre');
 
-  /* Trayectoria Académica */
+  /* Trayectoria Institucional: historial completo de periodos de vinculación
+     (no solo el rol activo), reflejando la memoria cronológica del miembro. */
   var trajectoryEl = document.getElementById('cv-modal-trayectoria');
   if (trajectoryEl) {
-    if (egresado) {
-      var ano    = egresado.ano_graduacion   || egresado.anoGraduacion   || '';
-      var titulo = egresado.titulo           || '';
-      var indice = parseFloat(egresado.indice_academico || egresado.indiceAcademico || 0).toFixed(2);
-      trajectoryEl.innerHTML =
-        '<div class="cv-timeline-item">' +
-          '<span class="cv-timeline-date">UCAB · ' + ano + '</span>' +
-          '<strong>' + titulo + '</strong>' +
-          '<span>Universidad Católica Andrés Bello</span>' +
-          '<span class="badge badge-success" style="margin-top:4px;align-self:flex-start;">' +
-            'Índice académico: ' + indice + ' / 20' +
-          '</span>' +
-        '</div>';
-    } else if (estudiante) {
-      var prom    = parseFloat(estudiante.promedio || 0).toFixed(2);
-      var uc      = estudiante.uc_aprobadas || estudiante.ucAprobadas || 0;
-      var sem     = estudiante.semestre || '';
-      var escuela = estudiante.escuela  || '';
-      var fac     = estudiante.facultad || '';
-      var becaBadge = estudiante.beca
-        ? '<span class="badge badge-warning" style="margin-top:4px;align-self:flex-start;">Beca ' +
-          estudiante.beca.tipo + ' — ' + estudiante.beca.estatus + '</span>'
-        : '';
-      var prepBadge = estudiante.preparador
-        ? '<span class="badge badge-navy" style="margin-top:4px;align-self:flex-start;">Preparador: ' +
-          estudiante.preparador.asignatura + '</span>'
-        : '';
-      trajectoryEl.innerHTML =
-        '<div class="cv-timeline-item">' +
-          '<span class="cv-timeline-date">UCAB · Activo</span>' +
-          '<strong>' + escuela + '</strong>' +
-          '<span>Universidad Católica Andrés Bello · Facultad de ' + fac + '</span>' +
-          '<span class="badge badge-info" style="margin-top:4px;align-self:flex-start;">' +
-            'GPA: ' + prom + ' / 20 · Semestre ' + sem + ' · ' + uc + ' UC aprobadas' +
-          '</span>' +
-          becaBadge + prepBadge +
-        '</div>';
+    trajectoryEl.innerHTML = '<p style="color:var(--color-text-muted);">Cargando…</p>';
+    try {
+      var sid2 = sessionStorage.getItem('sessionID') || '';
+      var resT  = await fetch('/api/perfil/trayectoria', { headers: { 'Authorization': 'Bearer ' + sid2 } });
+      var dataT = await resT.json();
+      var periodos = resT.ok ? (dataT.periodos || []) : [];
+      trajectoryEl.innerHTML = periodos.length
+        ? periodos.map(_periodoTimelineItem).join('')
+        : '<p style="color:var(--color-text-muted);">Sin historial de vinculación registrado.</p>';
+    } catch (err) {
+      trajectoryEl.innerHTML = '<p style="color:var(--color-text-muted);">No se pudo cargar la trayectoria.</p>';
     }
   }
 

@@ -2,7 +2,7 @@
    estacionamiento.css — Smart parking management
    ============================================================= */
 
-/* Section: Stats row */
+/* Sección: Fila de estadísticas */
 .parking-stats-row {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -10,7 +10,7 @@
   margin-bottom: var(--space-5);
 }
 
-/* Section: Filter bar */
+/* Sección: Barra de filtros */
 .parking-filterbar {
   display: flex;
   align-items: center;
@@ -19,7 +19,7 @@
   flex-wrap: wrap;
 }
 
-/* Section: Main layout — grid + detail */
+/* Sección: Layout principal — grid + detalle */
 .parking-main {
   display: grid;
   grid-template-columns: 1fr 280px;
@@ -27,7 +27,7 @@
   align-items: start;
 }
 
-/* Section: Spot grid */
+/* Sección: Grid de puestos */
 .spot-grid {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -81,7 +81,7 @@
 .spot.mantenimiento { border-color: rgba(239,68,68,0.4); background-color: rgba(239,68,68,0.04); }
 .spot.mantenimiento .spot-dot { background-color: var(--color-danger); }
 
-/* Section: Spot legend */
+/* Sección: Leyenda de puestos */
 .spot-legend {
   display: flex;
   gap: var(--space-4);
@@ -99,7 +99,7 @@
   color: var(--color-text-secondary);
 }
 
-/* Section: Detail panel */
+/* Sección: Panel de detalle */
 .spot-detail {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -156,7 +156,7 @@
   font-size: 0.85rem;
 }
 
-/* Section: Spot popover */
+/* Sección: Popover de puesto */
 .spot-popover {
   position: fixed;
   z-index: 500;

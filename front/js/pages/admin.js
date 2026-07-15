@@ -41,7 +41,7 @@ const ESTADO_BADGE = {
 };
 
 document.addEventListener('DOMContentLoaded', function () {
-  // Guard: solo el administrador del sistema (allowlist en auth-guard.js / config/admins.js).
+  // Solo el administrador del sistema (allowlist en config/admins.js)
   var u = getUsuario();
   if (!u || !esAdminSistema()) {
     showToast('Esta sección es solo para el administrador del sistema', 'error');
@@ -51,7 +51,14 @@ document.addEventListener('DOMContentLoaded', function () {
   YO = u.cedula;
   cargarUsuarios();
   cargarAprobaciones();
+  // Solo agrega el sort por columna; búsqueda y paginado ya existen aparte
+  makeTableSortable('tabla-usuarios');
+  makeTableSortable('tabla-vinc');
 });
+
+// Guarda qué tablas nuevas ya recibieron su sort/search (deben inicializarse
+// una sola vez; el paginado en cambio se recalcula en cada recarga de datos).
+var _tablasInit = {};
 
 /* ================= TABS ================= */
 function cambiarTab(tab) {
@@ -480,11 +487,7 @@ async function _cargarEmpresas() {
   try {
     const data = await api('/admin/entidades-externas');
     _empresas = data.entidades || [];
-    if (!_empresas.length) {
-      tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:var(--space-4);">No hay empresas registradas.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = _empresas.map(e =>
+    tbody.innerHTML = _empresas.length ? _empresas.map(e =>
       '<tr>' +
         '<td class="font-mono text-sm">' + e.rif + '</td>' +
         '<td><strong>' + e.razon_social + '</strong></td>' +
@@ -492,10 +495,16 @@ async function _cargarEmpresas() {
         '<td>' + (e.contacto_correo || '—') + '</td>' +
         '<td>' + (e.fecha_fin_contrato ? new Date(e.fecha_fin_contrato).toLocaleDateString('es-VE') : '—') + '</td>' +
       '</tr>'
-    ).join('');
+    ).join('') : '<tr><td colspan="5" style="text-align:center;color:var(--color-text-muted);padding:var(--space-4);">No hay empresas registradas.</td></tr>';
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="5" style="color:var(--color-danger);padding:var(--space-4);">' + err.message + '</td></tr>';
   }
+  if (!_tablasInit.empresas) {
+    makeTableSortable('empresas-table');
+    makeTableSearchable('empresas-table', 'buscar-empresa');
+    _tablasInit.empresas = true;
+  }
+  makePaginated('empresas-table', 8);
 }
 window.cargarVacantesAdmin = cargarVacantesAdmin;
 
@@ -540,6 +549,12 @@ async function _cargarVacantes() {
     const lista = data.vacantes || [];
     if (!lista.length) {
       tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--color-text-muted);padding:var(--space-4);">No hay vacantes registradas.</td></tr>';
+      if (!_tablasInit.vacantes) {
+        makeTableSortable('vacantes-table');
+        makeTableSearchable('vacantes-table', 'buscar-vacante');
+        _tablasInit.vacantes = true;
+      }
+      makePaginated('vacantes-table', 8);
       return;
     }
     tbody.innerHTML = lista.map(v => {
@@ -549,13 +564,18 @@ async function _cargarVacantes() {
       const respEsc = (v.responsabilidades || '').replace(/'/g, "\\'");
       const perfilEsc = (v.perfil_buscado || '').replace(/'/g, "\\'");
       const benEsc = (v.beneficios || '').replace(/'/g, "\\'");
+      const totalPost = v.total_postulaciones || 0;
+      const postulantesCell = totalPost > 0
+        ? '<button type="button" class="btn btn-outline btn-sm" ' +
+            'onclick="verPostulantes(\'' + idEsc + '\',\'' + cargoEsc + '\')">' + totalPost + ' →</button>'
+        : '<span style="color:var(--color-text-muted);">0</span>';
       return '<tr>' +
         '<td class="font-mono text-sm">' + v.id_vacante + '</td>' +
         '<td><strong>' + (v.cargo || '—') + '</strong></td>' +
         '<td>' + (v.empresa || '—') + '</td>' +
         '<td>' + (v.fecha_oferta ? new Date(v.fecha_oferta).toLocaleDateString('es-VE') : '—') + '</td>' +
         '<td><span class="badge ' + estatusBadge + '">' + v.estatus + '</span></td>' +
-        '<td style="text-align:center;">' + (v.total_postulaciones || 0) + '</td>' +
+        '<td style="text-align:center;">' + postulantesCell + '</td>' +
         '<td style="white-space:nowrap;">' +
           '<button class="btn btn-outline btn-sm" style="margin-right:4px;" ' +
             'onclick="abrirModalEditarVacante(\'' + idEsc + '\',\'' + cargoEsc + '\',\'' + respEsc + '\',\'' + perfilEsc + '\',\'' + benEsc + '\',\'' + v.estatus + '\')">Editar</button>' +
@@ -567,7 +587,71 @@ async function _cargarVacantes() {
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="7" style="color:var(--color-danger);padding:var(--space-4);">' + err.message + '</td></tr>';
   }
+  if (!_tablasInit.vacantes) {
+    makeTableSortable('vacantes-table');
+    makeTableSearchable('vacantes-table', 'buscar-vacante');
+    _tablasInit.vacantes = true;
+  }
+  makePaginated('vacantes-table', 8);
 }
+
+/* ---- Postulantes de una vacante: ver y gestionar su estatus ---- */
+const ESTATUS_POSTULA = ['Postulado', 'En Revisión', 'Entrevistado', 'Contratado', 'Rechazado', 'Descartado'];
+
+async function verPostulantes(idVacante, cargo) {
+  document.getElementById('postulantes-titulo').textContent = 'Postulantes — ' + cargo;
+  const cont = document.getElementById('postulantes-body');
+  cont.innerHTML = '<p style="color:var(--color-text-muted);padding:var(--space-4);">Cargando…</p>';
+  openModal('modal-postulantes');
+
+  try {
+    const data = await api('/admin/postulaciones');
+    const lista = (data.postulaciones || []).filter(p => p.id_vacante === idVacante);
+    if (!lista.length) {
+      cont.innerHTML = '<p style="color:var(--color-text-muted);padding:var(--space-4);">Nadie se ha postulado todavía.</p>';
+      return;
+    }
+    cont.innerHTML =
+      '<table class="table"><thead><tr>' +
+        '<th>Candidato</th><th>Título</th><th>Índice</th><th>Fecha</th><th>Estatus</th>' +
+      '</tr></thead><tbody>' +
+      lista.map(p => {
+        const cedEsc = p.cedula.replace(/'/g, "\\'");
+        const vacEsc = idVacante.replace(/'/g, "\\'");
+        const opts = ESTATUS_POSTULA.map(e =>
+          '<option value="' + e + '"' + (e === p.estatus ? ' selected' : '') + '>' + e + '</option>'
+        ).join('');
+        const fecha = p.fecha_postulacion ? new Date(p.fecha_postulacion).toLocaleDateString('es-VE') : '—';
+        return '<tr>' +
+          '<td><strong>' + p.nombre + '</strong><br><span class="text-sm text-secondary">' + p.cedula + '</span></td>' +
+          '<td>' + (p.titulo || '—') + '</td>' +
+          '<td>' + (p.indice_academico != null ? parseFloat(p.indice_academico).toFixed(2) : '—') + '</td>' +
+          '<td>' + fecha + '</td>' +
+          '<td><select class="form-select" style="font-size:.82rem;" ' +
+            'onchange="cambiarEstatusPostulacion(\'' + cedEsc + '\',\'' + vacEsc + '\', this.value)">' +
+            opts + '</select></td>' +
+        '</tr>';
+      }).join('') +
+      '</tbody></table>';
+  } catch (err) {
+    cont.innerHTML = '<p style="color:var(--color-danger);padding:var(--space-4);">' + err.message + '</p>';
+  }
+}
+window.verPostulantes = verPostulantes;
+
+async function cambiarEstatusPostulacion(cedula, idVacante, estatus) {
+  try {
+    await api('/admin/postulaciones/' + encodeURIComponent(cedula) + '/' + encodeURIComponent(idVacante), {
+      method: 'PATCH',
+      body: { estatus }
+    });
+    showToast('Estatus actualizado', 'success');
+    _cargarVacantes();
+  } catch (err) {
+    showToast(err.message, 'error');
+  }
+}
+window.cambiarEstatusPostulacion = cambiarEstatusPostulacion;
 
 async function abrirModalVacante() {
   ['vac-cargo', 'vac-responsabilidades', 'vac-perfil', 'vac-beneficios'].forEach(id => {
@@ -681,6 +765,12 @@ async function cargarTasas() {
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="3" style="color:var(--color-danger);">' + err.message + '</td></tr>';
   }
+  if (!_tablasInit.tasas) {
+    makeTableSortable('tasas-admin-table');
+    makeTableSearchable('tasas-admin-table', 'buscar-tasa');
+    _tablasInit.tasas = true;
+  }
+  makePaginated('tasas-admin-table', 10);
 }
 window.cargarTasas = cargarTasas;
 
@@ -718,11 +808,7 @@ async function cargarAcredAdmin() {
   try {
     const data = await api('/admin/acreditaciones');
     const lista = data.acreditaciones || [];
-    if (!lista.length) {
-      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:var(--space-4);">Sin acreditaciones en catálogo.</td></tr>';
-      return;
-    }
-    tbody.innerHTML = lista.map(a => {
+    tbody.innerHTML = lista.length ? lista.map(a => {
       const idEsc = a.id_acreditacion.replace(/'/g, "\\'");
       return '<tr>' +
         '<td class="font-mono text-sm">' + a.id_acreditacion + '</td>' +
@@ -731,10 +817,16 @@ async function cargarAcredAdmin() {
         '<td><button class="btn btn-sm" style="background:var(--color-danger);color:#fff;" ' +
           'onclick="eliminarAcredAdmin(\'' + idEsc + '\')">Eliminar</button></td>' +
       '</tr>';
-    }).join('');
+    }).join('') : '<tr><td colspan="4" style="text-align:center;color:var(--color-text-muted);padding:var(--space-4);">Sin acreditaciones en catálogo.</td></tr>';
   } catch (err) {
     tbody.innerHTML = '<tr><td colspan="4" style="color:var(--color-danger);">' + err.message + '</td></tr>';
   }
+  if (!_tablasInit.acred) {
+    makeTableSortable('acred-admin-table');
+    makeTableSearchable('acred-admin-table', 'buscar-acred-admin');
+    _tablasInit.acred = true;
+  }
+  makePaginated('acred-admin-table', 10);
 }
 window.cargarAcredAdmin = cargarAcredAdmin;
 
@@ -783,3 +875,29 @@ async function ejecutarCierreMasivo() {
   }
 }
 window.ejecutarCierreMasivo = ejecutarCierreMasivo;
+
+async function ejecutarArchivarExpirados() {
+  if (!confirm('¿Ejecutar el protocolo de limpieza institucional? Esto elimina permanentemente acompañantes y beneficiarios expirados hace más de un año. No se puede deshacer.')) return;
+  const res = document.getElementById('archivar-resultado');
+  res.innerHTML = '<p style="color:var(--color-text-muted);">Ejecutando...</p>';
+  try {
+    await api('/admin/limpieza/archivar-expirados', { method: 'POST' });
+    res.innerHTML = '<p style="color:var(--color-success);font-weight:600;">✓ Limpieza ejecutada correctamente.</p>';
+  } catch (err) {
+    res.innerHTML = '<p style="color:var(--color-danger);">✗ ' + err.message + '</p>';
+  }
+}
+window.ejecutarArchivarExpirados = ejecutarArchivarExpirados;
+
+async function ejecutarTransicionMayoriaEdad() {
+  if (!confirm('¿Ejecutar la transición de mayoría de edad de los beneficiarios?')) return;
+  const res = document.getElementById('transicion-resultado');
+  res.innerHTML = '<p style="color:var(--color-text-muted);">Ejecutando...</p>';
+  try {
+    await api('/admin/beneficiarios/transicion-mayoria-edad', { method: 'POST' });
+    res.innerHTML = '<p style="color:var(--color-success);font-weight:600;">✓ Transición ejecutada correctamente.</p>';
+  } catch (err) {
+    res.innerHTML = '<p style="color:var(--color-danger);">✗ ' + err.message + '</p>';
+  }
+}
+window.ejecutarTransicionMayoriaEdad = ejecutarTransicionMayoriaEdad;

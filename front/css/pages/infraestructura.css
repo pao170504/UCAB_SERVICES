@@ -2,7 +2,7 @@
    infraestructura.css — Infrastructure management page
    ============================================================= */
 
-/* Section: Two-column layout */
+/* Sección: Layout de dos columnas */
 .infra-layout {
   display: grid;
   grid-template-columns: 340px 1fr;
@@ -10,7 +10,7 @@
   align-items: start;
 }
 
-/* Section: Left panel */
+/* Sección: Panel izquierdo */
 .infra-panel {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -36,7 +36,7 @@
   gap: var(--space-4);
 }
 
-/* Section: Space detail mini cards */
+/* Sección: Mini tarjetas de detalle del espacio */
 .space-details-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -65,7 +65,7 @@
   color: var(--color-text-primary);
 }
 
-/* Section: Tariff adjustment panel */
+/* Sección: Panel de ajuste de tarifa */
 .tariff-panel {
   background-color: var(--color-navy);
   border-radius: var(--radius-md);
@@ -106,6 +106,10 @@
 
 .tariff-input:focus { border-color: var(--color-blue); }
 
+#tarifa-miembro, #tarifa-egresado, #tarifa-externo {
+  color: rgba(255,255,255,0.85);
+}
+
 .tariff-warning {
   background-color: rgba(239,68,68,0.15);
   border: 1px solid rgba(239,68,68,0.4);
@@ -116,7 +120,7 @@
   margin-bottom: var(--space-3);
 }
 
-/* Section: Calendar panel */
+/* Sección: Panel de calendario */
 .calendar-panel {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -166,7 +170,7 @@
   font-weight: 600;
 }
 
-/* Section: Calendar grid */
+/* Sección: Grid de calendario */
 .calendar-grid {
   display: grid;
   grid-template-columns: 50px repeat(7, 1fr);

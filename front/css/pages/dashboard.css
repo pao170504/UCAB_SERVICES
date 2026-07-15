@@ -2,7 +2,7 @@
    dashboard.css — KPIs, audit table, map widget
    ============================================================= */
 
-/* Section: KPI cards row */
+/* Sección: Fila de tarjetas KPI */
 .kpi-row {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -48,7 +48,7 @@
   margin-top: var(--space-3);
 }
 
-/* Section: Tags row on KPI card */
+/* Sección: Fila de etiquetas en tarjeta KPI */
 .kpi-tags {
   display: flex;
   flex-wrap: wrap;
@@ -56,7 +56,7 @@
   margin-top: var(--space-3);
 }
 
-/* Section: Security card specifics */
+/* Sección: Detalles de la tarjeta de seguridad */
 .security-row {
   display: flex;
   align-items: center;
@@ -66,14 +66,14 @@
   color: var(--color-text-secondary);
 }
 
-/* Section: Audit + Map row */
+/* Sección: Fila de auditoría + mapa */
 .audit-map-row {
   display: grid;
   grid-template-columns: 1fr 280px;
   gap: var(--space-4);
 }
 
-/* Section: Map widget */
+/* Sección: Widget de mapa */
 .map-widget {
   background-color: var(--color-surface);
   border: 1px solid var(--color-border);
@@ -103,7 +103,7 @@
   background-color: var(--color-surface);
 }
 
-/* Section: Device cell in audit table */
+/* Sección: Celda de dispositivo en tabla de auditoría */
 .device-cell {
   display: flex;
   flex-direction: column;

@@ -14,7 +14,7 @@ async function apiFetch(path, options = {}) {
   return data;
 }
 
-// Module state
+// Estado del módulo
 let zonasCache   = [];
 let puestosCache = [];
 let zonaActiva   = null;
@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     ?.addEventListener('click',  () => cargarPuestos(zonaActiva));
 });
 
-// Load zones and render tabs
+// Carga las zonas y arma las pestañas
 async function cargarZonas() {
   try {
     const { zonas } = await apiFetch('/api/estacionamiento/zonas');
