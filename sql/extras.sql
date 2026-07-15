@@ -1,13 +1,13 @@
 -- =================================================================
--- UCAB Services — Triggers, Functions, Procedure, Views
--- Run in pgAdmin in this exact order (A1 → A2 → A3 → A4)
+-- UCAB Services — Triggers, funciones, procedimiento y vistas
+-- Ejecutar en este orden: A1 -> A2 -> A3 -> A4
 -- =================================================================
 
 -- ================================================================
 -- A1. TRIGGERS
 -- ================================================================
 
--- TRIGGER 1: Validate Item_Consumo price against category limits
+-- TRIGGER 1: valida el precio de Item_Consumo contra los límites de la categoría
 CREATE OR REPLACE FUNCTION fn_validar_precio_item()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -42,7 +42,7 @@ CREATE OR REPLACE TRIGGER trg_validar_precio_item
 BEFORE INSERT OR UPDATE ON Item_Consumo
 FOR EACH ROW EXECUTE FUNCTION fn_validar_precio_item();
 
--- TRIGGER 2: Suspend account when no active vinculaciones remain
+-- TRIGGER 2: suspende la cuenta si no quedan vinculaciones activas
 CREATE OR REPLACE FUNCTION fn_suspender_cuenta_sin_vinculacion()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -67,7 +67,7 @@ CREATE OR REPLACE TRIGGER trg_suspender_cuenta
 AFTER UPDATE ON Periodo_Vinculacion
 FOR EACH ROW EXECUTE FUNCTION fn_suspender_cuenta_sin_vinculacion();
 
--- TRIGGER 3: Mark space unavailable on reserva insert
+-- TRIGGER 3: marca el espacio como no disponible al insertar una reserva
 CREATE OR REPLACE FUNCTION fn_marcar_espacio_no_disponible()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -84,7 +84,7 @@ CREATE OR REPLACE TRIGGER trg_espacio_no_disponible
 AFTER INSERT ON Reserva
 FOR EACH ROW EXECUTE FUNCTION fn_marcar_espacio_no_disponible();
 
--- TRIGGER 4: Auto-timestamp when Paso_Actividad is completed
+-- TRIGGER 4: graba la fecha al completar un Paso_Actividad
 CREATE OR REPLACE FUNCTION fn_timestamp_paso_completado()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -103,7 +103,7 @@ CREATE OR REPLACE TRIGGER trg_timestamp_paso
 BEFORE UPDATE ON Paso_Actividad
 FOR EACH ROW EXECUTE FUNCTION fn_timestamp_paso_completado();
 
--- TRIGGER 5: Block duplicate reservations
+-- TRIGGER 5: bloquea reservas duplicadas
 CREATE OR REPLACE FUNCTION fn_evitar_duplicado_reserva()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -126,7 +126,7 @@ CREATE OR REPLACE TRIGGER trg_evitar_duplicado_reserva
 BEFORE INSERT ON Reserva
 FOR EACH ROW EXECUTE FUNCTION fn_evitar_duplicado_reserva();
 
--- TRIGGER 6: Block suspended/blocked accounts from new requests
+-- TRIGGER 6: bloquea solicitudes de cuentas suspendidas o bloqueadas
 CREATE OR REPLACE FUNCTION fn_verificar_estado_cuenta()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -149,185 +149,24 @@ FOR EACH ROW EXECUTE FUNCTION fn_verificar_estado_cuenta();
 
 
 -- ================================================================
--- A2. FUNCTIONS
+-- A2. FUNCIONES
 -- ================================================================
 
--- FUNCTION 1: Resolution time excluding weekends
-CREATE OR REPLACE FUNCTION fn_tiempo_resolucion(p_id_solicitud VARCHAR)
-RETURNS TABLE (
-  horas_netas    NUMERIC,
-  dias_habiles   NUMERIC,
-  fecha_apertura TIMESTAMP,
-  fecha_cierre   TIMESTAMP
-) AS $$
-DECLARE
-  v_apertura TIMESTAMP;
-  v_cierre   TIMESTAMP;
-  v_diff_hrs NUMERIC;
-  v_cur      TIMESTAMP;
-  v_fines    NUMERIC := 0;
-BEGIN
-  SELECT ss.fecha_apertura::TIMESTAMP,
-         MAX(pa.fecha_completada)
-  INTO   v_apertura, v_cierre
-  FROM   Solicitud_Servicio ss
-  JOIN   Paso_Actividad pa ON pa.id_solicitud = ss.id_solicitud
-  WHERE  ss.id_solicitud = p_id_solicitud
-  GROUP  BY ss.fecha_apertura;
-
-  IF v_cierre IS NULL THEN v_cierre := CURRENT_TIMESTAMP; END IF;
-
-  v_cur := v_apertura;
-  WHILE v_cur < v_cierre LOOP
-    IF EXTRACT(DOW FROM v_cur) IN (0, 6) THEN
-      v_fines := v_fines + 1;
-    END IF;
-    v_cur := v_cur + INTERVAL '1 hour';
-  END LOOP;
-
-  v_diff_hrs := EXTRACT(EPOCH FROM (v_cierre - v_apertura)) / 3600;
-
-  RETURN QUERY SELECT
-    ROUND((v_diff_hrs - v_fines)::NUMERIC, 2),
-    ROUND(((v_diff_hrs - v_fines) / 8)::NUMERIC, 2),
-    v_apertura,
-    v_cierre;
-END;
-$$ LANGUAGE plpgsql;
-
--- FUNCTION 2: Member recurrence index
-CREATE OR REPLACE FUNCTION fn_indice_recurrencia(p_cedula VARCHAR)
-RETURNS TABLE (
-  indice    NUMERIC,
-  categoria VARCHAR,
-  servicios BIGINT,
-  facturas  BIGINT,
-  pagadas   BIGINT
-) AS $$
-DECLARE
-  v_servicios BIGINT;
-  v_facturas  BIGINT;
-  v_pagadas   BIGINT;
-  v_score     NUMERIC;
-  v_cat       VARCHAR;
-BEGIN
-  SELECT COUNT(*) INTO v_servicios
-  FROM   Solicitud_Servicio
-  WHERE  cedula        = p_cedula
-    AND  estado        = 'Completada'
-    AND  fecha_apertura >= CURRENT_DATE - INTERVAL '12 months';
-
-  SELECT
-    COUNT(*),
-    COUNT(*) FILTER (
-      WHERE (
-        SELECT COALESCE(SUM(p.monto), 0)
-        FROM   Pago p WHERE p.id_factura = f.id_factura
-      ) >= f.monto
-    )
-  INTO v_facturas, v_pagadas
-  FROM   Factura f
-  JOIN   Folio_Consumo      fc ON fc.id_folio     = f.id_folio
-  JOIN   Solicitud_Servicio ss ON ss.id_solicitud = fc.id_solicitud
-  WHERE  ss.cedula = p_cedula;
-
-  v_score := (v_servicios * 10)
-           + (CASE WHEN v_facturas > 0
-                   THEN (v_pagadas::NUMERIC / v_facturas) * 50
-                   ELSE 0 END);
-
-  v_cat := CASE
-    WHEN v_score >= 80 THEN 'Preferencial'
-    WHEN v_score >= 40 THEN 'Frecuente'
-    ELSE 'Regular'
-  END;
-
-  RETURN QUERY SELECT
-    ROUND(v_score, 2), v_cat, v_servicios, v_facturas, v_pagadas;
-END;
-$$ LANGUAGE plpgsql;
-
--- FUNCTION 3: Final cost with loyalty discounts
-CREATE OR REPLACE FUNCTION fn_costo_final_servicio(
-  p_id_servicio VARCHAR,
-  p_cedula      VARCHAR
-)
-RETURNS TABLE (
-  precio_base   REAL,
-  descuento_pct NUMERIC,
-  precio_final  REAL,
-  tipo_tarifa   VARCHAR
-) AS $$
-DECLARE
-  v_base REAL;
-  v_desc NUMERIC := 0;
-  v_tipo VARCHAR;
-  v_cat  VARCHAR;
-BEGIN
-  SELECT r.costo_min INTO v_base
-  FROM   Servicio s
-  JOIN   Regula r ON r.id_categoria = s.id_categoria
-  JOIN   Miembro_Comunidad mc ON mc.id_sede = r.id_sede
-  WHERE  s.id_servicio = p_id_servicio AND mc.cedula = p_cedula;
-
-  IF EXISTS (SELECT 1 FROM Estudiante WHERE cedula = p_cedula) THEN
-    v_tipo := 'Miembro Activo (Estudiante)';
-  ELSIF EXISTS (SELECT 1 FROM Egresado WHERE cedula = p_cedula) THEN
-    v_tipo := 'Egresado'; v_desc := 5;
-  ELSE
-    v_tipo := 'Miembro Activo (Empleado)';
-  END IF;
-
-  SELECT categoria INTO v_cat FROM fn_indice_recurrencia(p_cedula);
-  IF v_cat = 'Preferencial' THEN v_desc := v_desc + 15;
-  ELSIF v_cat = 'Frecuente' THEN v_desc := v_desc + 8;
-  END IF;
-
-  RETURN QUERY SELECT
-    v_base, v_desc,
-    ROUND((v_base * (1 - v_desc / 100))::NUMERIC, 2)::REAL,
-    v_tipo;
-END;
-$$ LANGUAGE plpgsql;
-
+-- Ya definidas en logic.sql (fn_tiempo_resolucion, fn_indice_recurrencia,
+-- fn_costo_final_servicio); se removieron los duplicados de aquí.
 
 -- ================================================================
--- A3. STORED PROCEDURE
+-- A3. PROCEDIMIENTO ALMACENADO
 -- ================================================================
 
-CREATE OR REPLACE PROCEDURE proc_cierre_masivo_folios()
-LANGUAGE plpgsql AS $$
-DECLARE
-  v_folio  RECORD;
-  v_monto  REAL;
-  v_id_fac VARCHAR(50);
-BEGIN
-  FOR v_folio IN
-    SELECT id_folio FROM Folio_Consumo WHERE estado = 'Abierto'
-  LOOP
-    SELECT COALESCE(SUM(precio * cantidad + impuesto), 0)
-    INTO   v_monto
-    FROM   Item_Consumo WHERE id_folio = v_folio.id_folio;
-
-    UPDATE Folio_Consumo SET estado = 'Cerrado'
-    WHERE  id_folio = v_folio.id_folio;
-
-    IF v_monto > 0 THEN
-      v_id_fac := 'FAC-CIERRE-' || v_folio.id_folio || '-' ||
-                  TO_CHAR(CURRENT_DATE, 'YYYYMMDD');
-      INSERT INTO Factura (id_factura, emisión, monto, id_folio, rif)
-      VALUES (v_id_fac, CURRENT_DATE, v_monto, v_folio.id_folio, NULL);
-    END IF;
-  END LOOP;
-END;
-$$;
-
+-- Ya definido en logic.sql como proc_cierre_masivo_folios; se removió el
+-- duplicado (tenía un cálculo de impuesto incorrecto).
 
 -- ================================================================
--- A4. VIEWS FOR POWERBI
+-- A4. VISTAS PARA POWERBI
 -- ================================================================
 
--- View 1: Response times by office (horas brutas + días hábiles excluyendo fines de semana y feriados)
+-- Vista 1: tiempos de respuesta por oficina (horas brutas + días hábiles)
 CREATE OR REPLACE VIEW v_tiempos_respuesta AS
 SELECT
   ss.id_solicitud,
@@ -355,8 +194,8 @@ JOIN   Miembro_Comunidad   mc ON mc.cedula       = ss.cedula
 JOIN   Persona             p  ON p.cedula        = mc.cedula
 JOIN   Sede                se ON se.id_sede      = mc.id_sede;
 
--- View 2: Session audit (incluye MFA_Verificado)
-CREATE OR REPLACE VIEW v_auditoria_sesiones AS
+-- Vista 2: auditoría de sesiones con nivel de riesgo (para PowerBI)
+CREATE OR REPLACE VIEW v_reporte_riesgo_sesiones AS
 SELECT
   s.cedula,
   p.primer_nombre || ' ' || p.primer_apellido AS nombre,
@@ -378,7 +217,7 @@ FROM   Sesion            s
 JOIN   Persona           p  ON p.cedula  = s.cedula
 JOIN   Miembro_Comunidad mc ON mc.cedula = s.cedula;
 
--- View 3: Multi-currency payment reconciliation (con moneda, referencia por método y monto en BsD)
+-- Vista 3: conciliación de pagos multi-moneda con monto en BsD
 CREATE OR REPLACE VIEW v_conciliacion_pagos AS
 SELECT
   f.id_factura,
@@ -442,7 +281,7 @@ GROUP  BY f.id_factura, f.monto, f.emisión, pg.id_pago,
           sv.descripcion, mc.cedula,
           p.primer_nombre, p.primer_apellido, se.nombre;
 
--- View 4: Space profitability (con horas reservadas y distinción académico/comercial)
+-- Vista 4: rentabilidad de espacios (horas reservadas, académico vs comercial)
 CREATE OR REPLACE VIEW v_rentabilidad_espacios AS
 SELECT
   se.nombre                                   AS sede,
@@ -478,7 +317,7 @@ LEFT   JOIN Item_Consumo       ic ON ic.id_folio     = fc.id_folio
 GROUP  BY se.nombre, ef.nombre_edificacion,
           e.numero_espacio, e.tipo_espacio, e.capacidad_max;
 
--- View 5: Institutional trajectory
+-- Vista 5: trayectoria institucional
 CREATE OR REPLACE VIEW v_trayectoria_institucional AS
 SELECT
   mc.cedula,
@@ -510,7 +349,7 @@ LEFT   JOIN Profesor                pr ON pr.cedula      = pv.cedula AND pr.fech
 LEFT   JOIN Personal_Administrativo pa ON pa.cedula      = pv.cedula AND pa.fecha_inicio = pv.fecha_inicio
 LEFT   JOIN Egresado                eg ON eg.cedula      = pv.cedula AND eg.fecha_inicio = pv.fecha_inicio;
 
--- View 6: Job board effectiveness (con Fecha_Contratacion y conteo de contratados)
+-- Vista 6: efectividad de la bolsa de trabajo (contratados por vacante)
 CREATE OR REPLACE VIEW v_bolsa_trabajo_efectividad AS
 SELECT
   vl.id_vacante,
@@ -520,7 +359,7 @@ SELECT
   ee.razon_social                             AS empresa,
   COUNT(po.cedula)                            AS total_postulaciones,
   COUNT(po.cedula)
-    FILTER (WHERE po.estatus = 'Contactado')  AS contactados,
+    FILTER (WHERE po.estatus = 'Entrevistado') AS entrevistados,
   COUNT(po.cedula)
     FILTER (WHERE po.estatus = 'Contratado')  AS contratados,
   p.primer_nombre || ' ' || p.primer_apellido AS egresado,
@@ -540,7 +379,7 @@ GROUP  BY vl.id_vacante, vl.cargo, vl.estatus, vl.fecha_oferta,
           eg.titulo, eg.indice_academico,
           po.fecha_postulacion, po.fecha_contratacion, po.estatus;
 
--- View 7: Parking occupancy (con hora pico histórica y tiempo promedio de uso)
+-- Vista 7: ocupación de estacionamiento (hora pico y tiempo promedio de uso)
 CREATE OR REPLACE VIEW v_ocupacion_estacionamiento AS
 SELECT
   se.nombre                                   AS sede,
@@ -583,7 +422,7 @@ JOIN   Sede                 se ON se.id_sede = z.id_sede
 LEFT   JOIN Puesto          pu ON pu.id_zona = z.id_zona
 GROUP  BY se.nombre, z.id_zona, z.nombre, z.capacidad, pu.tipo_vehiculo;
 
--- View 8: Parking revenue (con canal TAI, horas facturadas y monto en BsD)
+-- Vista 8: recaudación de estacionamiento (canal TAI, horas y monto en BsD)
 CREATE OR REPLACE VIEW v_recaudacion_estacionamiento AS
 SELECT
   f.id_factura,
@@ -665,9 +504,7 @@ GROUP  BY f.id_factura, f.emisión, f.monto, mc.cedula,
           pg.moneda, t.usd, t.eur;
 
 
--- TRIGGER: Auto-complete Solicitud when all pasos are done
-
-
+-- TRIGGER: completa la Solicitud cuando todos sus pasos terminan
 CREATE OR REPLACE FUNCTION fn_completar_solicitud()
 RETURNS TRIGGER AS $$
 DECLARE
@@ -683,7 +520,7 @@ BEGIN
   FROM   Paso_Actividad
   WHERE  id_solicitud = v_id_sol;
 
-  -- All steps completed → mark solicitud as Completada
+  -- Todos los pasos completados: marcar la solicitud como Completada
   IF v_total > 0 AND v_total = v_completados THEN
     UPDATE Solicitud_Servicio
     SET    estado     = 'Completada',
@@ -702,9 +539,7 @@ FOR EACH ROW
 WHEN (NEW.estado_paso = 'Completado')
 EXECUTE FUNCTION fn_completar_solicitud();
 
--- ============================================================
--- TRIGGER: Block step N from starting if step N-1 not done
--- ============================================================
+-- TRIGGER: bloquea el paso N si el paso N-1 no está completado
 
 CREATE OR REPLACE FUNCTION fn_validar_orden_pasos()
 RETURNS TRIGGER AS $$
@@ -713,26 +548,27 @@ DECLARE
   v_paso_previo VARCHAR(50);
   v_estado_previo VARCHAR(30);
 BEGIN
-  -- Only check when trying to set a paso to 'En proceso' or 'Completado'
+  -- Solo valida si el paso pasa a 'En proceso' o 'Completado'
   IF NEW.estado_paso NOT IN ('En proceso', 'Completado') THEN
     RETURN NEW;
   END IF;
 
-  -- Get ordinal position of this paso within the solicitud
+  -- Se usa Orden y no Fecha_Inicio porque varios pasos creados en la misma
+  -- transacción comparten el mismo CURRENT_TIMESTAMP.
   SELECT COUNT(*) INTO v_num_paso
   FROM   Paso_Actividad
   WHERE  id_solicitud = NEW.id_solicitud
-    AND  fecha_inicio < NEW.fecha_inicio;
+    AND  orden < NEW.orden;
 
-  -- If it's the first paso (v_num_paso = 0), always allow
+  -- Si es el primer paso, siempre se permite
   IF v_num_paso = 0 THEN RETURN NEW; END IF;
 
-  -- Get the previous paso status
+  -- Obtiene el estado del paso anterior
   SELECT estado_paso INTO v_estado_previo
   FROM   Paso_Actividad
   WHERE  id_solicitud = NEW.id_solicitud
-    AND  fecha_inicio < NEW.fecha_inicio
-  ORDER  BY fecha_inicio DESC
+    AND  orden < NEW.orden
+  ORDER  BY orden DESC
   LIMIT  1;
 
   IF v_estado_previo <> 'Completado' THEN

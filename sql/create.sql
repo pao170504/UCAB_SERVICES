@@ -38,8 +38,11 @@ CREATE TABLE Beneficiario (
   Cedula VARCHAR(20) PRIMARY KEY,
   Parentesco VARCHAR(50) NOT NULL,
   Cedula_Miembro VARCHAR(20) NOT NULL,
+  Fecha_Inicio_Cobertura DATE NOT NULL DEFAULT CURRENT_DATE,
+  Fecha_Fin_Cobertura DATE,
   FOREIGN KEY (Cedula) REFERENCES Persona(Cedula) ON DELETE CASCADE ON UPDATE CASCADE,
-  FOREIGN KEY (Cedula_Miembro) REFERENCES Miembro_Comunidad(Cedula) ON DELETE CASCADE ON UPDATE CASCADE
+  FOREIGN KEY (Cedula_Miembro) REFERENCES Miembro_Comunidad(Cedula) ON DELETE CASCADE ON UPDATE CASCADE,
+  CHECK (Fecha_Fin_Cobertura IS NULL OR Fecha_Fin_Cobertura > Fecha_Inicio_Cobertura)
 );
 
 CREATE TABLE Carga_Mayor (
@@ -245,6 +248,29 @@ CREATE TABLE Requiere (
   FOREIGN KEY (ID_Servicio) REFERENCES Servicio(ID_Servicio) ON DELETE CASCADE ON UPDATE CASCADE
 );
 
+CREATE TABLE Plantilla_Paso (
+  ID_Servicio VARCHAR(50),
+  Orden INT NOT NULL CHECK (Orden > 0),
+  Descripcion VARCHAR(255) NOT NULL,
+  Responsable VARCHAR(100) NOT NULL CHECK (Responsable IN (
+    'Unidad de Caja', 'Secretaría Académica', 'Rectorado',
+    'Control de Estudios', 'Dir. Planta Física'
+  )),
+  PRIMARY KEY (ID_Servicio, Orden),
+  FOREIGN KEY (ID_Servicio) REFERENCES Servicio(ID_Servicio) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+CREATE TABLE Tarifa (
+  ID_Servicio VARCHAR(50),
+  Fecha_Vigencia DATE,
+  Tarifa_Miembro REAL NOT NULL CHECK (Tarifa_Miembro >= 0.0),
+  Tarifa_Egresado REAL NOT NULL CHECK (Tarifa_Egresado >= 0.0),
+  Tarifa_Externo REAL NOT NULL CHECK (Tarifa_Externo >= 0.0),
+  PRIMARY KEY (ID_Servicio, Fecha_Vigencia),
+  FOREIGN KEY (ID_Servicio) REFERENCES Servicio(ID_Servicio) ON DELETE CASCADE ON UPDATE CASCADE,
+  CHECK (Tarifa_Egresado >= Tarifa_Miembro AND Tarifa_Externo >= Tarifa_Egresado)
+);
+
 CREATE TABLE Solicitud_Servicio (
   ID_Solicitud VARCHAR(50) PRIMARY KEY,
   Resolucion VARCHAR(255),
@@ -323,6 +349,7 @@ CREATE TABLE Paso_Actividad (
   Fecha_Completada TIMESTAMP,
   Estado_Paso VARCHAR(30) NOT NULL,
   ID_Solicitud VARCHAR(50) NOT NULL,
+  Orden INT NOT NULL CHECK (Orden > 0),
   FOREIGN KEY (ID_Solicitud) REFERENCES Solicitud_Servicio(ID_Solicitud) ON DELETE CASCADE ON UPDATE CASCADE,
   CHECK (Fecha_Completada IS NULL OR Fecha_Completada >= Fecha_Inicio)
 );

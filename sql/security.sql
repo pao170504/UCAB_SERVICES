@@ -1,10 +1,7 @@
 -- =====================================================================
---  security.sql  —  Seguridad de UCAB-Services (PostgreSQL)
---  Combina: cifrado de contraseñas (pgcrypto), RBAC completo con
---  jerarquía de roles, vistas DAC y políticas RLS (MAC-like).
---
---  Orden de ejecución recomendado:
---    create.sql  ->  inserts.sql  ->  logic.sql  ->  security.sql
+--  security.sql — Cifrado de contraseñas, RBAC, vistas DAC y RLS
+--  Orden: create -> inserts -> logic -> extras -> security (extras crea
+--  las vistas de PowerBI que aquí se les da GRANT)
 -- =====================================================================
 
 -- ---------------------------------------------------------------------
@@ -28,6 +25,10 @@ BEGIN
     EXECUTE format('REVOKE ALL ON ALL SEQUENCES IN SCHEMA public FROM %I', r.rolname);
     EXECUTE format('REVOKE ALL ON ALL FUNCTIONS IN SCHEMA public FROM %I', r.rolname);
     EXECUTE format('REVOKE ALL ON SCHEMA public FROM %I', r.rolname);
+    -- También limpia los privilegios por omisión (Sección 10); si no, bloquean el DROP ROLE
+    EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES    FROM %I', r.rolname);
+    EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM %I', r.rolname);
+    EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON FUNCTIONS FROM %I', r.rolname);
     EXECUTE format('DROP ROLE IF EXISTS %I', r.rolname);
   END LOOP;
 END$$;
@@ -38,8 +39,15 @@ END$$;
 
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
+-- Se elimina y recrea porque depende de la columna Contrasena y bloquea su ALTER TYPE
+DROP TRIGGER IF EXISTS trg_fecha_cambio_clave ON Miembro_Comunidad;
+
 ALTER TABLE Miembro_Comunidad
     ALTER COLUMN Contrasena TYPE TEXT;
+
+CREATE TRIGGER trg_fecha_cambio_clave
+  BEFORE UPDATE OF Contrasena ON Miembro_Comunidad
+  FOR EACH ROW EXECUTE FUNCTION trg_fn_fecha_cambio_clave();
 
 SET app.clave_simetrica = 'UCABServices';
 ALTER DATABASE proyectobd SET app.clave_simetrica = 'UCABServices';
@@ -134,7 +142,7 @@ GRANT USAGE ON SCHEMA public TO
 
 GRANT SELECT ON
   Sede, Edificacion, Espacio_Fisico,
-  Categoria_Servicio, Servicio, Requisitos_Acceso, Regula,
+  Categoria_Servicio, Servicio, Requisitos_Acceso, Regula, Plantilla_Paso,
   Entidad_Prestadora, Entidad_Interna, Entidad_Externa,
   Zona_Estacionamiento, Puesto, Tasa
 TO ucab_lectura;
@@ -250,6 +258,7 @@ GRANT SELECT                 ON Categoria_Servicio   TO ucab_aliado;
 GRANT SELECT, INSERT, UPDATE         ON Servicio             TO ucab_entidad_interna;
 GRANT SELECT, INSERT, UPDATE, DELETE ON Requisitos_Acceso    TO ucab_entidad_interna;
 GRANT SELECT, INSERT, UPDATE, DELETE ON Requiere             TO ucab_entidad_interna;
+GRANT SELECT, INSERT, UPDATE, DELETE ON Plantilla_Paso       TO ucab_entidad_interna;
 GRANT SELECT                         ON Solicitud_Servicio   TO ucab_entidad_interna;
 GRANT SELECT, INSERT, UPDATE         ON Paso_Actividad       TO ucab_entidad_interna;
 GRANT SELECT                         ON Folio_Consumo        TO ucab_entidad_interna;

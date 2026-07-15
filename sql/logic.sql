@@ -247,9 +247,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
--- Indice de recurrencia de un miembro
--- Score = (servicios_completados × 3) + (pagos_puntuales × 2) + (reservas × 1)
--- Clasificación: Nuevo < 3 ≤ Regular < 10 ≤ Frecuente < 20 ≤ Preferencial
+-- Indice de recurrencia: score = servicios×3 + pagos_puntuales×2 + reservas×1
 CREATE OR REPLACE FUNCTION fn_indice_recurrencia(p_cedula VARCHAR)
 RETURNS TABLE(
   cedula                VARCHAR,
@@ -267,8 +265,8 @@ DECLARE
   v_clasif VARCHAR;
 BEGIN
   SELECT COUNT(*) INTO v_svc
-  FROM Solicitud_Servicio
-  WHERE Cedula = p_cedula AND Estado = 'Completada';
+  FROM Solicitud_Servicio ss
+  WHERE ss.Cedula = p_cedula AND ss.Estado = 'Completada';
 
   SELECT COUNT(*) INTO v_pagos
   FROM Pago pg
@@ -317,16 +315,8 @@ DECLARE
   v_clasif   VARCHAR;
   v_desc     NUMERIC;
   v_final    REAL;
+  v_tarifa   RECORD;
 BEGIN
-  -- Precio base: promedio del item #1 en folios cerrados de este servicio
-  SELECT COALESCE(AVG(ic.Precio), 0) INTO v_precio
-  FROM Item_Consumo ic
-  JOIN Folio_Consumo      fc ON fc.ID_Folio    = ic.ID_Folio
-  JOIN Solicitud_Servicio ss ON ss.ID_Solicitud = fc.ID_Solicitud
-  WHERE ss.ID_Servicio = p_id_servicio
-    AND ic.Numero = 1
-    AND fc.Estado = 'Cerrado';
-
   -- Perfil del miembro
   v_perfil := CASE
     WHEN EXISTS (
@@ -340,9 +330,20 @@ BEGIN
     ELSE 'Público Externo'
   END;
 
-  IF v_perfil = 'Público Externo' THEN
-    v_precio := v_precio * 1.20;
-  END IF;
+  -- Tarifa vigente del historial (la de mayor Fecha_Vigencia <= hoy)
+  SELECT Tarifa_Miembro, Tarifa_Egresado, Tarifa_Externo
+  INTO   v_tarifa
+  FROM   Tarifa
+  WHERE  ID_Servicio = p_id_servicio
+    AND  Fecha_Vigencia <= CURRENT_DATE
+  ORDER  BY Fecha_Vigencia DESC
+  LIMIT  1;
+
+  v_precio := CASE v_perfil
+    WHEN 'Miembro Activo' THEN COALESCE(v_tarifa.Tarifa_Miembro, 0)
+    WHEN 'Egresado'       THEN COALESCE(v_tarifa.Tarifa_Egresado, 0)
+    ELSE                       COALESCE(v_tarifa.Tarifa_Externo, 0)
+  END;
 
   SELECT clasificacion INTO v_clasif FROM fn_indice_recurrencia(p_cedula);
 
@@ -360,6 +361,37 @@ $$ LANGUAGE plpgsql;
 
 
 -- TRIGGERS
+
+-- Valida la tarifa contra el rango más restrictivo de Regula entre sedes
+CREATE OR REPLACE FUNCTION trg_fn_validar_tarifa()
+RETURNS TRIGGER AS $$
+DECLARE
+  v_categoria VARCHAR(50);
+  v_min       REAL;
+  v_max       REAL;
+BEGIN
+  SELECT ID_Categoria INTO v_categoria FROM Servicio WHERE ID_Servicio = NEW.ID_Servicio;
+
+  SELECT MAX(Costo_Min), MIN(Costo_Max)
+  INTO   v_min, v_max
+  FROM   Regula
+  WHERE  ID_Categoria = v_categoria;
+
+  IF v_min IS NOT NULL AND (NEW.Tarifa_Miembro < v_min OR NEW.Tarifa_Miembro > v_max) THEN
+    RAISE EXCEPTION
+      'La tarifa % está fuera del rango permitido [%, %] para la categoría del servicio',
+      NEW.Tarifa_Miembro, v_min, v_max;
+  END IF;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+DROP TRIGGER IF EXISTS trg_validar_tarifa ON Tarifa;
+CREATE TRIGGER trg_validar_tarifa
+  BEFORE INSERT OR UPDATE ON Tarifa
+  FOR EACH ROW EXECUTE FUNCTION trg_fn_validar_tarifa();
+
 
 -- Inicializar Saldo y Estado de nueva Factura
 CREATE OR REPLACE FUNCTION trg_fn_init_factura()
@@ -622,10 +654,7 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- El estacionamiento es un servicio MEDIDO POR TIEMPO (tarifa variable),
-  -- no una tarifa fija de catálogo: se exime del rango [min,max] de Regula.
-  -- En /entrada el item base entra con precio 0 y en /salida se recalcula
-  -- segun las horas, pudiendo superar el maximo. Por eso queda exento.
+  -- Estacionamiento tiene tarifa variable por tiempo, se exime del rango de Regula
   IF v_cat_id = 'CAT-ESTAC' THEN
     RETURN NEW;
   END IF;
@@ -843,13 +872,17 @@ END;
 $$;
 
 
--- Transición de Carga_Menor a Carga_Mayor al cumplir 18 años
+-- Transiciona Carga_Menor a Carga_Mayor a los 18 y rompe el vínculo a los 25
 CREATE OR REPLACE PROCEDURE proc_transicion_mayoria_edad()
 LANGUAGE plpgsql AS $$
 DECLARE
-  v_menor RECORD;
-  v_count INT := 0;
+  v_menor    RECORD;
+  v_vencido  RECORD;
+  v_count    INT := 0;
+  v_rotos    INT := 0;
+  EDAD_LIMITE CONSTANT INT := 25;
 BEGIN
+  -- Carga_Menor -> Carga_Mayor al cumplir 18 años
   FOR v_menor IN
     SELECT cm.Cedula
     FROM   Carga_Menor cm
@@ -866,7 +899,26 @@ BEGIN
     RAISE NOTICE 'Beneficiario % transicionado a Carga_Mayor', v_menor.Cedula;
   END LOOP;
 
-  RAISE NOTICE 'proc_transicion_mayoria_edad: % beneficiarios transicionados', v_count;
+  -- Romper vínculo de Carga_Mayor que superó la edad límite sin constancia
+  FOR v_vencido IN
+    SELECT b.Cedula
+    FROM   Beneficiario b
+    JOIN   Carga_Mayor  cm ON cm.Cedula = b.Cedula
+    JOIN   Persona      p  ON p.Cedula  = b.Cedula
+    WHERE  b.Fecha_Fin_Cobertura IS NULL
+      AND  cm.Constancia_Estudio_Universitario = 'PENDIENTE DE ENTREGA'
+      AND  DATE_PART('year', AGE(CURRENT_DATE, p.Fecha_Nacimiento)) >= EDAD_LIMITE
+  LOOP
+    UPDATE Beneficiario
+    SET    Fecha_Fin_Cobertura = CURRENT_DATE
+    WHERE  Cedula = v_vencido.Cedula;
+
+    v_rotos := v_rotos + 1;
+    RAISE NOTICE 'Vínculo roto por edad límite sin estudios: %', v_vencido.Cedula;
+  END LOOP;
+
+  RAISE NOTICE 'proc_transicion_mayoria_edad: % transicionados a Carga_Mayor, % vínculos rotos por edad límite',
+    v_count, v_rotos;
 END;
 $$;
 
