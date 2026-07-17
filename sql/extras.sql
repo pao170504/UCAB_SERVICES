@@ -583,3 +583,13 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE TRIGGER trg_validar_orden_pasos
 BEFORE UPDATE ON Paso_Actividad
 FOR EACH ROW EXECUTE FUNCTION fn_validar_orden_pasos();
+
+-- Acceso a las vistas de reportes PowerBI (deben ir aquí y no en security.sql,
+-- porque estas vistas recién existen después de correr este archivo)
+GRANT SELECT ON v_tiempos_respuesta          TO ucab_administrativo, ucab_profesor;
+GRANT SELECT ON v_conciliacion_pagos         TO ucab_administrativo, ucab_cajero;
+GRANT SELECT ON v_rentabilidad_espacios      TO ucab_administrativo;
+GRANT SELECT ON v_trayectoria_institucional  TO ucab_administrativo, ucab_profesor;
+GRANT SELECT ON v_bolsa_trabajo_efectividad  TO ucab_administrativo, ucab_aliado;
+GRANT SELECT ON v_ocupacion_estacionamiento  TO ucab_administrativo, ucab_cajero;
+GRANT SELECT ON v_recaudacion_estacionamiento TO ucab_administrativo, ucab_cajero;

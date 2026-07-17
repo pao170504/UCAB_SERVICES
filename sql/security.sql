@@ -416,14 +416,8 @@ GRANT SELECT ON v_cliente_cajero             TO ucab_cajero WITH GRANT OPTION;
 GRANT SELECT ON v_perfil_egresado_bolsa      TO ucab_aliado;
 GRANT SELECT ON v_auditoria_sesiones         TO ucab_administrativo, ucab_auditor;
 
--- Acceso a las vistas de reportes PowerBI (definidas en extras.sql)
-GRANT SELECT ON v_tiempos_respuesta          TO ucab_administrativo, ucab_profesor;
-GRANT SELECT ON v_conciliacion_pagos         TO ucab_administrativo, ucab_cajero;
-GRANT SELECT ON v_rentabilidad_espacios      TO ucab_administrativo;
-GRANT SELECT ON v_trayectoria_institucional  TO ucab_administrativo, ucab_profesor;
-GRANT SELECT ON v_bolsa_trabajo_efectividad  TO ucab_administrativo, ucab_aliado;
-GRANT SELECT ON v_ocupacion_estacionamiento  TO ucab_administrativo, ucab_cajero;
-GRANT SELECT ON v_recaudacion_estacionamiento TO ucab_administrativo, ucab_cajero;
+-- Nota: los GRANT sobre las vistas de reportes PowerBI están en extras.sql,
+-- porque esas vistas se crean ahí y todavía no existen en este punto del script.
 
 -- =====================================================================
 -- SECCIÓN 12: RLS — SEGURIDAD A NIVEL DE FILA (MAC-like)

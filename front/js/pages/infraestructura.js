@@ -227,6 +227,7 @@ async function cargarTarifas(esp) {
     if (inputMin) {
       inputMin.value               = parseFloat(tarifas.costo_min).toFixed(2);
       inputMin.dataset.idCategoria = tarifas.idCategoria || tarifas.id_categoria || '';
+      inputMin.dataset.idServicio  = idServicio;
     }
     if (inputMax) inputMax.value = parseFloat(tarifas.costo_max).toFixed(2);
   } catch (err) {
@@ -253,6 +254,7 @@ async function actualizarTarifa() {
   }
 
   const idCategoria = inputMin?.dataset.idCategoria;
+  const idServicio  = inputMin?.dataset.idServicio;
   if (!idCategoria) {
     if (errorEl) { errorEl.textContent = 'Selecciona un espacio primero'; errorEl.style.display = 'block'; }
     return;
@@ -261,7 +263,7 @@ async function actualizarTarifa() {
   try {
     const data = await apiFetch(
       `/api/admin/tarifas/1/${idCategoria}`,
-      { method: 'PUT', body: JSON.stringify({ costoMin: min, costoMax: max }) }
+      { method: 'PUT', body: JSON.stringify({ costoMin: min, costoMax: max, idServicio }) }
     );
     showToast(
       `Tarifas actualizadas — Miembro: $${data.tarifa_miembro} | ` +

@@ -231,7 +231,7 @@ router.put('/tarifas/:idSede/:idCategoria', async (req, res) => {
     return res.status(403).json({ error: 'Solo el personal administrativo puede modificar tarifas' });
 
   const { idSede, idCategoria } = req.params;
-  const { costoMin, costoMax  } = req.body;
+  const { costoMin, costoMax, idServicio } = req.body;
 
   const min = parseFloat(costoMin);
   const max = parseFloat(costoMax);
@@ -243,25 +243,52 @@ router.put('/tarifas/:idSede/:idCategoria', async (req, res) => {
   if (min > max)
     return res.status(400).json({ error: 'El mínimo no puede superar el máximo' });
 
+  const tarifaMiembro  = parseFloat(min.toFixed(2));
+  const tarifaEgresado = parseFloat((min * 1.20).toFixed(2));
+  const tarifaExterno  = parseFloat((min * 1.60).toFixed(2));
+
+  const client = await pool.connect();
   try {
-    const { rowCount } = await pool.query(`
+    await client.query('BEGIN');
+
+    // Regula: rango válido usado por los triggers de validación de precio
+    const { rowCount } = await client.query(`
       UPDATE Regula
       SET    costo_min = $1, costo_max = $2
       WHERE  id_sede = $3 AND id_categoria = $4
     `, [min, max, parseInt(idSede), idCategoria]);
 
-    if (!rowCount)
+    if (!rowCount) {
+      await client.query('ROLLBACK');
       return res.status(404).json({ error: 'Categoría/sede no encontrada' });
+    }
 
+    // Tarifa: la tabla que realmente consultan el preview y la reserva —
+    // sin esto, el cambio nunca se refleja en lo que ve/paga el usuario.
+    if (idServicio) {
+      await client.query(`
+        INSERT INTO Tarifa (id_servicio, fecha_vigencia, tarifa_miembro, tarifa_egresado, tarifa_externo)
+        VALUES ($1, CURRENT_DATE, $2, $3, $4)
+        ON CONFLICT (id_servicio, fecha_vigencia)
+        DO UPDATE SET tarifa_miembro  = EXCLUDED.tarifa_miembro,
+                      tarifa_egresado = EXCLUDED.tarifa_egresado,
+                      tarifa_externo  = EXCLUDED.tarifa_externo
+      `, [idServicio, tarifaMiembro, tarifaEgresado, tarifaExterno]);
+    }
+
+    await client.query('COMMIT');
     res.json({
       message:         'Tarifas actualizadas',
-      tarifa_miembro:  parseFloat(min.toFixed(2)),
-      tarifa_egresado: parseFloat((min * 1.20).toFixed(2)),
-      tarifa_externo:  parseFloat((min * 1.60).toFixed(2))
+      tarifa_miembro:  tarifaMiembro,
+      tarifa_egresado: tarifaEgresado,
+      tarifa_externo:  tarifaExterno
     });
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => {});
     console.error(err);
     res.status(500).json({ error: 'Error interno' });
+  } finally {
+    client.release();
   }
 });
 

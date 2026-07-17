@@ -239,17 +239,52 @@ router.post('/reservar', async (req, res) => {
     return res.status(500).json({ error: err.message || 'Error interno' });
   }
 
-  // Busca la tarifa fuera de la transacción (solo lectura)
+  // Busca la tarifa fuera de la transacción (solo lectura), diferenciada por rol
   let precio = 10.00;
   try {
+    const { rows: rolRows } = await pool.query(`
+      SELECT
+        EXISTS (
+          SELECT 1 FROM Estudiante e
+          JOIN Periodo_Vinculacion pv ON pv.cedula = e.cedula AND pv.fecha_inicio = e.fecha_inicio
+          WHERE e.cedula = $1 AND pv.fecha_fin IS NULL
+        ) OR EXISTS (
+          SELECT 1 FROM Profesor pr
+          JOIN Periodo_Vinculacion pv ON pv.cedula = pr.cedula AND pv.fecha_inicio = pr.fecha_inicio
+          WHERE pr.cedula = $1 AND pv.fecha_fin IS NULL
+        ) OR EXISTS (
+          SELECT 1 FROM Personal_Administrativo pa
+          JOIN Periodo_Vinculacion pv ON pv.cedula = pa.cedula AND pv.fecha_inicio = pa.fecha_inicio
+          WHERE pa.cedula = $1 AND pv.fecha_fin IS NULL
+        ) AS es_miembro,
+        EXISTS (SELECT 1 FROM Egresado WHERE cedula = $1) AS es_egresado
+    `, [req.cedula]);
+    const { es_miembro: esMiembro, es_egresado: esEgresado } = rolRows[0];
+
     const { rows: tarifaRows } = await pool.query(`
-      SELECT r.costo_min
-      FROM   Servicio s
-      JOIN   Categoria_Servicio cs ON cs.id_categoria = s.id_categoria
-      JOIN   Regula r ON r.id_categoria = s.id_categoria AND r.id_sede = $1
-      WHERE  s.id_servicio = $2
-    `, [idSede, idServicio]);
-    if (tarifaRows.length) precio = parseFloat(tarifaRows[0].costo_min);
+      SELECT tarifa_miembro, tarifa_egresado, tarifa_externo
+      FROM   Tarifa
+      WHERE  id_servicio = $1 AND fecha_vigencia <= CURRENT_DATE
+      ORDER  BY fecha_vigencia DESC
+      LIMIT  1
+    `, [idServicio]);
+
+    if (tarifaRows.length) {
+      const t = tarifaRows[0];
+      precio = parseFloat(esMiembro ? t.tarifa_miembro : esEgresado ? t.tarifa_egresado : t.tarifa_externo);
+    } else {
+      const { rows: regulaRows } = await pool.query(`
+        SELECT r.costo_min
+        FROM   Servicio s
+        JOIN   Categoria_Servicio cs ON cs.id_categoria = s.id_categoria
+        JOIN   Regula r ON r.id_categoria = s.id_categoria AND r.id_sede = $1
+        WHERE  s.id_servicio = $2
+      `, [idSede, idServicio]);
+      if (regulaRows.length) {
+        const base = parseFloat(regulaRows[0].costo_min);
+        precio = esMiembro ? base : esEgresado ? base * 1.20 : base * 1.60;
+      }
+    }
   } catch (_) {}
 
   const iva        = parseFloat((precio * 0.16).toFixed(2));

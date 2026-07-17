@@ -331,12 +331,12 @@ BEGIN
   END;
 
   -- Tarifa vigente del historial (la de mayor Fecha_Vigencia <= hoy)
-  SELECT Tarifa_Miembro, Tarifa_Egresado, Tarifa_Externo
+  SELECT t.Tarifa_Miembro, t.Tarifa_Egresado, t.Tarifa_Externo
   INTO   v_tarifa
-  FROM   Tarifa
-  WHERE  ID_Servicio = p_id_servicio
-    AND  Fecha_Vigencia <= CURRENT_DATE
-  ORDER  BY Fecha_Vigencia DESC
+  FROM   Tarifa t
+  WHERE  t.ID_Servicio = p_id_servicio
+    AND  t.Fecha_Vigencia <= CURRENT_DATE
+  ORDER  BY t.Fecha_Vigencia DESC
   LIMIT  1;
 
   v_precio := CASE v_perfil
@@ -345,7 +345,7 @@ BEGIN
     ELSE                       COALESCE(v_tarifa.Tarifa_Externo, 0)
   END;
 
-  SELECT clasificacion INTO v_clasif FROM fn_indice_recurrencia(p_cedula);
+  SELECT fir.clasificacion INTO v_clasif FROM fn_indice_recurrencia(p_cedula) AS fir;
 
   v_desc := CASE v_clasif
     WHEN 'Preferencial' THEN 10.0
